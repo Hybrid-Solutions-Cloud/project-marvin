@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" role="img" aria-label="Project Marvin large logo">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0b1119"/>
+      <stop offset="100%" stop-color="#1a2431"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d6dde4"/>
+      <stop offset="100%" stop-color="#b7c3cf"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="420" rx="36" fill="url(#bg)"/>
+  <g transform="translate(84 70)">
+    <rect x="0" y="28" width="242" height="180" rx="42" fill="url(#panel)"/>
+    <rect x="24" y="52" width="194" height="132" rx="28" fill="#ecf1f5"/>
+    <circle cx="84" cy="116" r="18" fill="#ff8e3c"/>
+    <circle cx="158" cy="116" r="18" fill="#ff8e3c"/>
+    <path d="M72 162h98" stroke="#485a69" stroke-width="14" stroke-linecap="round"/>
+    <path d="M121 0v36" stroke="#ff8e3c" stroke-width="16" stroke-linecap="round"/>
+  </g>
+  <text x="356" y="168" fill="#f8fafc" font-size="82" font-family="Georgia, 'Times New Roman', serif" font-weight="700">Project Marvin</text>
+  <text x="358" y="224" fill="#ff8e3c" font-size="30" font-family="Verdana, Geneva, sans-serif">the paranoid android of calendar sync</text>
+  <text x="358" y="278" fill="#93a5b7" font-size="24" font-family="Verdana, Geneva, sans-serif">Multi-tenant scheduling, private blockers, and a professionally gloomy outlook.</text>
+</svg>

@@ -7,13 +7,15 @@
       "id": "work_m365",
       "label": "Work Microsoft 365",
       "provider": "m365",
-      "email": "you@work.example.com"
+      "email": "you@work.example.com",
+      "tenantId": "11111111-1111-1111-1111-111111111111"
     },
     {
       "id": "contract_m365",
       "label": "Contract Microsoft 365",
       "provider": "m365",
-      "email": "you@contract.example.com"
+      "email": "you@contract.example.com",
+      "tenantId": "22222222-2222-2222-2222-222222222222"
     }
   ],
   "eligibleRoutes": [],

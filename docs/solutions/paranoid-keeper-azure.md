@@ -1,146 +1,104 @@
 # Deploy Keeper to Azure Container Apps
 
-Azure Container Apps is the primary hosted deployment target for Keeper in Project Marvin.
+Azure Container Apps is the primary hosted deployment target for the Marvin plus Paranoid Keeper runtime.
 
 This is the first-class path when you want:
 
 - always-on container hosting
 - scripted deployment
-- persistent Keeper state
-- Microsoft 365 plus Google support in one hosted runtime
+- Marvin as the public front door
+- Paranoid Keeper as the backend sync engine
+- Microsoft 365 with optional Google support in one hosted runtime
 
 ## What this deployment does
 
 The repo deployment script:
 
 1. reads your local Keeper `.env`
-2. creates or reuses an Azure resource group
-3. creates an Azure Storage account and Azure Files share
-4. creates or reuses an Azure Container Apps environment
-5. links the Azure Files share into that environment
-6. deploys `ghcr.io/ridafkih/keeper-standalone:2.9`
-7. mounts persistent storage at `/var/lib/postgresql/data`
-8. configures ingress on port `80`
-9. pins the app to `minReplicas: 1` and `maxReplicas: 1`
-10. updates `TRUSTED_ORIGINS` to the final Azure Container Apps FQDN
+2. creates or reuses the standards-based resource group
+3. creates or reuses an Azure Container Registry for the Marvin UI image
+4. builds the Marvin UI image from the local repo
+5. deploys Log Analytics, PostgreSQL Flexible Server, Container Apps environment, and the hosted runtime through Bicep
+6. runs `marvin-ui`, `keeper`, and `redis` in the same Container App
+7. exposes Marvin on the public URL and keeps Keeper behind `/keeper`
+8. pins the runtime to `minReplicas: 1` and `maxReplicas: 1`
+9. updates `BETTER_AUTH_URL` and `TRUSTED_ORIGINS` to the final Azure Container Apps URL
+
+## Preferred repo flow
+
+```powershell
+npm install
+npm run marvin:ui
+```
+
+Then open `http://localhost:4177`, create the Marvin operator account, save the profile, and deploy the hosted runtime.
 
 ## Prerequisites
 
-- Azure subscription with rights to create resource groups, storage accounts, and container apps
+- Azure subscription with rights to create resource groups, Azure Container Registry, PostgreSQL Flexible Server, and Container Apps
 - Azure CLI installed
 - `az login` completed
 - local Keeper `.env` created from the repo
 - Microsoft OAuth credentials in `.env`
 - Google OAuth credentials in `.env` if you want Google destinations
 
-## Prepare the local env file
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\setup-env.ps1
-```
-
-Then edit `solutions/paranoid-keeper/.env`.
-
-Required values:
-
-- `BETTER_AUTH_SECRET`
-- `ENCRYPTION_KEY`
-- `MICROSOFT_CLIENT_ID`
-- `MICROSOFT_CLIENT_SECRET`
-
-Optional values:
-
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
-
-## Deploy
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\deploy-azure-container-app.ps1 `
-  -ResourceGroupName marvin-keeper-rg `
-  -Location eastus `
-  -EnvironmentName marvin-keeper-env `
-  -AppName marvin-keeper
-```
-
-## Optional parameters
-
-### Add extra trusted origins
-
-Use this if you plan to put Keeper behind a custom domain later.
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\deploy-azure-container-app.ps1 `
-  -ResourceGroupName marvin-keeper-rg `
-  -Location eastus `
-  -EnvironmentName marvin-keeper-env `
-  -AppName marvin-keeper `
-  -AdditionalTrustedOrigins "https://keeper.example.com"
-```
-
-### Use a specific subscription
+## Deploy from the repo
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\deploy-azure-container-app.ps1 `
   -SubscriptionId <subscription-guid> `
-  -ResourceGroupName marvin-keeper-rg `
-  -Location eastus `
-  -EnvironmentName marvin-keeper-env `
-  -AppName marvin-keeper
+  -WorkloadName marvin `
+  -Environment dev `
+  -RegionShort wus3 `
+  -Location westus3 `
+  -Instance 01
 ```
 
-## After deployment
+That produces the standards-based names:
 
-1. Open the returned `https://...azurecontainerapps.io` URL.
-2. Sign in to Keeper.
-3. Connect Microsoft 365 accounts.
-4. Connect Google accounts if you need them.
-5. Recreate the sync routes from `artifacts/solutions/<profile>/paranoid-keeper/sync-plan.md`.
-6. Test create, update, and delete propagation with one calendar pair first.
+- `rg-marvin-dev-wus3-01`
+- `law-marvin-dev-wus3-01`
+- `psql-marvin-dev-wus3-01`
+- `cae-marvin-dev-wus3-01`
+- `ca-marvin-dev-wus3-01`
+- `acrmarvindevwus301`
+
+## What opens after deployment
+
+The public URL opens **Marvin**, not Keeper.
+
+From there:
+
+1. create or reuse the Marvin operator account
+2. review the calendar profile and sync plan
+3. continue into provider linking through the embedded Keeper path
+4. validate route behavior with a narrow test window first
 
 ## Operational notes
 
-### Persistence
+### Runtime layout
 
-Keeper state is mounted on Azure Files.
+The hosted runtime is one Container App with three containers:
 
-That matters because the standalone Keeper image stores persistent state under `/var/lib/postgresql/data`.
+- `marvin-ui`
+- `keeper`
+- `redis`
+
+Marvin is exposed publicly on port `3001`.
+
+Keeper remains internal to the same app on port `3000` and is routed through Marvin under `/keeper`.
+
+### Secrets
+
+The deployment stores runtime secrets in Azure Container Apps secrets.
+
+For stricter production controls, move those secrets into Azure Key Vault later and rotate them there.
 
 ### Availability
 
-This deployment sets:
+The deployment sets:
 
 - `minReplicas: 1`
 - `maxReplicas: 1`
 
-That keeps one replica running continuously instead of scale-to-zero behavior.
-
-### Secrets
-
-The current script stores secrets in Azure Container Apps app secrets.
-
-For stricter production controls, move those secrets into Azure Key Vault later and rotate them there.
-
-### Custom domain
-
-The first script pass deploys against the generated ACA FQDN.
-
-If you later front it with a custom domain, redeploy with `-AdditionalTrustedOrigins` so Keeper accepts that origin.
-
-## When to prefer Azure App Service instead
-
-Use App Service only if:
-
-- your organization already mandates App Service
-- your operations team already standardizes on it
-- you are willing to do extra work around container storage expectations
-
-For Project Marvin, Azure Container Apps remains the better default.
-
-## References
-
-- [Azure Container Apps with `az containerapp up`](https://learn.microsoft.com/en-us/azure/container-apps/containerapp-up)
-- [Azure Container Apps storage mounts](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts)
-- [Azure Files mount tutorial for Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/storage-mounts-azure-files)
-- [Azure Container Apps environment variables](https://learn.microsoft.com/en-us/azure/container-apps/environment-variables)
-- [Azure Container Apps secrets](https://learn.microsoft.com/en-us/azure/container-apps/manage-secrets)
+That keeps the runtime continuously available.

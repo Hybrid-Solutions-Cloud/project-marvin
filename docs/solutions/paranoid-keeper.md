@@ -2,63 +2,51 @@
 
 ## Summary
 
-Paranoid Keeper is the cross-provider automated path for Project Marvin.
-It is based on `keeper.sh` and is the best fit when you need Microsoft 365 and Google together, with optional Apple or CalDAV later.
+Paranoid Keeper is the primary backend sync engine for Project Marvin.
 
-The important constraint is operational, not functional:
-
-- `Keeper` is only truly hands-off if it runs on an always-on host.
-- Running it on your laptop with Docker Desktop is a convenience path, not the real deployment model.
-- For this repo, the primary hosted target is **Azure Container Apps**.
+The operator-facing product is Marvin. Keeper runs underneath it as the hosted synchronization engine for the main Azure path.
 
 ## Automation status
 
-`Keeper` meets the automation requirement only when deployed to a persistent container runtime.
+This path meets the automation requirement when it is deployed to an always-on host.
 
-- `Docker Desktop`: no, this is local convenience only
+- `Docker Desktop`: no, convenience only
 - `Docker Compose on always-on Linux host`: yes
 - `Azure Container Apps`: yes, recommended
-- `Cloudflare Containers`: not currently recommended for Keeper as-is
+- `Cloudflare Containers`: still secondary for this repo
 
 ## Problem fit
 
 Use this solution when:
 
-- you need Microsoft 365 and Google together
-- Apple or CalDAV may matter later
-- you want one always-on hosted service instead of desktop sync clients
-- you want a deployment story that can be scripted
+- you need multi-M365 mirroring with private blockers
+- Google may also need to participate
+- you want an always-on hosted runtime
+- you want a scripted deployment path
 
 ## Architecture
 
 Components:
 
-- local Marvin profile
+- local Marvin onboarding UI
+- shared Marvin profile
 - generated Keeper sync plan
-- Keeper container runtime
-- persistent data volume for Keeper state
-- OAuth provider connections inside Keeper
-- hosted web UI for operator sign-in and route setup
+- hosted Marvin front door
+- Keeper backend engine
+- PostgreSQL and Redis for the hosted runtime
 
 ## Data flow
 
-1. Marvin onboarding collects calendar inventory and routes.
-2. Marvin generator writes Keeper-specific artifacts.
-3. Keeper is deployed to an always-on container host.
-4. Operator signs into Keeper and binds provider accounts.
-5. Keeper executes synchronization continuously.
+1. Marvin onboarding collects account inventory and routes.
+2. Marvin generates Keeper-specific artifacts.
+3. Azure deploys the hosted Marvin runtime.
+4. The operator lands on Marvin first.
+5. Marvin routes provider linking into the backend Keeper path.
+6. Keeper executes synchronization continuously.
 
 ## Recommended deployment target
 
 Use **Azure Container Apps** first.
-
-Why:
-
-- always-on container hosting with `minReplicas: 1`
-- simple public ingress
-- Azure Files mount for persistent Keeper data
-- clean fit for a single self-hosted web workload
-- close to your own preferred Azure operating model
 
 Start here:
 
@@ -66,45 +54,32 @@ Start here:
 - [Deploy Keeper to Azure Container Apps](/solutions/paranoid-keeper-azure)
 - [Cloudflare Evaluation](/solutions/paranoid-keeper-cloudflare)
 
-## Repo files
-
-- `solutions/paranoid-keeper/compose.yaml`
-- `solutions/paranoid-keeper/setup-env.ps1`
-- `solutions/paranoid-keeper/deploy-azure-container-app.ps1`
-- `solutions/paranoid-keeper/validate.ps1`
-- `solutions/paranoid-keeper/test.ps1`
-- `artifacts/solutions/<profile>/paranoid-keeper/sync-plan.md`
-
 ## Fast path
 
 ```powershell
 npm install
-npm run marvin:onboard
-powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\test.ps1
-powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\setup-env.ps1
-powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\deploy-azure-container-app.ps1
+npm run marvin:ui
 ```
 
-## What still requires operator action
+Then:
 
-This repo can script the runtime deployment.
+1. Create the Marvin operator account.
+2. Save the shared Marvin profile.
+3. Deploy the hosted runtime.
+4. Open the hosted Marvin URL.
+5. Use the Marvin flow to continue into provider linking.
 
-It cannot fully automate these provider-authorized steps away:
+## What still requires provider-authorized action
+
+This repo now scripts the onboarding artifacts and hosted runtime deployment.
+
+These steps still remain provider-authorized:
 
 - Microsoft OAuth app registration and consent
-- Google OAuth app registration and consent
-- first-time Keeper account/provider binding in the Keeper UI
-- mapping the final sync routes in Keeper based on the generated Marvin sync plan
-
-Those are normal identity-bound steps, not local-manual runtime steps.
-
-## Risks
-
-- provider OAuth registration complexity
-- provider-specific recurrence behavior
-- route configuration still occurs inside Keeper UI rather than fully from Marvin
-- hosted runtime still needs backup, update, and monitoring policy
+- Google OAuth app registration and consent if used
+- first-time provider authorization in the backend engine
+- final route confirmation against the generated sync plan
 
 ## Recommendation
 
-If you need one automated cross-provider runtime, use Keeper on Azure Container Apps.
+If you need one automated hosted path now, use Marvin on Azure Container Apps with Paranoid Keeper underneath it.

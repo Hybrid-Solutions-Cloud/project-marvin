@@ -5,3 +5,4 @@ solutions/paranoid-keeper/.env
 profiles/*.local.json
 profiles/*.local.events.json
 artifacts/solutions/*.local/
+.marvin/

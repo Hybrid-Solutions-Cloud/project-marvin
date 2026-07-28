@@ -15,6 +15,7 @@
     "solutions:test": "powershell -ExecutionPolicy Bypass -File .\\scripts\\test-all-solutions.ps1",
     "marvin:setup": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1",
     "marvin:onboard": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1 -RunGenerators",
+    "marvin:ui": "node scripts/marvin-onboard-ui.mjs",
     "keeper:azure:deploy": "powershell -ExecutionPolicy Bypass -File .\\solutions\\paranoid-keeper\\deploy-azure-container-app.ps1"
   },
   "devDependencies": {

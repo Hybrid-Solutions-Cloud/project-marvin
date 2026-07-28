@@ -1,0 +1,7 @@
+.git
+node_modules
+artifacts
+.marvin
+profiles/*.local.json
+profiles/*.local.events.json
+docs/.vitepress/dist

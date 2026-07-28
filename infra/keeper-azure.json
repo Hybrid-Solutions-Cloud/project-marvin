@@ -1,0 +1,492 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "5587338111310116289"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "metadata": {
+        "description": "Environment identifier."
+      }
+    },
+    "projectName": {
+      "type": "string",
+      "defaultValue": "project-marvin",
+      "metadata": {
+        "description": "Project tag value."
+      }
+    },
+    "costCenter": {
+      "type": "string",
+      "defaultValue": "hcs-internal",
+      "metadata": {
+        "description": "Cost center tag value."
+      }
+    },
+    "owner": {
+      "type": "string",
+      "defaultValue": "kris@hybridsolutions.cloud",
+      "metadata": {
+        "description": "Owner tag value."
+      }
+    },
+    "managedBy": {
+      "type": "string",
+      "defaultValue": "bicep",
+      "metadata": {
+        "description": "Managed by tag value."
+      }
+    },
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "ghcr.io/ridafkih/keeper-services:2.9",
+      "metadata": {
+        "description": "Container image for Keeper services."
+      }
+    },
+    "marvinUiImage": {
+      "type": "string",
+      "metadata": {
+        "description": "Container image for the Marvin operator UI."
+      }
+    },
+    "containerAppEnvironmentName": {
+      "type": "string",
+      "metadata": {
+        "description": "Managed environment name for Azure Container Apps."
+      }
+    },
+    "marvinAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Container app name for the public Marvin UI."
+      }
+    },
+    "keeperAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Container app name for the public Keeper runtime."
+      }
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace name."
+      }
+    },
+    "postgresServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "PostgreSQL flexible server name."
+      }
+    },
+    "registryServer": {
+      "type": "string",
+      "metadata": {
+        "description": "Container registry server for the Marvin UI image."
+      }
+    },
+    "registryUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Container registry username for the Marvin UI image."
+      }
+    },
+    "registryPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Container registry password for the Marvin UI image."
+      }
+    },
+    "postgresAdminUser": {
+      "type": "string",
+      "defaultValue": "keeperadmin",
+      "metadata": {
+        "description": "PostgreSQL admin username."
+      }
+    },
+    "postgresAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "PostgreSQL admin password."
+      }
+    },
+    "postgresDatabaseName": {
+      "type": "string",
+      "defaultValue": "postgres",
+      "metadata": {
+        "description": "Keeper PostgreSQL database name."
+      }
+    },
+    "postgresSkuName": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "PostgreSQL SKU name."
+      }
+    },
+    "postgresTier": {
+      "type": "string",
+      "defaultValue": "Burstable",
+      "metadata": {
+        "description": "PostgreSQL tier."
+      }
+    },
+    "postgresVersion": {
+      "type": "string",
+      "defaultValue": "16",
+      "metadata": {
+        "description": "PostgreSQL version."
+      }
+    },
+    "containerCpu": {
+      "type": "string",
+      "defaultValue": "0.5",
+      "metadata": {
+        "description": "CPU allocation for the Keeper container."
+      }
+    },
+    "containerMemory": {
+      "type": "string",
+      "defaultValue": "1Gi",
+      "metadata": {
+        "description": "Memory allocation for the Keeper container."
+      }
+    },
+    "marvinUiCpu": {
+      "type": "string",
+      "defaultValue": "0.25",
+      "metadata": {
+        "description": "CPU allocation for the Marvin UI container."
+      }
+    },
+    "marvinUiMemory": {
+      "type": "string",
+      "defaultValue": "0.5Gi",
+      "metadata": {
+        "description": "Memory allocation for the Marvin UI container."
+      }
+    },
+    "minReplicas": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Minimum number of replicas to keep running."
+      }
+    },
+    "maxReplicas": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Maximum number of replicas."
+      }
+    },
+    "betterAuthSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Keeper auth secret."
+      }
+    },
+    "encryptionKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Keeper encryption key."
+      }
+    },
+    "microsoftClientId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Microsoft OAuth client ID."
+      }
+    },
+    "microsoftClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Microsoft OAuth client secret."
+      }
+    },
+    "googleClientId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Google OAuth client ID. Leave empty if not used."
+      }
+    },
+    "googleClientSecret": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Google OAuth client secret. Leave empty if not used."
+      }
+    },
+    "trustedOrigins": {
+      "type": "string",
+      "defaultValue": "https://placeholder.invalid",
+      "metadata": {
+        "description": "Comma-separated trusted origins for Keeper."
+      }
+    },
+    "betterAuthUrl": {
+      "type": "string",
+      "defaultValue": "https://placeholder.invalid",
+      "metadata": {
+        "description": "Base URL used by Keeper auth callbacks."
+      }
+    },
+    "marvinKeeperLinkUrl": {
+      "type": "string",
+      "defaultValue": "https://placeholder.invalid",
+      "metadata": {
+        "description": "External Keeper URL used by Marvin for provider-link navigation."
+      }
+    }
+  },
+  "variables": {
+    "tags": {
+      "Owner": "[parameters('owner')]",
+      "Project": "[parameters('projectName')]",
+      "Environment": "[parameters('environment')]",
+      "CostCenter": "[parameters('costCenter')]",
+      "ManagedBy": "[parameters('managedBy')]"
+    },
+    "workspaceSkuName": "PerGB2018",
+    "useGoogle": "[and(not(empty(trim(parameters('googleClientId')))), not(empty(trim(parameters('googleClientSecret')))))]",
+    "postgresHost": "[format('{0}.postgres.database.azure.com', parameters('postgresServerName'))]",
+    "databaseUrl": "[format('postgresql://{0}:{1}@{2}:5432/{3}?sslmode=require', uriComponent(parameters('postgresAdminUser')), uriComponent(parameters('postgresAdminPassword')), variables('postgresHost'), parameters('postgresDatabaseName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[parameters('logAnalyticsWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "features": {
+          "disableLocalAuth": false,
+          "enableLogAccessUsingOnlyResourcePermissions": true
+        },
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled",
+        "retentionInDays": 30,
+        "sku": {
+          "name": "[variables('workspaceSkuName')]"
+        },
+        "workspaceCapping": {
+          "dailyQuotaGb": -1
+        }
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2022-12-01",
+      "name": "[parameters('postgresServerName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "name": "[parameters('postgresSkuName')]",
+        "tier": "[parameters('postgresTier')]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('postgresAdminUser')]",
+        "administratorLoginPassword": "[parameters('postgresAdminPassword')]",
+        "backup": {
+          "backupRetentionDays": 7,
+          "geoRedundantBackup": "Disabled"
+        },
+        "highAvailability": {
+          "mode": "Disabled"
+        },
+        "network": {},
+        "storage": {
+          "storageSizeGB": 32
+        },
+        "version": "[parameters('postgresVersion')]"
+      }
+    },
+    {
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/firewallRules",
+      "apiVersion": "2022-12-01",
+      "name": "[format('{0}/{1}', parameters('postgresServerName'), 'AllowAzureServices')]",
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('containerAppEnvironmentName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2022-10-01').customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2022-10-01').primarySharedKey]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('marvinAppName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": 3001,
+            "transport": "auto"
+          },
+          "registries": [
+            {
+              "server": "[parameters('registryServer')]",
+              "username": "[parameters('registryUsername')]",
+              "passwordSecretRef": "registry-password"
+            }
+          ],
+          "secrets": [
+            {
+              "name": "registry-password",
+              "value": "[parameters('registryPassword')]"
+            }
+          ]
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "marvin-ui",
+              "image": "[parameters('marvinUiImage')]",
+              "env": [
+                {
+                  "name": "MARVIN_UI_PORT",
+                  "value": "3001"
+                },
+                {
+                  "name": "MARVIN_DEPLOY_ENABLED",
+                  "value": "false"
+                },
+                {
+                  "name": "MARVIN_HOSTED",
+                  "value": "true"
+                },
+                {
+                  "name": "MARVIN_KEEPER_LINK_URL",
+                  "value": "[parameters('marvinKeeperLinkUrl')]"
+                }
+              ],
+              "resources": {
+                "cpu": "[json(parameters('marvinUiCpu'))]",
+                "memory": "[parameters('marvinUiMemory')]"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": "[parameters('minReplicas')]",
+            "maxReplicas": "[parameters('maxReplicas')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('keeperAppName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": 80,
+            "transport": "auto"
+          },
+          "secrets": "[concat(createArray(createObject('name', 'database-url', 'value', variables('databaseUrl')), createObject('name', 'better-auth-secret', 'value', parameters('betterAuthSecret')), createObject('name', 'encryption-key', 'value', parameters('encryptionKey')), createObject('name', 'microsoft-client-id', 'value', parameters('microsoftClientId')), createObject('name', 'microsoft-client-secret', 'value', parameters('microsoftClientSecret'))), if(variables('useGoogle'), createArray(createObject('name', 'google-client-id', 'value', parameters('googleClientId')), createObject('name', 'google-client-secret', 'value', parameters('googleClientSecret'))), createArray()))]"
+        },
+        "template": {
+          "containers": [
+            {
+              "name": "keeper",
+              "image": "[parameters('containerImage')]",
+              "env": "[concat(createArray(createObject('name', 'DATABASE_URL', 'secretRef', 'database-url'), createObject('name', 'REDIS_URL', 'value', 'redis://localhost:6379'), createObject('name', 'WORKER_JOB_QUEUE_ENABLED', 'value', 'true'), createObject('name', 'BETTER_AUTH_URL', 'value', parameters('betterAuthUrl')), createObject('name', 'BETTER_AUTH_SECRET', 'secretRef', 'better-auth-secret'), createObject('name', 'ENCRYPTION_KEY', 'secretRef', 'encryption-key'), createObject('name', 'TRUSTED_ORIGINS', 'value', parameters('trustedOrigins')), createObject('name', 'MICROSOFT_CLIENT_ID', 'secretRef', 'microsoft-client-id'), createObject('name', 'MICROSOFT_CLIENT_SECRET', 'secretRef', 'microsoft-client-secret')), if(variables('useGoogle'), createArray(createObject('name', 'GOOGLE_CLIENT_ID', 'secretRef', 'google-client-id'), createObject('name', 'GOOGLE_CLIENT_SECRET', 'secretRef', 'google-client-secret')), createArray()))]",
+              "resources": {
+                "cpu": "[json(parameters('containerCpu'))]",
+                "memory": "[parameters('containerMemory')]"
+              }
+            },
+            {
+              "name": "redis",
+              "image": "redis:7-alpine",
+              "resources": {
+                "cpu": "[json('0.25')]",
+                "memory": "0.5Gi"
+              }
+            }
+          ],
+          "scale": {
+            "minReplicas": "[parameters('minReplicas')]",
+            "maxReplicas": "[parameters('maxReplicas')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "marvinUrl": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', parameters('marvinAppName')), '2024-03-01').configuration.ingress.fqdn)]"
+    },
+    "marvinFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('marvinAppName')), '2024-03-01').configuration.ingress.fqdn]"
+    },
+    "keeperUrl": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', parameters('keeperAppName')), '2024-03-01').configuration.ingress.fqdn)]"
+    },
+    "keeperFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('keeperAppName')), '2024-03-01').configuration.ingress.fqdn]"
+    },
+    "postgresHost": {
+      "type": "string",
+      "value": "[variables('postgresHost')]"
+    },
+    "postgresAdminUser": {
+      "type": "string",
+      "value": "[parameters('postgresAdminUser')]"
+    }
+  }
+}

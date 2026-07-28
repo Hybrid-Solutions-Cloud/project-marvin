@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Project Marvin</title>
+  <style>
+    :root {
+      --bg: #0b1117;
+      --panel: #101922;
+      --panel-2: #162231;
+      --line: #2f4355;
+      --text: #eef3f8;
+      --muted: #9cb0c2;
+      --accent: #ff8e3c;
+      --accent-2: #7cc8ff;
+      --ok: #79d9a7;
+      --bad: #ff8c8c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Verdana, Geneva, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 200, 255, 0.16), transparent 30%),
+        radial-gradient(circle at top right, rgba(255, 142, 60, 0.14), transparent 28%),
+        var(--bg);
+    }
+    main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 64px; }
+    .shell, .panel { border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(180deg, rgba(16,25,34,.98), rgba(12,19,27,.98)); box-shadow: 0 18px 40px rgba(0,0,0,.26); }
+    .shell { padding: 24px; }
+    .masthead { display: grid; grid-template-columns: 120px 1fr; gap: 22px; align-items: center; margin-bottom: 22px; }
+    .masthead img { width: 100%; height: auto; display: block; }
+    h1, h2, h3 { margin: 0 0 10px; }
+    h1 { font-family: Georgia, 'Times New Roman', serif; font-size: 46px; line-height: 1; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 16px; color: var(--accent-2); text-transform: uppercase; letter-spacing: .08em; }
+    p { margin: 0; color: var(--muted); line-height: 1.55; }
+    .chip { display: inline-flex; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 6px 10px; color: var(--accent); font-size: 12px; margin-bottom: 10px; }
+    .wizard-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+    .steps { display: grid; gap: 12px; }
+    .step { border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 14px; background: rgba(255,255,255,.03); }
+    .step.active { border-color: var(--accent); background: rgba(255,142,60,.08); }
+    .step.done { border-color: rgba(121,217,167,.35); }
+    .step strong { display: block; margin-bottom: 6px; }
+    .panel { padding: 22px; }
+    .fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .card { border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 16px; background: rgba(255,255,255,.03); cursor: pointer; }
+    .card.selected { border-color: var(--accent); background: rgba(255,142,60,.08); }
+    label { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+    input, select { width: 100%; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: var(--panel-2); color: var(--text); }
+    button { border: 0; border-radius: 14px; padding: 12px 16px; font-weight: 700; cursor: pointer; background: var(--accent); color: #111; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+    .status { margin-top: 12px; font-weight: 700; }
+    .status.ok { color: var(--ok); }
+    .status.bad { color: var(--bad); }
+    .notice { margin-top: 12px; padding: 12px 14px; border-radius: 14px; background: rgba(124,200,255,.08); border: 1px solid rgba(124,200,255,.18); color: #d9ecfa; }
+    .hidden { display: none !important; }
+    .account-list, .summary-list { display: grid; gap: 12px; margin-top: 14px; }
+    .account-item { border: 1px solid rgba(255,255,255,.08); border-radius: 16px; padding: 14px; background: rgba(255,255,255,.03); display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+    .account-meta { color: var(--muted); font-size: 13px; }
+    .console-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .console-card { border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 18px; background: rgba(255,255,255,.03); }
+    .console-card.full { grid-column: 1 / -1; }
+    pre { margin: 14px 0 0; min-height: 120px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: #091016; color: #d7e0e8; white-space: pre-wrap; word-break: break-word; overflow: auto; }
+    @media (max-width: 960px) {
+      .masthead, .wizard-layout, .fields, .cards, .console-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 36px; }
+      .masthead img { width: 92px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="shell">
+      <div class="masthead">
+        <img src="/logo-large.svg" alt="Project Marvin logo">
+        <div>
+          <div class="chip">Project Marvin</div>
+          <h1>Calendar sync without the ceremony.</h1>
+          <p>First run creates a Marvin account, picks a sync solution, adds calendars, sets how mirrored events look, and then hands you a management console.</p>
+        </div>
+      </div>
+
+      <div id="wizardView" class="wizard-layout hidden">
+        <aside class="steps" id="steps"></aside>
+        <section class="panel" id="stepPanel"></section>
+      </div>
+
+      <section id="consoleView" class="panel hidden">
+        <div class="chip">Management Console</div>
+        <h2 id="consoleTitle">Marvin Console</h2>
+        <p id="consoleIntro">Manage accounts, pick solutions, adjust how mirrored events appear, and deploy the hosted runtime.</p>
+        <div class="console-grid" style="margin-top:18px;">
+          <div class="console-card">
+            <h3>Accounts</h3>
+            <p>Add, remove, or edit the accounts Marvin mirrors across.</p>
+            <div id="consoleAccounts" class="account-list"></div>
+            <div class="actions">
+              <button id="consoleAddAccount" class="secondary" type="button">Add Account</button>
+            </div>
+          </div>
+          <div class="console-card">
+            <h3>Solution</h3>
+            <p id="consoleSolutionText">Choose which backend engine Marvin should drive.</p>
+            <div class="actions">
+              <button id="consoleChangeSolution" class="secondary" type="button">Change Solution</button>
+              <button id="consoleDisplayRules" class="secondary" type="button">Edit Event Display</button>
+            </div>
+          </div>
+          <div class="console-card full">
+            <h3>Deployment</h3>
+            <p>Deploy Marvin to Azure, then use the provider-link flow to connect Microsoft 365, Google, or Apple paths as needed.</p>
+            <div class="fields" style="margin-top:14px;">
+              <div class="field"><label>Subscription ID</label><input id="deploymentSubscriptionId"></div>
+              <div class="field"><label>Workload Name</label><input id="deploymentWorkloadName" value="marvin"></div>
+              <div class="field"><label>Environment</label><select id="deploymentEnvironment"><option value="dev">dev</option><option value="stg">stg</option><option value="prd">prd</option></select></div>
+              <div class="field"><label>Region Short</label><input id="deploymentRegionShort" value="wus3"></div>
+              <div class="field"><label>Azure Location</label><input id="deploymentLocation" value="westus3"></div>
+              <div class="field"><label>Instance</label><input id="deploymentInstance" value="01"></div>
+            </div>
+            <div class="actions">
+              <button id="saveConsole" type="button">Save Changes</button>
+              <button id="deployConsole" type="button">Deploy Marvin</button>
+              <button id="openKeeper" class="secondary" type="button">Open Provider Linking</button>
+              <button id="rerunWizard" class="secondary" type="button">Re-run Setup</button>
+            </div>
+            <p id="status" class="status">Idle.</p>
+            <pre id="output">Waiting for Marvin.</pre>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const steps = [
+      { id: 'account', title: 'Create Marvin Account', description: 'Set up the one account used to manage Marvin.' },
+      { id: 'solution', title: 'Choose Solution', description: 'Pick the sync engine Marvin should drive.' },
+      { id: 'accounts', title: 'Add Calendars', description: 'Connect work, personal, Microsoft, Google, or Apple calendars.' },
+      { id: 'display', title: 'Event Display', description: 'Choose how mirrored events show up everywhere else.' },
+      { id: 'finish', title: 'Finish Setup', description: 'Save the setup and move into the management console.' }
+    ];
+
+    const wizardView = document.getElementById('wizardView');
+    const consoleView = document.getElementById('consoleView');
+    const stepsEl = document.getElementById('steps');
+    const stepPanel = document.getElementById('stepPanel');
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+
+    let state = {
+      currentStep: 0,
+      operator: { marvinDisplayName: '', marvinEmail: '', marvinPassword: '' },
+      selectedSolution: 'paranoid-keeper',
+      profileName: 'marvin.local',
+      timezone: 'America/New_York',
+      syncWindowDays: 45,
+      accounts: [],
+      preferences: { mirrorMode: 'busy', displayMode: 'busy', visibility: 'private', subjectPrefix: 'BUSY: ' },
+      deployment: { subscriptionId: '', workloadName: 'marvin', environment: 'dev', regionShort: 'wus3', location: 'westus3', instance: '01', marvinUrl: '', keeperUrl: '' },
+      automationTenantId: '',
+      automationEnvironmentUrl: '',
+      microsoftClientId: '',
+      microsoftClientSecret: '',
+      googleClientId: '',
+      googleClientSecret: '',
+      deployEnabled: true,
+      keeperLink: '/login'
+    };
+
+    function setStatus(text, ok = true) {
+      statusEl.textContent = text;
+      statusEl.className = ok ? 'status ok' : 'status bad';
+    }
+
+    async function post(url, body) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      return response.json();
+    }
+
+    function renderSteps() {
+      stepsEl.innerHTML = steps.map((step, index) => {
+        const classes = ['step'];
+        if (index === state.currentStep) classes.push('active');
+        if (index < state.currentStep) classes.push('done');
+        return `<div class="${classes.join(' ')}"><strong>${index + 1}. ${step.title}</strong><div>${step.description}</div></div>`;
+      }).join('');
+    }
+
+    function accountCard(account, index) {
+      return `<div class="account-item"><div><strong>${account.label}</strong><div class="account-meta">${account.provider} • ${account.scope || 'account'} • ${account.email}${account.tenantId ? ` • ${account.tenantId}` : ''}</div></div><button class="secondary" type="button" data-remove-index="${index}">Remove</button></div>`;
+    }
+
+    function renderStepPanel() {
+      const step = steps[state.currentStep].id;
+      if (step === 'account') {
+        stepPanel.innerHTML = `
+          <div class="chip">First Run</div>
+          <h2>Create your Marvin account</h2>
+          <p>This is the only thing Marvin should ask first. Once this is created, setup continues into calendar sync configuration.</p>
+          <div class="fields" style="margin-top:18px;">
+            <div class="field"><label>Display Name</label><input id="wizardDisplayName" value="${escapeHtml(state.operator.marvinDisplayName || 'Marvin Operator')}"></div>
+            <div class="field"><label>Email</label><input id="wizardEmail" value="${escapeHtml(state.operator.marvinEmail || '')}"></div>
+            <div class="field full"><label>Password</label><input id="wizardPassword" type="password" value=""></div>
+          </div>
+          <div class="actions"><button id="createAccountStep" type="button">Create Account</button></div>
+          <div class="notice">After this, Marvin should take you straight into choosing a solution and adding accounts.</div>
+        `;
+        document.getElementById('createAccountStep').addEventListener('click', createAccountAndContinue);
+        return;
+      }
+
+      if (step === 'solution') {
+        stepPanel.innerHTML = `
+          <div class="chip">Step 2</div>
+          <h2>Which solution should Marvin manage?</h2>
+          <p>Choose the backend Marvin should drive. This does not lock you out of changing it later from the management console.</p>
+          <div class="cards" style="margin-top:18px;">
+            ${solutionCard('paranoid-keeper', 'Paranoid Keeper', 'Hosted sync runtime with Marvin as the front door.')}
+            ${solutionCard('bureaucratic-flow', 'Power Automate', 'Microsoft-heavy route for tenants that want flows.')}
+            ${solutionCard('google-hub', 'Google Hub', 'Fallback bridge option when Google is part of the picture.')}
+          </div>
+          <div class="actions"><button id="solutionNext" type="button">Continue</button></div>
+        `;
+        bindSolutionCards();
+        document.getElementById('solutionNext').addEventListener('click', () => moveStep(1));
+        return;
+      }
+
+      if (step === 'accounts') {
+        stepPanel.innerHTML = `
+          <div class="chip">Step 3</div>
+          <h2>Add your calendar accounts</h2>
+          <p>Add the calendars Marvin should manage. Work or personal, Microsoft or Google or Apple. You can change these later in the console.</p>
+          <div class="fields" style="margin-top:18px;">
+            <div class="field"><label>Label</label><input id="accountLabel" placeholder="Work Microsoft 365"></div>
+            <div class="field"><label>Provider</label><select id="accountProvider"><option value="m365">Microsoft 365</option><option value="google">Google</option><option value="apple-caldav">Apple / CalDAV</option></select></div>
+            <div class="field"><label>Email</label><input id="accountEmail" placeholder="you@company.com"></div>
+            <div class="field"><label>Account Type</label><select id="accountScope"><option value="work">Work</option><option value="personal">Personal</option><option value="contract">Contract</option></select></div>
+            <div class="field full"><label>Tenant ID (Microsoft only)</label><input id="accountTenantId" placeholder="Optional unless Microsoft 365"></div>
+          </div>
+          <div class="actions"><button id="addAccountButton" type="button">Add Account</button><button id="accountsNext" class="secondary" type="button">Continue</button></div>
+          <div id="wizardAccounts" class="account-list">${state.accounts.length ? state.accounts.map(accountCard).join('') : '<div class="notice">No accounts added yet.</div>'}</div>
+        `;
+        document.getElementById('addAccountButton').addEventListener('click', addAccountFromWizard);
+        document.getElementById('accountsNext').addEventListener('click', () => {
+          if (state.accounts.length === 0) {
+            alert('Add at least one account first.');
+            return;
+          }
+          moveStep(1);
+        });
+        bindAccountRemove('wizardAccounts');
+        return;
+      }
+
+      if (step === 'display') {
+        stepPanel.innerHTML = `
+          <div class="chip">Step 4</div>
+          <h2>How should mirrored events look?</h2>
+          <p>Choose whether events show up as busy blocks, private entries, or with a prefix. This is the part that controls how your other calendars see the copied events.</p>
+          <div class="fields" style="margin-top:18px;">
+            <div class="field"><label>Mirror Mode</label><select id="prefMirrorMode"><option value="busy">Busy only</option><option value="subject">Keep subject</option></select></div>
+            <div class="field"><label>Display Mode</label><select id="prefDisplayMode"><option value="busy">Busy</option><option value="private">Private</option><option value="custom">Custom Prefix</option></select></div>
+            <div class="field"><label>Visibility</label><select id="prefVisibility"><option value="private">Private</option><option value="default">Default</option></select></div>
+            <div class="field"><label>Subject Prefix</label><input id="prefSubjectPrefix" value="${escapeHtml(state.preferences.subjectPrefix || 'BUSY: ')}"></div>
+            <div class="field"><label>Timezone</label><input id="prefTimezone" value="${escapeHtml(state.timezone)}"></div>
+            <div class="field"><label>Sync Window Days</label><input id="prefSyncWindowDays" type="number" value="${Number(state.syncWindowDays || 45)}"></div>
+          </div>
+          <div class="actions"><button id="displayNext" type="button">Continue</button></div>
+        `;
+        document.getElementById('prefMirrorMode').value = state.preferences.mirrorMode || 'busy';
+        document.getElementById('prefDisplayMode').value = state.preferences.displayMode || 'busy';
+        document.getElementById('prefVisibility').value = state.preferences.visibility || 'private';
+        document.getElementById('displayNext').addEventListener('click', () => {
+          state.preferences.mirrorMode = document.getElementById('prefMirrorMode').value;
+          state.preferences.displayMode = document.getElementById('prefDisplayMode').value;
+          state.preferences.visibility = document.getElementById('prefVisibility').value;
+          state.preferences.subjectPrefix = document.getElementById('prefSubjectPrefix').value || 'BUSY: ';
+          state.timezone = document.getElementById('prefTimezone').value || 'America/New_York';
+          state.syncWindowDays = Number(document.getElementById('prefSyncWindowDays').value || 45);
+          moveStep(1);
+        });
+        return;
+      }
+
+      stepPanel.innerHTML = `
+        <div class="chip">Step 5</div>
+        <h2>Finish setup</h2>
+        <p>Marvin has enough information now to save your configuration and switch into the management console.</p>
+        <div class="summary-list">
+          <div class="notice"><strong>Solution:</strong> ${escapeHtml(solutionLabel(state.selectedSolution))}</div>
+          <div class="notice"><strong>Accounts:</strong> ${state.accounts.length}</div>
+          <div class="notice"><strong>Event display:</strong> ${escapeHtml(state.preferences.displayMode)} / ${escapeHtml(state.preferences.visibility)}</div>
+        </div>
+        <div class="actions"><button id="finishSetup" type="button">Finish Setup</button><button id="goBackStep" class="secondary" type="button">Back</button></div>
+      `;
+      document.getElementById('finishSetup').addEventListener('click', saveConfigAndOpenConsole);
+      document.getElementById('goBackStep').addEventListener('click', () => moveStep(-1));
+    }
+
+    function solutionCard(id, title, description) {
+      const selected = state.selectedSolution === id ? 'selected' : '';
+      return `<div class="card ${selected}" data-solution="${id}"><strong>${title}</strong><p>${description}</p></div>`;
+    }
+
+    function bindSolutionCards() {
+      document.querySelectorAll('[data-solution]').forEach((card) => {
+        card.addEventListener('click', () => {
+          state.selectedSolution = card.dataset.solution;
+          renderStepPanel();
+        });
+      });
+    }
+
+    function bindAccountRemove(containerId) {
+      document.querySelectorAll(`#${containerId} [data-remove-index]`).forEach((button) => {
+        button.addEventListener('click', () => {
+          state.accounts.splice(Number(button.dataset.removeIndex), 1);
+          renderStepPanel();
+          renderConsole();
+        });
+      });
+    }
+
+    function addAccountFromWizard() {
+      const account = {
+        label: document.getElementById('accountLabel').value.trim(),
+        provider: document.getElementById('accountProvider').value,
+        email: document.getElementById('accountEmail').value.trim(),
+        scope: document.getElementById('accountScope').value,
+        tenantId: document.getElementById('accountTenantId').value.trim()
+      };
+      if (!account.label || !account.email) {
+        alert('Add at least a label and email.');
+        return;
+      }
+      state.accounts.push(account);
+      renderStepPanel();
+    }
+
+    function moveStep(offset) {
+      state.currentStep = Math.max(0, Math.min(steps.length - 1, state.currentStep + offset));
+      renderSteps();
+      renderStepPanel();
+    }
+
+    async function createAccountAndContinue() {
+      state.operator.marvinDisplayName = document.getElementById('wizardDisplayName').value.trim();
+      state.operator.marvinEmail = document.getElementById('wizardEmail').value.trim();
+      state.operator.marvinPassword = document.getElementById('wizardPassword').value;
+      const result = await post('/marvin-api/create-account', state.operator);
+      if (!result.ok) {
+        alert(result.error || 'Unable to create Marvin account.');
+        return;
+      }
+      moveStep(1);
+    }
+
+    async function saveConfigAndOpenConsole() {
+      const payload = {
+        marvinEmail: state.operator.marvinEmail,
+        profileName: state.profileName,
+        timezone: state.timezone,
+        syncWindowDays: state.syncWindowDays,
+        accounts: state.accounts,
+        selectedSolution: state.selectedSolution,
+        preferences: state.preferences,
+        deployment: state.deployment,
+        automationTenantId: state.automationTenantId,
+        automationEnvironmentUrl: state.automationEnvironmentUrl,
+        microsoftClientId: state.microsoftClientId,
+        microsoftClientSecret: state.microsoftClientSecret,
+        googleClientId: state.googleClientId,
+        googleClientSecret: state.googleClientSecret
+      };
+      const result = await post('/marvin-api/save-config', payload);
+      if (!result.ok) {
+        alert(result.error || 'Unable to save Marvin setup.');
+        return;
+      }
+      state.profileName = result.config.profileName;
+      state.deployment = { ...state.deployment, ...(result.config.deployment || {}) };
+      showConsole(result.config);
+      outputEl.textContent = JSON.stringify(result, null, 2);
+      setStatus('Marvin setup saved.');
+    }
+
+    function solutionLabel(id) {
+      if (id === 'paranoid-keeper') return 'Paranoid Keeper';
+      if (id === 'bureaucratic-flow') return 'Power Automate';
+      if (id === 'google-hub') return 'Google Hub';
+      return id;
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+    }
+
+    function showConsole(config) {
+      wizardView.classList.add('hidden');
+      consoleView.classList.remove('hidden');
+      if (config) {
+        state.selectedSolution = config.selectedSolution || state.selectedSolution;
+        state.accounts = config.accounts || state.accounts;
+        state.preferences = config.preferences || state.preferences;
+        state.deployment = { ...state.deployment, ...(config.deployment || {}) };
+      }
+      renderConsole();
+    }
+
+    function renderConsole() {
+      document.getElementById('consoleTitle').textContent = `${state.operator.marvinDisplayName || 'Marvin'} Management Console`;
+      document.getElementById('consoleSolutionText').textContent = `Current solution: ${solutionLabel(state.selectedSolution)}.`;
+      document.getElementById('consoleAccounts').innerHTML = state.accounts.length ? state.accounts.map(accountCard).join('') : '<div class="notice">No accounts configured yet.</div>';
+      bindAccountRemove('consoleAccounts');
+      document.getElementById('deploymentSubscriptionId').value = state.deployment.subscriptionId || '';
+      document.getElementById('deploymentWorkloadName').value = state.deployment.workloadName || 'marvin';
+      document.getElementById('deploymentEnvironment').value = state.deployment.environment || 'dev';
+      document.getElementById('deploymentRegionShort').value = state.deployment.regionShort || 'wus3';
+      document.getElementById('deploymentLocation').value = state.deployment.location || 'westus3';
+      document.getElementById('deploymentInstance').value = state.deployment.instance || '01';
+      document.getElementById('openKeeper').disabled = !state.deployment.keeperUrl && !state.keeperLink;
+    }
+
+    function attachConsoleHandlers() {
+      document.getElementById('consoleAddAccount').addEventListener('click', () => {
+        state.accounts.push({ label: 'New Account', provider: 'm365', email: 'you@example.com', scope: 'work', tenantId: '' });
+        renderConsole();
+      });
+
+      document.getElementById('consoleChangeSolution').addEventListener('click', () => {
+        state.currentStep = 1;
+        wizardView.classList.remove('hidden');
+        consoleView.classList.add('hidden');
+        renderSteps();
+        renderStepPanel();
+      });
+
+      document.getElementById('consoleDisplayRules').addEventListener('click', () => {
+        state.currentStep = 3;
+        wizardView.classList.remove('hidden');
+        consoleView.classList.add('hidden');
+        renderSteps();
+        renderStepPanel();
+      });
+
+      document.getElementById('rerunWizard').addEventListener('click', () => {
+        state.currentStep = 0;
+        wizardView.classList.remove('hidden');
+        consoleView.classList.add('hidden');
+        renderSteps();
+        renderStepPanel();
+      });
+
+      document.getElementById('saveConsole').addEventListener('click', saveConfigAndOpenConsole);
+
+      document.getElementById('deployConsole').addEventListener('click', async () => {
+        state.deployment.subscriptionId = document.getElementById('deploymentSubscriptionId').value.trim();
+        state.deployment.workloadName = document.getElementById('deploymentWorkloadName').value.trim() || 'marvin';
+        state.deployment.environment = document.getElementById('deploymentEnvironment').value;
+        state.deployment.regionShort = document.getElementById('deploymentRegionShort').value.trim() || 'wus3';
+        state.deployment.location = document.getElementById('deploymentLocation').value.trim() || 'westus3';
+        state.deployment.instance = document.getElementById('deploymentInstance').value.trim() || '01';
+        const result = await post('/marvin-api/deploy', {
+          subscriptionId: state.deployment.subscriptionId,
+          workloadName: state.deployment.workloadName,
+          environment: state.deployment.environment,
+          regionShort: state.deployment.regionShort,
+          location: state.deployment.location,
+          instance: state.deployment.instance,
+          usePlaceholderProviderSecrets: !state.microsoftClientId || !state.microsoftClientSecret
+        });
+        if (!result.ok) {
+          setStatus(result.error || 'Deployment failed.', false);
+          outputEl.textContent = JSON.stringify(result, null, 2);
+          return;
+        }
+        state.deployment.marvinUrl = result.marvinUrl || state.deployment.marvinUrl;
+        state.deployment.keeperUrl = result.keeperUrl || state.deployment.keeperUrl;
+        state.keeperLink = state.deployment.keeperUrl || state.keeperLink;
+        renderConsole();
+        setStatus('Hosted Marvin deployment completed.');
+        outputEl.textContent = JSON.stringify(result, null, 2);
+      });
+
+      document.getElementById('openKeeper').addEventListener('click', () => {
+        window.location.href = state.deployment.keeperUrl || state.keeperLink;
+      });
+    }
+
+    async function bootstrap() {
+      const result = await fetch('/marvin-api/bootstrap').then((response) => response.json());
+      state.deployEnabled = result.deployEnabled;
+      state.keeperLink = result.keeperLink || '/login';
+      if (result.operator) {
+        state.operator.marvinDisplayName = result.operator.displayName;
+        state.operator.marvinEmail = result.operator.email;
+      }
+      if (result.config) {
+        state.selectedSolution = result.config.selectedSolution || state.selectedSolution;
+        state.accounts = result.config.accounts || [];
+        state.preferences = result.config.preferences || state.preferences;
+        state.deployment = { ...state.deployment, ...(result.config.deployment || {}) };
+        showConsole(result.config);
+      } else {
+        wizardView.classList.remove('hidden');
+        renderSteps();
+        renderStepPanel();
+      }
+      attachConsoleHandlers();
+    }
+
+    bootstrap().catch((error) => {
+      wizardView.classList.remove('hidden');
+      renderSteps();
+      renderStepPanel();
+      setStatus(error.message || 'Unable to load Marvin.', false);
+    });
+  </script>
+</body>
+</html>

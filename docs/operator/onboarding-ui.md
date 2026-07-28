@@ -6,184 +6,55 @@ A fresh operator should be able to clone the repo, launch one setup experience, 
 
 ## Product intent
 
-The UI is not just a form. It is an orchestration shell for:
+The UI is not just a form. It is the operator-facing shell for:
 
+- creating the Marvin operator account
 - collecting calendar topology
 - selecting provider types
 - collecting privacy policy choices
-- launching provider-specific authentication
-- validating prerequisites
 - generating solution-specific configuration
-- guiding the user into a narrow pilot test window
+- launching the hosted Marvin runtime
+- routing the operator into backend engine linking when needed
 
-## User flow
+## Current implementation
 
-### Step 1. Workspace initialization
+Run:
 
-The operator launches Marvin setup.
+```powershell
+npm install
+npm run marvin:ui
+```
 
-Inputs:
+Then open `http://localhost:4177`.
 
-- solution preference
-- profile name
-- timezone
-- sync window length
-- Power Automate runtime tenant and environment URL if that path is needed
+The current implementation now does all of this locally:
 
-Outputs:
+- creates a Marvin operator account record
+- collects multi-calendar topology
+- writes the shared Marvin profile
+- writes the generated event fixture
+- writes the Keeper `.env`
+- generates per-solution artifacts
+- can trigger the Azure hosted deployment path from the local repo
 
-- local profile scaffold
-- local event fixture scaffold
+## Hosted model
 
-### Step 2. Calendar inventory
-
-The operator adds each calendar source or destination.
-
-Required fields per calendar:
-
-- label
-- provider type
-- account email
-- tenant ID for each Microsoft 365 calendar
-- optional flag
-
-### Step 3. Route design
-
-The operator chooses which calendars mirror into which targets.
-
-Required route settings:
-
-- source calendar
-- target calendars
-- privacy mode
-- subject prefix or replacement policy
-
-### Step 4. Provider authentication
-
-This is where the UI behavior diverges by solution.
-
-#### For Marvin Engine
-
-The UI should:
-
-- launch Microsoft OAuth for Graph
-- launch Google OAuth if Google is included
-- collect CalDAV host, username, app-specific password, and calendar URL for Apple
-- store tokens or secrets in a local encrypted config store
-
-#### For Paranoid Keeper
-
-The UI should:
-
-- collect the required OAuth client IDs and secrets
-- render the `.env` file automatically
-- open the Keeper service after startup
-- drive the operator into the Keeper connection setup steps
-
-#### For Bureaucratic Flow
-
-The UI should:
-
-- collect the separate automation tenant information
-- collect the target Microsoft 365 tenant IDs
-- generate a Graph-backed deployment plan
-- avoid the Office 365 Outlook connector as the automation baseline
-- generate solution-aware deployment artifacts
-- drive `pac`-based import and connection-reference setup
-
-#### For Google Hub Of Last Resort
-
-The UI should:
-
-- collect Outlook and Google account bindings
-- generate OGCS settings XML
-- place the file into the chosen OGCS runtime folder
-- prompt the operator to complete sign-in inside OGCS
-
-### Step 5. Validation
-
-The UI should verify:
-
-- profile schema validity
-- presence of required provider data
-- route consistency
-- solution prerequisites
-
-### Step 6. Pilot preparation
-
-The UI should instruct the operator to:
-
-- start with a 1 to 3 day sync window
-- use blocker-only mirroring first
-- validate creates before testing updates and deletes
-
-## Backend responsibilities
-
-The backend needs to provide:
-
-- profile read and write functions
-- schema validation
-- artifact generation per solution
-- secret placeholder generation
-- provider-specific auth handlers
-- prerequisite checks
-- test orchestration
-
-## Suggested implementation shape
-
-### Frontend
-
-A small local web app is the cleanest fit.
-
-Suggested views:
-
-- welcome
-- calendars
-- routes
-- auth
-- solution selection
-- validation
-- test checklist
-
-### Backend
-
-Use a local Node service that:
-
-- reads and writes profile files
-- serves generated artifacts
-- triggers scripts already present in this repo
-- stores local encrypted secrets outside the repo
-
-## Data boundaries
-
-The shared profile remains the source of truth.
-
-Generated outputs remain derivatives.
+For the Azure Container Apps path, Marvin is the public front door.
 
 That means:
 
-- the UI writes one profile
-- generators render per-solution outputs
-- solution runtimes consume those outputs
+- the public URL opens Marvin first
+- Marvin sits in front of the Keeper engine
+- Keeper remains the backend sync runtime
+- provider linking happens by routing from Marvin into the embedded Keeper path
 
-## Security expectations
+## Remaining limits
 
-The UI must not commit secrets into git.
+The repo now owns the operator experience and deployment flow, but a few identity-bound steps still exist:
 
-Secrets should live in:
+- Microsoft Entra app registration and consent
+- Google OAuth app registration and consent if Google is included
+- provider account authorization inside the backend sync engine
+- final route confirmation against the generated sync plan
 
-- environment files excluded by `.gitignore`
-- local encrypted stores
-- OS-protected secret managers where practical
-
-## Current repo status
-
-The repo already contains the non-UI backend pieces needed to support this direction:
-
-- profile schema
-- setup script
-- solution generators
-- validation scripts
-- per-solution test flows
-
-What is still missing is the actual GUI layer and live OAuth orchestration.
+Those are provider authorization steps, not local repo setup steps.

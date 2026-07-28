@@ -20,7 +20,7 @@ $secretB = [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maxim
 @"
 BETTER_AUTH_SECRET=$secretA
 ENCRYPTION_KEY=$secretB
-TRUSTED_ORIGINS=http://localhost:8080
+TRUSTED_ORIGINS=http://localhost:3000
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 MICROSOFT_CLIENT_ID=

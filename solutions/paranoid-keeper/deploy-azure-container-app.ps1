@@ -1,236 +1,180 @@
+#Requires -Version 7.0
+
+[CmdletBinding()]
 param(
   [string]$SubscriptionId,
-  [string]$ResourceGroupName = "marvin-keeper-rg",
-  [string]$Location = "eastus",
-  [string]$EnvironmentName = "marvin-keeper-env",
-  [string]$AppName = "marvin-keeper",
-  [string]$StorageAccountName,
-  [string]$FileShareName = "keeper-data",
-  [string]$StorageMountName = "keeperdata",
-  [string]$EnvFilePath = ".env",
-  [string]$Image = "ghcr.io/ridafkih/keeper-standalone:2.9",
-  [string]$AdditionalTrustedOrigins = ""
+  [string]$WorkloadName = 'marvin',
+  [ValidateSet('dev','stg','prd')]
+  [string]$Environment = 'dev',
+  [string]$RegionShort = 'eus',
+  [string]$Instance = '01',
+  [string]$Location = 'eastus',
+  [string]$ProjectName = 'project-marvin',
+  [string]$CostCenter = 'hcs-internal',
+  [string]$Owner = 'kris@hybridsolutions.cloud',
+  [string]$EnvFilePath = '.env',
+  [string]$Image = 'ghcr.io/ridafkih/keeper-services:2.9',
+  [string]$AdditionalTrustedOrigins = '',
+  [string]$PostgresAdminUser = 'keeperadmin',
+  [string]$PostgresAdminPassword,
+  [switch]$UsePlaceholderProviderSecrets
 )
 
-$ErrorActionPreference = "Stop"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 function Require-Command {
   param([string]$Name)
-
   if (-not (Get-Command $Name -ErrorAction SilentlyContinue)) {
     throw "Required command not found: $Name"
   }
 }
 
+function Assert-Success {
+  param([string]$Action)
+  if ($LASTEXITCODE -ne 0) {
+    throw "$Action failed with exit code $LASTEXITCODE"
+  }
+}
+
 function Get-EnvMap {
   param([string]$Path)
-
   $map = @{}
   foreach ($line in Get-Content $Path) {
-    if ([string]::IsNullOrWhiteSpace($line)) {
-      continue
-    }
-
-    if ($line.TrimStart().StartsWith("#")) {
-      continue
-    }
-
-    $parts = $line -split "=", 2
-    if ($parts.Count -ne 2) {
-      continue
-    }
-
+    if ([string]::IsNullOrWhiteSpace($line)) { continue }
+    if ($line.TrimStart().StartsWith('#')) { continue }
+    $parts = $line -split '=', 2
+    if ($parts.Count -ne 2) { continue }
     $map[$parts[0].Trim()] = $parts[1].Trim()
   }
-
   return $map
 }
 
 function Require-Value {
-  param(
-    [hashtable]$Map,
-    [string]$Name
-  )
-
+  param([hashtable]$Map,[string]$Name)
   if (-not $Map.ContainsKey($Name) -or [string]::IsNullOrWhiteSpace($Map[$Name])) {
     throw "Missing required value in env file: $Name"
   }
 }
 
-function New-RandomStorageAccountName {
-  $suffix = -join ((48..57) + (97..122) | Get-Random -Count 10 | ForEach-Object { [char]$_ })
-  return "marvin$suffix"
-}
-
-function Escape-YamlSingleQuoted {
-  param([string]$Value)
-
-  if ($null -eq $Value) {
-    return ""
-  }
-
-  return $Value.Replace("'", "''")
+function New-RegistryName {
+  param([string]$Workload,[string]$EnvironmentName,[string]$Region,[string]$InstanceId)
+  return ("acr{0}{1}{2}{3}" -f $Workload, $EnvironmentName, $Region, $InstanceId).ToLowerInvariant()
 }
 
 Require-Command az
 
-$resolvedEnvFilePath = if ([System.IO.Path]::IsPathRooted($EnvFilePath)) {
-  Resolve-Path $EnvFilePath
-} else {
-  Resolve-Path (Join-Path $PSScriptRoot $EnvFilePath)
-}
-
+$resolvedEnvFilePath = if ([System.IO.Path]::IsPathRooted($EnvFilePath)) { Resolve-Path $EnvFilePath } else { Resolve-Path (Join-Path $PSScriptRoot $EnvFilePath) }
 $envMap = Get-EnvMap -Path $resolvedEnvFilePath
+Require-Value -Map $envMap -Name 'BETTER_AUTH_SECRET'
+Require-Value -Map $envMap -Name 'ENCRYPTION_KEY'
 
-Require-Value -Map $envMap -Name "BETTER_AUTH_SECRET"
-Require-Value -Map $envMap -Name "ENCRYPTION_KEY"
-Require-Value -Map $envMap -Name "MICROSOFT_CLIENT_ID"
-Require-Value -Map $envMap -Name "MICROSOFT_CLIENT_SECRET"
+if ($UsePlaceholderProviderSecrets) {
+  if (-not $envMap.ContainsKey('MICROSOFT_CLIENT_ID') -or [string]::IsNullOrWhiteSpace($envMap['MICROSOFT_CLIENT_ID'])) { $envMap['MICROSOFT_CLIENT_ID'] = 'placeholder-client-id' }
+  if (-not $envMap.ContainsKey('MICROSOFT_CLIENT_SECRET') -or [string]::IsNullOrWhiteSpace($envMap['MICROSOFT_CLIENT_SECRET'])) { $envMap['MICROSOFT_CLIENT_SECRET'] = 'placeholder-client-secret' }
+} else {
+  Require-Value -Map $envMap -Name 'MICROSOFT_CLIENT_ID'
+  Require-Value -Map $envMap -Name 'MICROSOFT_CLIENT_SECRET'
+}
+if (-not $envMap.ContainsKey('GOOGLE_CLIENT_ID')) { $envMap['GOOGLE_CLIENT_ID'] = '' }
+if (-not $envMap.ContainsKey('GOOGLE_CLIENT_SECRET')) { $envMap['GOOGLE_CLIENT_SECRET'] = '' }
 
-if ([string]::IsNullOrWhiteSpace($StorageAccountName)) {
-  $StorageAccountName = New-RandomStorageAccountName
+$resourceGroupName = "rg-$WorkloadName-$Environment-$RegionShort-$Instance"
+$containerAppEnvironmentName = "cae-$WorkloadName-$Environment-$RegionShort-$Instance"
+$marvinAppName = "ca-$WorkloadName-$Environment-$RegionShort-$Instance"
+$keeperAppName = "ca-keeper-$Environment-$RegionShort-$Instance"
+$logAnalyticsWorkspaceName = "law-$WorkloadName-$Environment-$RegionShort-$Instance"
+$postgresServerName = "psql-$WorkloadName-$Environment-$RegionShort-$Instance"
+$registryName = New-RegistryName -Workload $WorkloadName -EnvironmentName $Environment -Region $RegionShort -InstanceId $Instance
+
+if ([string]::IsNullOrWhiteSpace($PostgresAdminPassword)) {
+  $PostgresAdminPassword = [Convert]::ToBase64String((1..24 | ForEach-Object { Get-Random -Maximum 256 })) + '!Aa1'
 }
 
 if ($SubscriptionId) {
   az account set --subscription $SubscriptionId | Out-Null
+  Assert-Success 'Setting Azure subscription context'
 }
 
-az extension add --name containerapp --upgrade --only-show-errors | Out-Null
+az group create --name $resourceGroupName --location $Location --tags Owner=$Owner Project=$ProjectName Environment=$Environment CostCenter=$CostCenter ManagedBy=bicep --output none
+Assert-Success 'Creating resource group'
 
-Write-Host "Creating or updating resource group $ResourceGroupName"
-az group create --name $ResourceGroupName --location $Location --output none
+az acr create --resource-group $resourceGroupName --name $registryName --sku Basic --admin-enabled true --location $Location --tags Owner=$Owner Project=$ProjectName Environment=$Environment CostCenter=$CostCenter ManagedBy=script --output none
+Assert-Success 'Creating Azure Container Registry'
 
-Write-Host "Creating storage account $StorageAccountName"
-az storage account create --name $StorageAccountName --resource-group $ResourceGroupName --location $Location --sku Standard_LRS --kind StorageV2 --allow-blob-public-access false --output none
+$marvinImageTag = 'marvin-ui-' + ([guid]::NewGuid().Guid.Substring(0, 8))
+az acr build --registry $registryName --image "marvin-ui:$marvinImageTag" --file operator-ui/Dockerfile .
+Assert-Success 'Building Marvin UI image'
 
-Write-Host "Creating Azure Files share $FileShareName"
-az storage share-rm create --resource-group $ResourceGroupName --storage-account $StorageAccountName --name $FileShareName --quota 10 --enabled-protocol SMB --output none
+$registryLoginServer = az acr show --name $registryName --query loginServer --output tsv
+Assert-Success 'Reading registry login server'
+$registryUsername = az acr credential show --name $registryName --query username --output tsv
+Assert-Success 'Reading registry username'
+$registryPassword = az acr credential show --name $registryName --query passwords[0].value --output tsv
+Assert-Success 'Reading registry password'
+$marvinUiImage = "$registryLoginServer/marvin-ui:$marvinImageTag"
 
-$storageAccountKey = az storage account keys list --resource-group $ResourceGroupName --account-name $StorageAccountName --query "[0].value" -o tsv
-
-Write-Host "Creating or updating Container Apps environment $EnvironmentName"
-$envExists = $true
-try {
-  az containerapp env show --name $EnvironmentName --resource-group $ResourceGroupName --output none
-} catch {
-  $envExists = $false
-}
-
-if (-not $envExists) {
-  az containerapp env create --name $EnvironmentName --resource-group $ResourceGroupName --location $Location --output none
-}
-
-Write-Host "Linking Azure Files share into the Container Apps environment"
-az containerapp env storage set --name $EnvironmentName --resource-group $ResourceGroupName --storage-name $StorageMountName --storage-type AzureFile --azure-file-account-name $StorageAccountName --azure-file-account-key $storageAccountKey --azure-file-share-name $FileShareName --access-mode ReadWrite --output none
-
-$environmentId = az containerapp env show --name $EnvironmentName --resource-group $ResourceGroupName --query id -o tsv
-
-$secretLines = @(
-  "      - name: better-auth-secret",
-  "        value: '$(Escape-YamlSingleQuoted $envMap['BETTER_AUTH_SECRET'])'",
-  "      - name: encryption-key",
-  "        value: '$(Escape-YamlSingleQuoted $envMap['ENCRYPTION_KEY'])'",
-  "      - name: microsoft-client-id",
-  "        value: '$(Escape-YamlSingleQuoted $envMap['MICROSOFT_CLIENT_ID'])'",
-  "      - name: microsoft-client-secret",
-  "        value: '$(Escape-YamlSingleQuoted $envMap['MICROSOFT_CLIENT_SECRET'])'"
-)
-
-$envLines = @(
-  "        - name: BETTER_AUTH_SECRET",
-  "          secretRef: better-auth-secret",
-  "        - name: ENCRYPTION_KEY",
-  "          secretRef: encryption-key",
-  "        - name: MICROSOFT_CLIENT_ID",
-  "          secretRef: microsoft-client-id",
-  "        - name: MICROSOFT_CLIENT_SECRET",
-  "          secretRef: microsoft-client-secret",
-  "        - name: TRUSTED_ORIGINS",
-  "          value: 'https://placeholder.invalid'"
-)
-
-if ($envMap.ContainsKey('GOOGLE_CLIENT_ID') -and -not [string]::IsNullOrWhiteSpace($envMap['GOOGLE_CLIENT_ID'])) {
-  $secretLines += "      - name: google-client-id"
-  $secretLines += "        value: '$(Escape-YamlSingleQuoted $envMap['GOOGLE_CLIENT_ID'])'"
-  $envLines += "        - name: GOOGLE_CLIENT_ID"
-  $envLines += "          secretRef: google-client-id"
-}
-
-if ($envMap.ContainsKey('GOOGLE_CLIENT_SECRET') -and -not [string]::IsNullOrWhiteSpace($envMap['GOOGLE_CLIENT_SECRET'])) {
-  $secretLines += "      - name: google-client-secret"
-  $secretLines += "        value: '$(Escape-YamlSingleQuoted $envMap['GOOGLE_CLIENT_SECRET'])'"
-  $envLines += "        - name: GOOGLE_CLIENT_SECRET"
-  $envLines += "          secretRef: google-client-secret"
-}
-
-$yamlLines = @(
-  "location: $Location",
-  "properties:",
-  "  managedEnvironmentId: $environmentId",
-  "  configuration:",
-  "    ingress:",
-  "      external: true",
-  "      targetPort: 80",
-  "      transport: auto",
-  "    secrets:"
-)
-$yamlLines += $secretLines
-$yamlLines += @(
-  "  template:",
-  "    containers:",
-  "      - name: keeper",
-  "        image: $Image",
-  "        env:"
-)
-$yamlLines += $envLines
-$yamlLines += @(
-  "        resources:",
-  "          cpu: 0.5",
-  "          memory: 1Gi",
-  "        volumeMounts:",
-  "          - volumeName: keeper-data",
-  "            mountPath: /var/lib/postgresql/data",
-  "    scale:",
-  "      minReplicas: 1",
-  "      maxReplicas: 1",
-  "    volumes:",
-  "      - name: keeper-data",
-  "        storageType: AzureFile",
-  "        storageName: $StorageMountName"
-)
-
-$tempYaml = Join-Path $env:TEMP "$AppName-containerapp.yaml"
-$yamlLines | Set-Content -Path $tempYaml
-
-Write-Host "Deploying Keeper to Azure Container Apps"
-$containerAppExists = $true
-try {
-  az containerapp show --name $AppName --resource-group $ResourceGroupName --output none
-} catch {
-  $containerAppExists = $false
-}
-
-if ($containerAppExists) {
-  az containerapp update --name $AppName --resource-group $ResourceGroupName --yaml $tempYaml --output none
-} else {
-  az containerapp create --name $AppName --resource-group $ResourceGroupName --environment $EnvironmentName --yaml $tempYaml --output none
-}
-
-$fqdn = az containerapp show --name $AppName --resource-group $ResourceGroupName --query properties.configuration.ingress.fqdn -o tsv
-$trustedOrigins = @("https://$fqdn")
-
+$trustedOrigins = @('https://placeholder.invalid')
 if (-not [string]::IsNullOrWhiteSpace($AdditionalTrustedOrigins)) {
-  $trustedOrigins += $AdditionalTrustedOrigins.Split(",", [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Trim() }
+  $trustedOrigins += $AdditionalTrustedOrigins.Split(',', [System.StringSplitOptions]::RemoveEmptyEntries) | ForEach-Object { $_.Trim() }
 }
+$trustedOriginsValue = ($trustedOrigins | Select-Object -Unique) -join ','
+$templatePath = Resolve-Path (Join-Path $PSScriptRoot '..\..\infra\keeper-azure.bicep')
+$deploymentName = 'keeper-' + ([guid]::NewGuid().Guid.Substring(0, 8))
 
-$trustedOriginsValue = ($trustedOrigins | Select-Object -Unique) -join ","
+$deploymentJson = az deployment group create `
+  --name $deploymentName `
+  --resource-group $resourceGroupName `
+  --template-file $templatePath `
+  --parameters `
+    location=$Location `
+    environment=$Environment `
+    projectName=$ProjectName `
+    costCenter=$CostCenter `
+    owner=$Owner `
+    managedBy=bicep `
+    containerAppEnvironmentName=$containerAppEnvironmentName `
+    marvinAppName=$marvinAppName `
+    keeperAppName=$keeperAppName `
+    logAnalyticsWorkspaceName=$logAnalyticsWorkspaceName `
+    postgresServerName=$postgresServerName `
+    postgresAdminUser=$PostgresAdminUser `
+    postgresAdminPassword=$PostgresAdminPassword `
+    containerImage=$Image `
+    marvinUiImage=$marvinUiImage `
+    registryServer=$registryLoginServer `
+    registryUsername=$registryUsername `
+    registryPassword=$registryPassword `
+    betterAuthSecret=$($envMap['BETTER_AUTH_SECRET']) `
+    encryptionKey=$($envMap['ENCRYPTION_KEY']) `
+    microsoftClientId=$($envMap['MICROSOFT_CLIENT_ID']) `
+    microsoftClientSecret=$($envMap['MICROSOFT_CLIENT_SECRET']) `
+    googleClientId=$($envMap['GOOGLE_CLIENT_ID']) `
+    googleClientSecret=$($envMap['GOOGLE_CLIENT_SECRET']) `
+    trustedOrigins=$trustedOriginsValue `
+    betterAuthUrl='https://placeholder.invalid' `
+    marvinKeeperLinkUrl='https://placeholder.invalid' `
+  --query properties.outputs `
+  --output json
+Assert-Success 'Bicep deployment'
 
-Write-Host "Updating TRUSTED_ORIGINS to $trustedOriginsValue"
-az containerapp update --name $AppName --resource-group $ResourceGroupName --set-env-vars TRUSTED_ORIGINS=$trustedOriginsValue --output none
+$outputs = $deploymentJson | ConvertFrom-Json
+$marvinUrl = $outputs.marvinUrl.value
+$keeperUrl = $outputs.keeperUrl.value
+$finalTrustedOrigins = (($trustedOrigins + $marvinUrl + $keeperUrl) | Select-Object -Unique) -join ','
 
-Write-Host "Keeper deployed successfully"
-Write-Host "URL: https://$fqdn"
-Write-Host "Resource group: $ResourceGroupName"
-Write-Host "Container Apps environment: $EnvironmentName"
-Write-Host "Storage account: $StorageAccountName"
-Write-Host "File share: $FileShareName"
+az containerapp update --name $marvinAppName --resource-group $resourceGroupName --container-name marvin-ui --set-env-vars MARVIN_KEEPER_LINK_URL=$keeperUrl --output none
+Assert-Success 'Updating Marvin keeper link URL'
+az containerapp update --name $keeperAppName --resource-group $resourceGroupName --container-name keeper --set-env-vars BETTER_AUTH_URL=$keeperUrl TRUSTED_ORIGINS=$finalTrustedOrigins --output none
+Assert-Success 'Updating Keeper auth URL and trusted origins'
+
+Write-Host 'Hosted Marvin runtime deployed successfully'
+Write-Host "URL: $marvinUrl"
+Write-Host "KEEPER_URL: $keeperUrl"
+Write-Host "Resource group: $resourceGroupName"
+Write-Host "Container registry: $registryName"
+Write-Host "Container Apps environment: $containerAppEnvironmentName"
+Write-Host "Marvin app: $marvinAppName"
+Write-Host "Keeper app: $keeperAppName"
+Write-Host "PostgreSQL host: $($outputs.postgresHost.value)"
+Write-Host "PostgreSQL admin user: $($outputs.postgresAdminUser.value)"

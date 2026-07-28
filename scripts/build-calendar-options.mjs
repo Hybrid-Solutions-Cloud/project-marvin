@@ -58,7 +58,7 @@ writeFile(
   [
     `BETTER_AUTH_SECRET=`,
     `ENCRYPTION_KEY=`,
-    `TRUSTED_ORIGINS=http://localhost:8080`,
+    `TRUSTED_ORIGINS=http://localhost:3000`,
     `GOOGLE_CLIENT_ID=`,
     `GOOGLE_CLIENT_SECRET=`,
     `MICROSOFT_CLIENT_ID=`,
