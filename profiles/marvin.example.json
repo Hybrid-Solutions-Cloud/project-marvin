@@ -1,0 +1,56 @@
+{
+  "name": "marvin-example",
+  "timezone": "America/New_York",
+  "syncWindowDays": 45,
+  "privacyDefaults": {
+    "mirrorMode": "busy",
+    "visibility": "private"
+  },
+  "calendars": [
+    {
+      "id": "work_m365",
+      "label": "Work Microsoft 365",
+      "provider": "m365",
+      "email": "you@work.example.com"
+    },
+    {
+      "id": "contract_m365",
+      "label": "Contract Microsoft 365",
+      "provider": "m365",
+      "email": "you@contract.example.com"
+    },
+    {
+      "id": "personal_google",
+      "label": "Personal Google",
+      "provider": "google",
+      "email": "you@gmail.com"
+    },
+    {
+      "id": "personal_apple",
+      "label": "Personal Apple",
+      "provider": "apple-caldav",
+      "email": "you@icloud.com",
+      "optional": true
+    }
+  ],
+  "routes": [
+    {
+      "source": "work_m365",
+      "targets": ["contract_m365", "personal_google", "personal_apple"],
+      "mirrorMode": "busy",
+      "subjectPrefix": "BUSY: "
+    },
+    {
+      "source": "contract_m365",
+      "targets": ["work_m365", "personal_google", "personal_apple"],
+      "mirrorMode": "busy",
+      "subjectPrefix": "BUSY: "
+    },
+    {
+      "source": "personal_google",
+      "targets": ["work_m365", "contract_m365"],
+      "mirrorMode": "busy",
+      "subjectPrefix": "BUSY: "
+    }
+  ]
+}

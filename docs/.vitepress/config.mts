@@ -2,21 +2,25 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "Project Marvin",
-  description: "Research and implementation notes for private multi-calendar mirroring.",
+  description: "A mildly miserable lab for solving private multi-calendar mirroring.",
   base: "/project-marvin/",
   lastUpdated: true,
   themeConfig: {
     nav: [
       { text: "Home", link: "/" },
       { text: "Architecture", link: "/architecture" },
-      { text: "Research", link: "/research/" }
+      { text: "Research", link: "/research/" },
+      { text: "Solutions", link: "/solutions" },
+      { text: "Credits", link: "/credits" }
     ],
     sidebar: [
       {
         text: "Project",
         items: [
           { text: "Overview", link: "/" },
-          { text: "Architecture", link: "/architecture" }
+          { text: "Architecture", link: "/architecture" },
+          { text: "Solutions", link: "/solutions" },
+          { text: "Credits", link: "/credits" }
         ]
       },
       {

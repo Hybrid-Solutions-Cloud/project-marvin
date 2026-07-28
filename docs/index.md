@@ -1,37 +1,28 @@
 # Project Marvin
 
-Project Marvin is a docs-first repo for researching and building an automated calendar mirroring system.
+Project Marvin is a docs-first repo for researching and building automated calendar mirroring.
 
-The immediate problem is straightforward:
+It is also, regrettably, themed after Marvin from *The Hitchhiker''s Guide to the Galaxy*.
+So the repo is technically useful, emotionally exhausted, and structurally better organized than the calendars it is trying to fix.
+
+## The problem
 
 - A meeting added or accepted in one calendar should appear in the other calendars automatically.
-- Mirrored events should preserve the timing and enough context to be useful.
-- Mirrored events should be marked private or reduced to blocker-level detail where privacy requires it.
-- The setup should be durable, scriptable, and maintainable without ongoing manual babysitting.
+- Mirrored events should preserve timing without leaking details where privacy matters.
+- The automation should be set once and then left alone.
+- The overall process should involve less pointless suffering than manual calendar duplication.
 
-## What is in this repo
+## Solution tracks
 
-- VitePress-based documentation under `docs/`
-- GitHub Pages deployment workflow
-- Research spikes comparing Power Automate, custom Graph plus CalDAV automation, and existing open-source tools
+- `Paranoid Keeper`: the least foolish multi-provider path, based on `keeper.sh`
+- `Bureaucratic Flow`: the Microsoft 365 proof-of-concept path, based on `MShekow/outlook-calendar-sync`
+- `Google Hub Of Last Resort`: the Outlook + Google path, based on `OutlookGoogleCalendarSync`
+- `Marvin Engine`: the first-party custom sync service skeleton for when ownership matters more than convenience
 
-## Current recommendation
+## Start here
 
-The leading implementation direction is a small self-hosted sync service that:
-
-1. Reads Microsoft 365 and Outlook calendars through Microsoft Graph.
-2. Reads and writes Apple calendars through CalDAV.
-3. Mirrors events into target calendars as private blocker events.
-4. Stores source-to-target event mappings so updates and deletes stay consistent.
-5. Runs from a deployable service with scripted configuration and monitoring.
-
-That gives better long-term control than Power Automate and better privacy guarantees than consumer SaaS sync tools.
-
-## Next steps
-
-1. Pick a target architecture from the research docs.
-2. Decide whether to start from an existing open-source sync project or build a narrow custom service.
-3. Add deployment code for the chosen approach.
-4. Add secrets handling and environment bootstrapping.
-
-See [Research](/research/) for the current spikes.
+1. Read the [research index](/research/).
+2. Review the [architecture direction](/architecture).
+3. Review the [solutions page](/solutions).
+4. Review the [credits page](/credits).
+5. Generate the concrete solution artifacts with `npm run solutions:build`.

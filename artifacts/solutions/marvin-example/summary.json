@@ -1,0 +1,23 @@
+{
+  "profile": "marvin-example",
+  "generatedAt": "2026-07-28T15:20:56.639Z",
+  "routes": 3,
+  "solutions": [
+    {
+      "name": "paranoid-keeper",
+      "path": "artifacts\\solutions\\marvin-example\\paranoid-keeper"
+    },
+    {
+      "name": "bureaucratic-flow",
+      "path": "artifacts\\solutions\\marvin-example\\bureaucratic-flow"
+    },
+    {
+      "name": "google-hub",
+      "path": "artifacts\\solutions\\marvin-example\\google-hub"
+    },
+    {
+      "name": "marvin-engine",
+      "path": "artifacts\\solutions\\marvin-example\\marvin-engine"
+    }
+  ]
+}

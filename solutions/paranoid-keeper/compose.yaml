@@ -1,0 +1,14 @@
+services:
+  keeper:
+    image: ghcr.io/ridafkih/keeper-standalone:2.9
+    container_name: marvin-paranoid-keeper
+    ports:
+      - "8080:80"
+    volumes:
+      - keeper-data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  keeper-data:

@@ -1,0 +1,24 @@
+{
+  "profile": "marvin-example",
+  "timezone": "America/New_York",
+  "syncWindowDays": 45,
+  "eligibleCalendars": [
+    {
+      "id": "work_m365",
+      "label": "Work Microsoft 365",
+      "provider": "m365",
+      "email": "you@work.example.com"
+    },
+    {
+      "id": "contract_m365",
+      "label": "Contract Microsoft 365",
+      "provider": "m365",
+      "email": "you@contract.example.com"
+    }
+  ],
+  "eligibleRoutes": [],
+  "notes": [
+    "This solution is intentionally narrowed to Outlook and Microsoft 365 calendars.",
+    "Routes involving Google or Apple are excluded, because naturally the easy thing would have been too easy."
+  ]
+}

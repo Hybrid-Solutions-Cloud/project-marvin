@@ -1,36 +1,32 @@
 # Project Marvin
 
-Project Marvin is a docs-first repository for researching and eventually implementing automated private calendar mirroring across multiple providers.
+Project Marvin is a mildly resentful laboratory for solving calendar sprawl.
 
-The current repo includes:
+Like its namesake, it exists because the universe insists on being badly organized.
+The repo now presents four solution tracks:
 
-- a VitePress documentation site under `docs/`
-- a GitHub Pages deployment workflow
-- research spikes for Microsoft 365, Outlook, Apple Calendar, Power Automate, and open-source sync tooling
+- `solutions/paranoid-keeper/`: Keeper-based multi-provider deployment
+- `solutions/bureaucratic-flow/`: Power Automate and Outlook flow strategy
+- `solutions/google-hub/`: OutlookGoogleCalendarSync with Google as the visibility hub
+- `solutions/marvin-engine/`: first-party custom sync service skeleton
 
-## Local docs
+## Shared profile
 
-Install dependencies:
+- `profiles/marvin.example.json`
 
-```powershell
-npm install
-```
-
-Run the docs site locally:
+## Generate solution artifacts
 
 ```powershell
-npm run docs:dev
+npm run solutions:build
 ```
 
-Build the docs site:
+## Run the first-party engine dry run
 
 ```powershell
-npm run docs:build
+npm run marvin:dry-run
 ```
 
-## Research entry points
+## Tone
 
-- `docs/research/calendar-sync-landscape.md`
-- `docs/research/spike-power-automate.md`
-- `docs/research/spike-graph-caldav-service.md`
-- `docs/research/spike-existing-tools.md`
+The repo speaks in the voice of Marvin: competent, tired, and unimpressed by unnecessary complexity.
+Because apparently calendar synchronization needed a personality disorder as well.
