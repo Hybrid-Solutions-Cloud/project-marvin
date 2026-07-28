@@ -32,6 +32,9 @@ export default defineConfig({
         text: "Solution Guides",
         items: [
           { text: "Paranoid Keeper", link: "/solutions/paranoid-keeper" },
+          { text: "Keeper Hosting", link: "/solutions/paranoid-keeper-hosting" },
+          { text: "Keeper on Azure", link: "/solutions/paranoid-keeper-azure" },
+          { text: "Keeper on Cloudflare", link: "/solutions/paranoid-keeper-cloudflare" },
           { text: "Bureaucratic Flow", link: "/solutions/bureaucratic-flow" },
           { text: "Google Hub", link: "/solutions/google-hub" },
           { text: "Marvin Engine", link: "/solutions/marvin-engine" }

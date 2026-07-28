@@ -13,15 +13,26 @@ If you do not know which one to choose, start with:
 
 - [Paranoid Keeper](/solutions/paranoid-keeper)
 
+## Automation reality check
+
+Not every path in this repo satisfies the same level of automation.
+
+| Solution | Fully unattended after setup | Best fit |
+| --- | --- | --- |
+| Paranoid Keeper on always-on host | Yes | Microsoft 365 plus Google and future Apple/CalDAV |
+| Bureaucratic Flow | Yes | Microsoft 365 across one or more tenants |
+| Google Hub Of Last Resort | No | desktop fallback only |
+| Marvin Engine | No | prototype path |
+
 ## Important clarification
 
-`Marvin Engine` is **not** the installer for the other three solutions.
+`Marvin Engine` is **not** the installer for the other solutions.
 
 Instead:
 
-- `Paranoid Keeper` is a Keeper-based external solution
-- `Bureaucratic Flow` is a Power Automate external solution
-- `Google Hub Of Last Resort` is an OGCS external solution
+- `Paranoid Keeper` is the cross-provider hosted service path
+- `Bureaucratic Flow` is the Power Automate path
+- `Google Hub Of Last Resort` is the desktop fallback path
 - `Marvin Engine` is the repo's own custom engine path
 
 ## One onboarding flow
@@ -40,19 +51,15 @@ npm run marvin:onboard
 npm run solutions:test
 ```
 
-## GUI direction
-
-The long-term product direction is documented here:
-
-- [Onboarding UI Architecture](/operator/onboarding-ui)
-
-## Solution guides
+## Recommended solution guides
 
 ### Paranoid Keeper
 
-Use this first if you want the most practical pilot path.
+Use this if you need one automated hosted service across Microsoft 365 and Google.
 
 - [Paranoid Keeper](/solutions/paranoid-keeper)
+- [Keeper Hosting Matrix](/solutions/paranoid-keeper-hosting)
+- [Deploy Keeper to Azure Container Apps](/solutions/paranoid-keeper-azure)
 
 ### Bureaucratic Flow
 
@@ -62,7 +69,7 @@ Use this if you specifically want Power Automate and Microsoft 365.
 
 ### Google Hub Of Last Resort
 
-Use this only if the Google bridge model is acceptable.
+This remains documented, but it does **not** satisfy the fully unattended requirement.
 
 - [Google Hub Of Last Resort](/solutions/google-hub)
 

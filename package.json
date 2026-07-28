@@ -14,7 +14,8 @@
     "marvin:apply-mock": "node solutions/marvin-engine/src/cli.mjs --profile profiles/marvin.example.json --events profiles/marvin.example.events.json --apply-mock",
     "solutions:test": "powershell -ExecutionPolicy Bypass -File .\\scripts\\test-all-solutions.ps1",
     "marvin:setup": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1",
-    "marvin:onboard": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1 -RunGenerators"
+    "marvin:onboard": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1 -RunGenerators",
+    "keeper:azure:deploy": "powershell -ExecutionPolicy Bypass -File .\\solutions\\paranoid-keeper\\deploy-azure-container-app.ps1"
   },
   "devDependencies": {
     "vitepress": "next"
