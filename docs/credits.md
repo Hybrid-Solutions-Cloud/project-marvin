@@ -26,7 +26,7 @@ Used as the basis for the `Google Hub Of Last Resort` solution track.
 - Project: `phw198/OutlookGoogleCalendarSync`
 - Repo: <https://github.com/phw198/outlookgooglecalendarsync>
 
-## Platform documentation referenced in research
+## Platform documentation referenced in research and setup design
 
 - Microsoft Graph calendar and change notification docs
 - Microsoft Power Automate connector docs for Office 365 Outlook and Google Calendar

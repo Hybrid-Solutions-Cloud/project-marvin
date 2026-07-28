@@ -3,34 +3,39 @@
 Project Marvin is a mildly resentful laboratory for solving calendar sprawl.
 
 Like its namesake, it exists because the universe insists on being badly organized.
-The repo now presents four solution tracks:
+The repo presents four solution tracks:
 
 - `solutions/paranoid-keeper/`: Keeper-based multi-provider deployment
 - `solutions/bureaucratic-flow/`: Power Automate and Outlook flow strategy
 - `solutions/google-hub/`: OutlookGoogleCalendarSync with Google as the visibility hub
 - `solutions/marvin-engine/`: first-party custom sync service prototype
 
-## Shared profile and fixtures
+## Fast start
 
-- `profiles/marvin.example.json`
-- `profiles/marvin.example.events.json`
+Fresh clone path:
 
-## Generate solution artifacts
+```powershell
+npm install
+npm run marvin:onboard
+npm run solutions:test
+```
+
+That onboarding flow creates a local profile, generates per-solution artifacts, and prepares the Keeper `.env` placeholder file.
+
+## Shared profile system
+
+- Example profile: `profiles/marvin.example.json`
+- Example events: `profiles/marvin.example.events.json`
+- Schema: `profiles/marvin.schema.json`
+- Local onboarding script: `scripts/setup-marvin.ps1`
+
+## Other commands
 
 ```powershell
 npm run solutions:build
-```
-
-## Run all local tests
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\test-all-solutions.ps1
-```
-
-## Run the first-party engine dry run
-
-```powershell
 npm run marvin:dry-run
+npm run marvin:apply-mock
+npm run docs:build
 ```
 
 ## Tone

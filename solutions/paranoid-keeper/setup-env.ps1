@@ -2,7 +2,12 @@ param(
   [string]$ProfilePath = "..\..\profiles\marvin.example.json"
 )
 
-$resolvedProfilePath = Resolve-Path (Join-Path $PSScriptRoot $ProfilePath)
+if ([System.IO.Path]::IsPathRooted($ProfilePath)) {
+  $resolvedProfilePath = Resolve-Path $ProfilePath
+} else {
+  $resolvedProfilePath = Resolve-Path (Join-Path $PSScriptRoot $ProfilePath)
+}
+
 $envPath = Join-Path $PSScriptRoot ".env"
 if (Test-Path $envPath) {
   Write-Host ".env already exists at $envPath"

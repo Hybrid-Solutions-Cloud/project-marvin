@@ -12,7 +12,9 @@
     "options:build": "npm run solutions:build",
     "marvin:dry-run": "node solutions/marvin-engine/src/cli.mjs --profile profiles/marvin.example.json --events profiles/marvin.example.events.json --dry-run",
     "marvin:apply-mock": "node solutions/marvin-engine/src/cli.mjs --profile profiles/marvin.example.json --events profiles/marvin.example.events.json --apply-mock",
-    "solutions:test": "powershell -ExecutionPolicy Bypass -File .\\scripts\\test-all-solutions.ps1"
+    "solutions:test": "powershell -ExecutionPolicy Bypass -File .\\scripts\\test-all-solutions.ps1",
+    "marvin:setup": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1",
+    "marvin:onboard": "powershell -ExecutionPolicy Bypass -File .\\scripts\\setup-marvin.ps1 -RunGenerators"
   },
   "devDependencies": {
     "vitepress": "next"

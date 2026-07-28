@@ -12,12 +12,20 @@ So the repo is technically useful, emotionally exhausted, and structurally bette
 - The automation should be set once and then left alone.
 - The overall process should involve less pointless suffering than manual calendar duplication.
 
+## Operator path
+
+1. Clone the repo.
+2. Run `npm install`.
+3. Run `npm run marvin:onboard`.
+4. Run `npm run solutions:test`.
+5. Choose one solution track and follow its runbook.
+
 ## Solution tracks
 
 - `Paranoid Keeper`: the least foolish multi-provider path, based on `keeper.sh`
 - `Bureaucratic Flow`: the Microsoft 365 proof-of-concept path, based on `MShekow/outlook-calendar-sync`
 - `Google Hub Of Last Resort`: the Outlook + Google path, based on `OutlookGoogleCalendarSync`
-- `Marvin Engine`: the first-party custom sync service skeleton for when ownership matters more than convenience
+- `Marvin Engine`: the first-party custom sync service prototype for when ownership matters more than convenience
 
 ## Start here
 
@@ -25,4 +33,3 @@ So the repo is technically useful, emotionally exhausted, and structurally bette
 2. Review the [architecture direction](/architecture).
 3. Review the [solutions page](/solutions).
 4. Review the [credits page](/credits).
-5. Generate the concrete solution artifacts with `npm run solutions:build`.

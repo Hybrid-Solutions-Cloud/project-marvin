@@ -3,7 +3,12 @@ param(
   [switch]$StrictPrereqs
 )
 
-$resolvedProfilePath = Resolve-Path (Join-Path $PSScriptRoot $ProfilePath)
+if ([System.IO.Path]::IsPathRooted($ProfilePath)) {
+  $resolvedProfilePath = Resolve-Path $ProfilePath
+} else {
+  $resolvedProfilePath = Resolve-Path (Join-Path $PSScriptRoot $ProfilePath)
+}
+
 $errors = @()
 $warnings = @()
 $envPath = Join-Path $PSScriptRoot ".env"
