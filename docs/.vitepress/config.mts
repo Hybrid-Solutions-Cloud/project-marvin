@@ -19,8 +19,18 @@ export default defineConfig({
         items: [
           { text: "Overview", link: "/" },
           { text: "Architecture", link: "/architecture" },
-          { text: "Solutions", link: "/solutions" },
+          { text: "Solutions Index", link: "/solutions" },
+          { text: "Onboarding UI", link: "/operator/onboarding-ui" },
           { text: "Credits", link: "/credits" }
+        ]
+      },
+      {
+        text: "Solution Guides",
+        items: [
+          { text: "Paranoid Keeper", link: "/solutions/paranoid-keeper" },
+          { text: "Bureaucratic Flow", link: "/solutions/bureaucratic-flow" },
+          { text: "Google Hub", link: "/solutions/google-hub" },
+          { text: "Marvin Engine", link: "/solutions/marvin-engine" }
         ]
       },
       {
