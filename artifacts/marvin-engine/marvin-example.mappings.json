@@ -6,7 +6,7 @@
       "targetCalendarId": "contract_m365",
       "targetEventId": "contract_m365__evt-work-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.657Z"
+      "updatedAt": "2026-07-28T17:28:02.409Z"
     },
     {
       "sourceCalendarId": "work_m365",
@@ -14,7 +14,7 @@
       "targetCalendarId": "personal_google",
       "targetEventId": "personal_google__evt-work-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     },
     {
       "sourceCalendarId": "work_m365",
@@ -22,7 +22,7 @@
       "targetCalendarId": "personal_apple",
       "targetEventId": "personal_apple__evt-work-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -30,7 +30,7 @@
       "targetCalendarId": "work_m365",
       "targetEventId": "work_m365__evt-contract-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -38,7 +38,7 @@
       "targetCalendarId": "personal_google",
       "targetEventId": "personal_google__evt-contract-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -46,7 +46,7 @@
       "targetCalendarId": "personal_apple",
       "targetEventId": "personal_apple__evt-contract-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     },
     {
       "sourceCalendarId": "personal_google",
@@ -54,7 +54,7 @@
       "targetCalendarId": "work_m365",
       "targetEventId": "work_m365__evt-google-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     },
     {
       "sourceCalendarId": "personal_google",
@@ -62,7 +62,7 @@
       "targetCalendarId": "contract_m365",
       "targetEventId": "contract_m365__evt-google-1",
       "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:05:36.658Z"
+      "updatedAt": "2026-07-28T17:28:02.410Z"
     }
   ]
 }
