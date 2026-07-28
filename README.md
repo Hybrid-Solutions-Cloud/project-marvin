@@ -8,16 +8,23 @@ The repo now presents four solution tracks:
 - `solutions/paranoid-keeper/`: Keeper-based multi-provider deployment
 - `solutions/bureaucratic-flow/`: Power Automate and Outlook flow strategy
 - `solutions/google-hub/`: OutlookGoogleCalendarSync with Google as the visibility hub
-- `solutions/marvin-engine/`: first-party custom sync service skeleton
+- `solutions/marvin-engine/`: first-party custom sync service prototype
 
-## Shared profile
+## Shared profile and fixtures
 
 - `profiles/marvin.example.json`
+- `profiles/marvin.example.events.json`
 
 ## Generate solution artifacts
 
 ```powershell
 npm run solutions:build
+```
+
+## Run all local tests
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\test-all-solutions.ps1
 ```
 
 ## Run the first-party engine dry run

@@ -1,25 +1,25 @@
 # Marvin Engine
 
-This is the first-party custom sync service skeleton for Project Marvin.
+This is the first-party custom sync service prototype for Project Marvin.
 
-It does not claim to solve everything yet. It does provide a coherent local foundation:
+It is still a mock-backed implementation, but it now does more than stare into the void:
 
 - profile loading
+- source event loading from fixtures
 - route planning
 - privacy policy application
 - adapter boundaries for Microsoft Graph, Google Calendar, and CalDAV
 - file-backed mapping storage
 - dry-run execution
+- mock apply mode that writes deterministic mappings
 
-## Run the dry run
+## Commands
 
 ```powershell
 npm run marvin:dry-run
+powershell -ExecutionPolicy Bypass -File .\solutions\marvin-engine\test.ps1
 ```
 
-## Intended direction
+## Current limitation
 
-- implement provider auth and API calls
-- persist real source-to-target mappings
-- add scheduled reconciliation and webhook processing
-- turn dry-run planning into actual event synchronization
+Adapters are still stubs. The engine is ready for local testing of planning and mapping behavior, not live provider writes yet.

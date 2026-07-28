@@ -10,7 +10,9 @@
     "solutions:build": "node scripts/build-calendar-options.mjs",
     "solutions:build:example": "node scripts/build-calendar-options.mjs profiles/marvin.example.json",
     "options:build": "npm run solutions:build",
-    "marvin:dry-run": "node solutions/marvin-engine/src/cli.mjs --profile profiles/marvin.example.json --dry-run"
+    "marvin:dry-run": "node solutions/marvin-engine/src/cli.mjs --profile profiles/marvin.example.json --events profiles/marvin.example.events.json --dry-run",
+    "marvin:apply-mock": "node solutions/marvin-engine/src/cli.mjs --profile profiles/marvin.example.json --events profiles/marvin.example.events.json --apply-mock",
+    "solutions:test": "powershell -ExecutionPolicy Bypass -File .\\scripts\\test-all-solutions.ps1"
   },
   "devDependencies": {
     "vitepress": "next"

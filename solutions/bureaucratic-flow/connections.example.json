@@ -1,0 +1,14 @@
+{
+  "connections": [
+    {
+      "name": "work-outlook-connection",
+      "provider": "office365-outlook",
+      "calendarId": "work_m365"
+    },
+    {
+      "name": "contract-outlook-connection",
+      "provider": "office365-outlook",
+      "calendarId": "contract_m365"
+    }
+  ]
+}

@@ -10,4 +10,13 @@ export class CalDavAdapter {
       notes: "Implement CalDAV read/write here for optional Apple Calendar support."
     };
   }
+
+  planWrite(operation) {
+    return {
+      adapter: "caldav",
+      action: "upsert-private-blocker",
+      targetCalendar: operation.target.label,
+      payload: operation.payload
+    };
+  }
 }

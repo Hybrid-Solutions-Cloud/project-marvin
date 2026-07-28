@@ -1,0 +1,68 @@
+{
+  "mappings": [
+    {
+      "sourceCalendarId": "work_m365",
+      "sourceEventId": "evt-work-1",
+      "targetCalendarId": "contract_m365",
+      "targetEventId": "contract_m365__evt-work-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "work_m365",
+      "sourceEventId": "evt-work-1",
+      "targetCalendarId": "personal_google",
+      "targetEventId": "personal_google__evt-work-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "work_m365",
+      "sourceEventId": "evt-work-1",
+      "targetCalendarId": "personal_apple",
+      "targetEventId": "personal_apple__evt-work-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "contract_m365",
+      "sourceEventId": "evt-contract-1",
+      "targetCalendarId": "work_m365",
+      "targetEventId": "work_m365__evt-contract-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "contract_m365",
+      "sourceEventId": "evt-contract-1",
+      "targetCalendarId": "personal_google",
+      "targetEventId": "personal_google__evt-contract-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "contract_m365",
+      "sourceEventId": "evt-contract-1",
+      "targetCalendarId": "personal_apple",
+      "targetEventId": "personal_apple__evt-contract-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "personal_google",
+      "sourceEventId": "evt-google-1",
+      "targetCalendarId": "work_m365",
+      "targetEventId": "work_m365__evt-google-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    },
+    {
+      "sourceCalendarId": "personal_google",
+      "sourceEventId": "evt-google-1",
+      "targetCalendarId": "contract_m365",
+      "targetEventId": "contract_m365__evt-google-1",
+      "mirrorMode": "busy",
+      "updatedAt": "2026-07-28T15:32:46.863Z"
+    }
+  ]
+}

@@ -13,10 +13,11 @@ This is the pragmatic Microsoft-only route. Slow, visual, and irritating, but st
 
 - None in this profile.
 
-## Manual Actions
+## Test Sequence
 
-1. Create one Office 365 Outlook connection per Microsoft 365 account.
-2. Import the MShekow flow package into Power Automate.
-3. Apply the route settings from flow-settings.json.
-4. Disable or ignore any routes that target Google or Apple calendars.
-5. Start with a 1-day sync window before increasing to 45 days.
+1. Validate local generated inputs with solutions/bureaucratic-flow/validate.ps1
+2. Build the staging bundle with solutions/bureaucratic-flow/build-solution.ps1
+3. Create Office 365 Outlook connections in Power Automate
+4. Import or rebuild the MShekow flow package
+5. Apply the settings from flow-settings.json
+6. Run a 1-day test window before increasing to 45 days

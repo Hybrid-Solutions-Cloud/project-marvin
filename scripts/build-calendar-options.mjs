@@ -50,7 +50,7 @@ const keeperRoutes = profile.routes
 
 writeFile(
   path.join(keeperRoot, "sync-plan.md"),
-  `# Paranoid Keeper Sync Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nYes, this is the least ridiculous external option.\n\n## Route Summary\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Coverage\n\n- Microsoft 365 and Outlook: supported via Microsoft OAuth\n- Google: supported via Google OAuth\n- Apple Calendar: optional via iCloud or CalDAV setup\n\n## Detailed Route Notes\n\n${keeperRoutes}\n`
+  `# Paranoid Keeper Sync Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nYes, this is the least ridiculous external option.\n\n## Route Summary\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Coverage\n\n- Microsoft 365 and Outlook: supported via Microsoft OAuth\n- Google: supported via Google OAuth\n- Apple Calendar: optional via iCloud or CalDAV setup\n\n## Test Sequence\n\n1. Create the local .env with solutions/paranoid-keeper/setup-env.ps1\n2. Validate prerequisites with solutions/paranoid-keeper/validate.ps1\n3. Start the stack with solutions/paranoid-keeper/start.ps1\n4. Configure provider connections in Keeper UI\n5. Apply the routes listed below\n\n## Detailed Route Notes\n\n${keeperRoutes}\n`
 );
 
 writeFile(
@@ -96,7 +96,7 @@ writeFile(
 
 writeFile(
   path.join(paRoot, "import-checklist.md"),
-  `# Bureaucratic Flow Import Checklist\n\nProfile: ${profile.name}\n\nThis is the pragmatic Microsoft-only route. Slow, visual, and irritating, but still usable.\n\n## Eligible Calendars\n\n${paCalendars.map((item) => `- ${item.label} (${item.email})`).join("\n")}\n\n## Eligible Routes\n\n${paRoutes.length ? paRoutes.map(formatRoute).join("\n") : "- None in this profile."}\n\n## Manual Actions\n\n1. Create one Office 365 Outlook connection per Microsoft 365 account.\n2. Import the MShekow flow package into Power Automate.\n3. Apply the route settings from flow-settings.json.\n4. Disable or ignore any routes that target Google or Apple calendars.\n5. Start with a 1-day sync window before increasing to ${profile.syncWindowDays} days.\n`
+  `# Bureaucratic Flow Import Checklist\n\nProfile: ${profile.name}\n\nThis is the pragmatic Microsoft-only route. Slow, visual, and irritating, but still usable.\n\n## Eligible Calendars\n\n${paCalendars.map((item) => `- ${item.label} (${item.email})`).join("\n")}\n\n## Eligible Routes\n\n${paRoutes.length ? paRoutes.map(formatRoute).join("\n") : "- None in this profile."}\n\n## Test Sequence\n\n1. Validate local generated inputs with solutions/bureaucratic-flow/validate.ps1\n2. Build the staging bundle with solutions/bureaucratic-flow/build-solution.ps1\n3. Create Office 365 Outlook connections in Power Automate\n4. Import or rebuild the MShekow flow package\n5. Apply the settings from flow-settings.json\n6. Run a 1-day test window before increasing to ${profile.syncWindowDays} days\n`
 );
 
 const ogcsRoot = path.join(outRoot, "google-hub");
@@ -119,13 +119,13 @@ writeFile(
 
 writeFile(
   path.join(ogcsRoot, "runbook.md"),
-  `# Google Hub Of Last Resort Runbook\n\nProfile: ${profile.name}\n\nThis is the compromise option. One introduces Google as an availability hub because direct elegance was apparently unavailable.\n\n## Outlook <-> Google Pairs\n\n${ogcsPairs.length ? ogcsPairs.map((pair) => `- ${pair.outlook.label} <-> ${pair.google.label}`).join("\n") : "- No Google calendar found in profile."}\n\n## Notes\n\n- This is not the strongest fit for direct multi-M365 mirroring.\n- It is useful when you want one Google visibility hub and are comfortable running a desktop sync tool.\n- Apple Calendar is not directly covered by this solution.\n`
+  `# Google Hub Of Last Resort Runbook\n\nProfile: ${profile.name}\n\nThis is the compromise option. One introduces Google as an availability hub because direct elegance was apparently unavailable.\n\n## Outlook <-> Google Pairs\n\n${ogcsPairs.length ? ogcsPairs.map((pair) => `- ${pair.outlook.label} <-> ${pair.google.label}`).join("\n") : "- No Google calendar found in profile."}\n\n## Test Sequence\n\n1. Validate generated inputs with solutions/google-hub/validate.ps1\n2. Install OGCS with solutions/google-hub/install-ogcs.ps1\n3. Render the XML with solutions/google-hub/render-settings.ps1\n4. Open OGCS and bind Outlook calendars to the Google hub\n5. Start with a limited date window\n\n## Notes\n\n- This is not the strongest fit for direct multi-M365 mirroring.\n- It is useful when you want one Google visibility hub and are comfortable running a desktop sync tool.\n- Apple Calendar is not directly covered by this solution.\n`
 );
 
 const marvinRoot = path.join(outRoot, "marvin-engine");
 writeFile(
   path.join(marvinRoot, "dry-run-plan.md"),
-  `# Marvin Engine Dry Run Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis is the in-repo first-party service path. It is not finished, but it is at least honest about that.\n\n## Planned Routes\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Intended Providers\n\n- Microsoft Graph for Microsoft 365 and Outlook\n- Google Calendar API if a Google hub remains relevant\n- CalDAV for optional Apple calendar support\n`
+  `# Marvin Engine Dry Run Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis is the in-repo first-party service path. It can now execute a deterministic mock sync and write mapping state. Remarkable, really.\n\n## Planned Routes\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Intended Providers\n\n- Microsoft Graph for Microsoft 365 and Outlook\n- Google Calendar API if a Google hub remains relevant\n- CalDAV for optional Apple calendar support\n\n## Local Test Sequence\n\n1. Run npm run marvin:dry-run\n2. Run npm run marvin:apply-mock\n3. Inspect artifacts/marvin-engine/${profile.name}.mappings.json\n`
 );
 
 const summary = {

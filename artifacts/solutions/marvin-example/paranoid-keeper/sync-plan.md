@@ -18,6 +18,14 @@ Yes, this is the least ridiculous external option.
 - Google: supported via Google OAuth
 - Apple Calendar: optional via iCloud or CalDAV setup
 
+## Test Sequence
+
+1. Create the local .env with solutions/paranoid-keeper/setup-env.ps1
+2. Validate prerequisites with solutions/paranoid-keeper/validate.ps1
+3. Start the stack with solutions/paranoid-keeper/start.ps1
+4. Configure provider connections in Keeper UI
+5. Apply the routes listed below
+
 ## Detailed Route Notes
 
 ## Work Microsoft 365

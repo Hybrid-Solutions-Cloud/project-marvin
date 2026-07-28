@@ -16,15 +16,23 @@ It is based on `keeper.sh` and gives the broadest provider coverage with the lea
 
 ```powershell
 ./setup-env.ps1
+./validate.ps1
 ./start.ps1
 ./status.ps1
+./test.ps1
 ```
+
+## Test readiness
+
+This track is ready to test once you provide OAuth credentials in `.env` and have Docker available.
 
 ## Files
 
 - `compose.yaml`
 - `.env.example`
 - `setup-env.ps1`
+- `validate.ps1`
 - `start.ps1`
 - `stop.ps1`
 - `status.ps1`
+- `test.ps1`

@@ -2,6 +2,7 @@ param(
   [string]$ProfilePath = "..\..\profiles\marvin.example.json"
 )
 
+$resolvedProfilePath = Resolve-Path (Join-Path $PSScriptRoot $ProfilePath)
 $envPath = Join-Path $PSScriptRoot ".env"
 if (Test-Path $envPath) {
   Write-Host ".env already exists at $envPath"
@@ -23,4 +24,4 @@ MICROSOFT_CLIENT_SECRET=
 
 Write-Host "Created $envPath"
 Write-Host "Fill in provider OAuth values before starting Keeper."
-Write-Host "Profile reference: $ProfilePath"
+Write-Host "Profile reference: $resolvedProfilePath"
