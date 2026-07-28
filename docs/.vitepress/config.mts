@@ -9,7 +9,7 @@ export default defineConfig({
   ],
   lastUpdated: true,
   themeConfig: {
-    logo: "/logo-small.svg",
+    logo: "/favicon.svg",
     nav: [
       { text: "Home", link: "/" },
       { text: "Architecture", link: "/architecture" },
