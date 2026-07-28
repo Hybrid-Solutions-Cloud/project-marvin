@@ -1,6 +1,8 @@
 # Project Marvin
 
-![Project Marvin logo](/logo-large.svg)
+<div class="marvin-hero-logo">
+  <img src="/logo-large.svg" alt="Project Marvin logo">
+</div>
 
 Project Marvin is a repo for setting up private calendar mirroring across multiple calendars and providers.
 
