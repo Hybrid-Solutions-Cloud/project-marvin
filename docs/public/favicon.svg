@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Project Marvin favicon">
+  <rect width="64" height="64" rx="14" fill="#101722"/>
+  <rect x="10" y="12" width="44" height="36" rx="10" fill="#c9d3dd"/>
+  <circle cx="24" cy="30" r="4" fill="#ff8e3c"/>
+  <circle cx="40" cy="30" r="4" fill="#ff8e3c"/>
+  <path d="M20 40h24" stroke="#405261" stroke-width="4" stroke-linecap="round"/>
+  <path d="M32 8v7" stroke="#ff8e3c" stroke-width="4" stroke-linecap="round"/>
+</svg>

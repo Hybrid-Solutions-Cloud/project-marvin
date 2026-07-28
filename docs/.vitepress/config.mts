@@ -4,8 +4,12 @@ export default defineConfig({
   title: "Project Marvin",
   description: "A mildly miserable lab for solving private multi-calendar mirroring.",
   base: "/project-marvin/",
+  head: [
+    ["link", { rel: "icon", type: "image/svg+xml", href: "/project-marvin/favicon.svg" }]
+  ],
   lastUpdated: true,
   themeConfig: {
+    logo: "/logo-small.svg",
     nav: [
       { text: "Home", link: "/" },
       { text: "Architecture", link: "/architecture" },

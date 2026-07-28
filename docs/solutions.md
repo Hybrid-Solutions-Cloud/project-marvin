@@ -1,8 +1,32 @@
 # Solutions
 
+## Start Here
+
+If you are here as an operator, this is the shortest path:
+
+1. Run `npm install`
+2. Run `npm run marvin:onboard`
+3. Run `npm run solutions:test`
+4. Choose **one** solution below
+
+If you do not know which one to choose, start with:
+
+- [Paranoid Keeper](/solutions/paranoid-keeper)
+
+## Important clarification
+
+`Marvin Engine` is **not** the installer for the other three solutions.
+
+Instead:
+
+- `Paranoid Keeper` is a Keeper-based external solution
+- `Bureaucratic Flow` is a Power Automate external solution
+- `Google Hub Of Last Resort` is an OGCS external solution
+- `Marvin Engine` is the repo's own custom engine path
+
 ## One onboarding flow
 
-Every solution now starts from one source of truth:
+Every solution starts from one source of truth:
 
 - generated profile JSON
 - generated event fixture JSON
@@ -16,8 +40,6 @@ npm run marvin:onboard
 npm run solutions:test
 ```
 
-That gives an operator a local profile, generated artifacts, a Keeper `.env` placeholder, and a validated starting point.
-
 ## GUI direction
 
 The long-term product direction is documented here:
@@ -26,15 +48,29 @@ The long-term product direction is documented here:
 
 ## Solution guides
 
+### Paranoid Keeper
+
+Use this first if you want the most practical pilot path.
+
 - [Paranoid Keeper](/solutions/paranoid-keeper)
+
+### Bureaucratic Flow
+
+Use this if you specifically want Power Automate and Microsoft 365.
+
 - [Bureaucratic Flow](/solutions/bureaucratic-flow)
+
+### Google Hub Of Last Resort
+
+Use this only if the Google bridge model is acceptable.
+
 - [Google Hub Of Last Resort](/solutions/google-hub)
+
+### Marvin Engine
+
+Use this if you want the repo's custom engine path and understand that it is still prototype-oriented for live integrations.
+
 - [Marvin Engine](/solutions/marvin-engine)
-
-## Important platform note
-
-The Power Automate solution is now documented as a Graph-backed, automation-first deployment model.
-It should not rely on hand-created Outlook connector flows.
 
 ## Shared input
 
