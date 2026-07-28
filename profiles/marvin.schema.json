@@ -16,6 +16,21 @@
         "visibility": { "type": "string", "enum": ["private"] }
       }
     },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "powerAutomate": {
+          "type": "object",
+          "properties": {
+            "automationTenantId": { "type": "string", "minLength": 1 },
+            "environmentUrl": { "type": "string", "minLength": 1 },
+            "deploymentModel": { "type": "string", "enum": ["graph-http-entra-id"] },
+            "graphAppDisplayName": { "type": "string", "minLength": 1 },
+            "supportedAccountTypes": { "type": "string", "enum": ["AzureADMultipleOrgs"] }
+          }
+        }
+      }
+    },
     "calendars": {
       "type": "array",
       "minItems": 2,
@@ -27,6 +42,7 @@
           "label": { "type": "string", "minLength": 1 },
           "provider": { "type": "string", "enum": ["m365", "outlook", "google", "apple-caldav"] },
           "email": { "type": "string", "minLength": 3 },
+          "tenantId": { "type": "string" },
           "optional": { "type": "boolean" }
         }
       }

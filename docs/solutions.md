@@ -31,16 +31,10 @@ The long-term product direction is documented here:
 - [Google Hub Of Last Resort](/solutions/google-hub)
 - [Marvin Engine](/solutions/marvin-engine)
 
-## Repo Persona
+## Important platform note
 
-This repo speaks in the voice of Marvin:
-
-- dry
-- pessimistic
-- technically competent
-- unimpressed by needless complexity
-
-The point is not random novelty. The point is to make tedious infrastructure work feel deliberate.
+The Power Automate solution is now documented as a Graph-backed, automation-first deployment model.
+It should not rely on hand-created Outlook connector flows.
 
 ## Shared input
 

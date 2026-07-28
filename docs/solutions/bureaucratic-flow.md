@@ -2,56 +2,71 @@
 
 ## Summary
 
-Bureaucratic Flow is the Power Automate path based on `MShekow/outlook-calendar-sync`.
-This is the most reasonable solution when the problem is mainly Microsoft 365 talking to Microsoft 365.
+Bureaucratic Flow is the Power Automate path for Project Marvin.
+It is now explicitly designed for scripted deployment and cross-tenant runtime separation.
 
-## Design
+## Critical design decision
 
-### Problem fit
+This track does **not** treat the `Office 365 Outlook` connector as the primary automation surface.
+That connector is inappropriate for unattended deployment because it does not support service principal authentication.
+
+The automation-first model instead assumes:
+
+- a Power Platform environment in an automation tenant
+- solution-aware cloud flows
+- connection references
+- Microsoft Graph-backed calls through HTTP with Microsoft Entra ID or a custom Graph connector
+- multitenant app registration and consent in each target calendar tenant
+
+## Problem fit
 
 Use this solution when:
 
-- most calendars are Microsoft 365 or Outlook
-- you already live in Power Automate
-- you want a low-code proof of concept before committing to a custom engine
+- you need Power Automate for governance or platform reasons
+- you need the runtime to live in a tenant separate from the target calendar tenants
+- the calendars being synchronized are primarily Microsoft 365 calendars
 
-### Architecture
+## Architecture
 
-Components:
+### Runtime tenant
 
-- local Marvin profile
-- generated flow settings JSON
-- generated import checklist
-- Power Automate flow package or reconstructed flow
-- Office 365 Outlook connections in the tenant
+The flow itself runs in one Power Platform environment that can belong to a separate automation tenant.
 
-### Data flow
+### Target calendar tenants
 
-1. Marvin onboarding collects calendar inventory and routes.
-2. Marvin generator filters the profile to M365-compatible routes.
-3. Generated settings are used to parameterize the flow.
-4. Power Automate runs scheduled synchronization.
+The calendars can live in one or more unrelated Microsoft 365 tenants.
 
-## Implementation
+### Identity model
+
+The automation tenant hosts:
+
+- the solution-aware cloud flow
+- connection references
+- the Graph-backed connector configuration
+- the multitenant application registration metadata used by the runtime
+
+Each target calendar tenant must:
+
+- create or accept a service principal for the multitenant app
+- grant the required Graph calendar consent
+
+## Deployment model
+
+### Scripted path
+
+1. Generate Marvin profile and artifacts.
+2. Build the Power Automate staging bundle.
+3. Generate the automation runtime plan.
+4. Import the solution through `pac solution import`.
+5. Bind Graph-backed connection references.
+6. Grant multitenant app consent in each calendar tenant.
 
 ### Repo files
 
 - `solutions/bureaucratic-flow/build-solution.ps1`
-- `solutions/bureaucratic-flow/validate.ps1`
-- `solutions/bureaucratic-flow/test.ps1`
-- `solutions/bureaucratic-flow/connections.example.json`
-- `artifacts/solutions/<profile>/bureaucratic-flow/flow-settings.json`
-
-### Environment requirements
-
-- Microsoft tenant access
-- Power Automate access
-- Office 365 Outlook connectors for each participating account
-
-### Validation model
-
-The repo validation checks only generated local artifacts.
-Tenant validation still occurs in Power Automate itself.
+- `solutions/bureaucratic-flow/provision-runtime.ps1`
+- `solutions/bureaucratic-flow/deploy.ps1`
+- `solutions/bureaucratic-flow/runtime.example.json`
 
 ## How To Use
 
@@ -61,33 +76,28 @@ Tenant validation still occurs in Power Automate itself.
 npm install
 npm run marvin:onboard
 powershell -ExecutionPolicy Bypass -File .\solutions\bureaucratic-flow\test.ps1
+powershell -ExecutionPolicy Bypass -File .\solutions\bureaucratic-flow\deploy.ps1 -ProfilePath .\profiles\marvin.local.json -ProfileName marvin.local
 ```
 
-### Then do this
+### What the scripts do
 
-1. Open the generated `flow-settings.json`.
-2. Open the generated import checklist.
-3. Create the required Outlook connector instances.
-4. Import or rebuild the upstream flow in Power Automate.
-5. Apply the generated route settings.
-6. Test with a narrow 1 day window.
+- `build-solution.ps1`: prepares the local bundle
+- `provision-runtime.ps1`: creates a runtime plan for the automation tenant
+- `deploy.ps1`: ties the two together and prepares for `pac`-based import
 
-## Testing plan
+## Multi-tenant support
 
-### First pilot
+Yes, this design is meant to support multiple unrelated Microsoft 365 tenants.
 
-- work M365 event mirrors to contract M365
-- contract M365 event mirrors to work M365
-- blocker details remain private
-- loop prevention works
+The important condition is that the automation runtime tenant is separate from the calendar tenants only at the orchestration layer.
+The Graph application still needs admin consent in each tenant whose calendars it touches.
 
 ## Risks
 
-- low-code maintenance fatigue
-- flow action limits and throttling
-- no elegant Apple path
-- tenant-bound configuration rather than self-hosted portability
+- multitenant app consent across separate customer or work tenants
+- Power Platform environment governance and licensing
+- more complex connection and ALM model than a local app
 
 ## Recommendation
 
-Use this when the requirement is M365-first and speed matters more than elegance.
+This is the correct Power Automate architecture if you insist on automation-first deployment and separate runtime tenancy.

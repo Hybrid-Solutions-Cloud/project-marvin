@@ -6,18 +6,29 @@
     "mirrorMode": "busy",
     "visibility": "private"
   },
+  "runtime": {
+    "powerAutomate": {
+      "automationTenantId": "00000000-0000-0000-0000-000000000000",
+      "environmentUrl": "https://org000000.crm.dynamics.com",
+      "deploymentModel": "graph-http-entra-id",
+      "graphAppDisplayName": "Project Marvin Flow Runtime",
+      "supportedAccountTypes": "AzureADMultipleOrgs"
+    }
+  },
   "calendars": [
     {
       "id": "work_m365",
       "label": "Work Microsoft 365",
       "provider": "m365",
-      "email": "you@work.example.com"
+      "email": "you@work.example.com",
+      "tenantId": "11111111-1111-1111-1111-111111111111"
     },
     {
       "id": "contract_m365",
       "label": "Contract Microsoft 365",
       "provider": "m365",
-      "email": "you@contract.example.com"
+      "email": "you@contract.example.com",
+      "tenantId": "22222222-2222-2222-2222-222222222222"
     },
     {
       "id": "personal_google",

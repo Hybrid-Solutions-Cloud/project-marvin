@@ -28,6 +28,7 @@ Inputs:
 - profile name
 - timezone
 - sync window length
+- Power Automate runtime tenant and environment URL if that path is needed
 
 Outputs:
 
@@ -43,13 +44,8 @@ Required fields per calendar:
 - label
 - provider type
 - account email
+- tenant ID for each Microsoft 365 calendar
 - optional flag
-
-Provider values:
-
-- Microsoft 365 / Outlook
-- Google Calendar
-- Apple / CalDAV
 
 ### Step 3. Route design
 
@@ -88,10 +84,12 @@ The UI should:
 
 The UI should:
 
-- collect calendar pairing information
-- generate flow settings JSON
-- generate a Power Automate import checklist
-- optionally open links to Power Automate and the upstream flow package
+- collect the separate automation tenant information
+- collect the target Microsoft 365 tenant IDs
+- generate a Graph-backed deployment plan
+- avoid the Office 365 Outlook connector as the automation baseline
+- generate solution-aware deployment artifacts
+- drive `pac`-based import and connection-reference setup
 
 #### For Google Hub Of Last Resort
 

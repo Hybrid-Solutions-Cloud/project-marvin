@@ -6,6 +6,10 @@ param(
   [string]$ContractEmail,
   [string]$GoogleEmail,
   [string]$AppleEmail,
+  [string]$WorkTenantId = "11111111-1111-1111-1111-111111111111",
+  [string]$ContractTenantId = "22222222-2222-2222-2222-222222222222",
+  [string]$AutomationTenantId = "00000000-0000-0000-0000-000000000000",
+  [string]$AutomationEnvironmentUrl = "https://org000000.crm.dynamics.com",
   [string]$MirrorMode = "busy",
   [switch]$IncludeApple,
   [switch]$NoPrompt,
@@ -35,8 +39,12 @@ $ProfileName = Ask 'Profile name' $ProfileName
 $Timezone = Ask 'Timezone' $Timezone
 $windowInput = Ask 'Sync window days' $SyncWindowDays
 $SyncWindowDays = [int]$windowInput
+$AutomationTenantId = Ask 'Power Automate runtime tenant ID' $AutomationTenantId
+$AutomationEnvironmentUrl = Ask 'Power Platform environment URL' $AutomationEnvironmentUrl
 $WorkEmail = if ($WorkEmail) { $WorkEmail } else { Ask 'Work Microsoft 365 email' 'you@work.example.com' }
+$WorkTenantId = Ask 'Work Microsoft 365 tenant ID' $WorkTenantId
 $ContractEmail = if ($ContractEmail) { $ContractEmail } else { Ask 'Contract Microsoft 365 email' 'you@contract.example.com' }
+$ContractTenantId = Ask 'Contract Microsoft 365 tenant ID' $ContractTenantId
 $GoogleEmail = if ($GoogleEmail) { $GoogleEmail } else { Ask 'Google email (leave blank to skip Google track)' 'you@gmail.com' }
 
 if (-not $IncludeApple -and -not $NoPrompt) {
@@ -51,8 +59,8 @@ if ($IncludeApple) {
 }
 
 $calendars = @(
-  [ordered]@{ id = 'work_m365'; label = 'Work Microsoft 365'; provider = 'm365'; email = $WorkEmail },
-  [ordered]@{ id = 'contract_m365'; label = 'Contract Microsoft 365'; provider = 'm365'; email = $ContractEmail }
+  [ordered]@{ id = 'work_m365'; label = 'Work Microsoft 365'; provider = 'm365'; email = $WorkEmail; tenantId = $WorkTenantId },
+  [ordered]@{ id = 'contract_m365'; label = 'Contract Microsoft 365'; provider = 'm365'; email = $ContractEmail; tenantId = $ContractTenantId }
 )
 
 if (-not [string]::IsNullOrWhiteSpace($GoogleEmail)) {
@@ -91,6 +99,15 @@ $profile = [ordered]@{
   privacyDefaults = [ordered]@{
     mirrorMode = $MirrorMode
     visibility = 'private'
+  }
+  runtime = [ordered]@{
+    powerAutomate = [ordered]@{
+      automationTenantId = $AutomationTenantId
+      environmentUrl = $AutomationEnvironmentUrl
+      deploymentModel = 'graph-http-entra-id'
+      graphAppDisplayName = 'Project Marvin Flow Runtime'
+      supportedAccountTypes = 'AzureADMultipleOrgs'
+    }
   }
   calendars = $calendars
   routes = $routes
@@ -152,7 +169,7 @@ if ($RunGenerators) {
 }
 
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "1. Review the generated profile and emails."
+Write-Host "1. Review the generated profile, tenant IDs, and emails."
 Write-Host "2. Run npm run solutions:build -- $profilePath if you did not use -RunGenerators."
 Write-Host "3. Run npm run solutions:test for local validation."
 Write-Host "4. Pick one solution track under solutions/."
