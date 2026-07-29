@@ -2,7 +2,7 @@
 
 Profile: marvin-example
 
-This is the pragmatic Microsoft-only route. Slow, visual, and irritating, but still usable.
+This is the pragmatic Microsoft-only route.
 
 ## Eligible Calendars
 
@@ -13,11 +13,7 @@ This is the pragmatic Microsoft-only route. Slow, visual, and irritating, but st
 
 - None in this profile.
 
-## Test Sequence
+## Runtime Mode
 
-1. Validate local generated inputs with solutions/bureaucratic-flow/validate.ps1
-2. Build the staging bundle with solutions/bureaucratic-flow/build-solution.ps1
-3. Create Office 365 Outlook connections in Power Automate
-4. Import or rebuild the MShekow flow package
-5. Apply the settings from flow-settings.json
-6. Run a 1-day test window before increasing to 45 days
+- auth mode: marvin-engine
+- bridge URL: not configured

@@ -4,22 +4,25 @@ Profile: marvin-example
 Timezone: America/New_York
 Sync window: 45 days
 
-This is the in-repo first-party service path. It can now execute a deterministic mock sync and write mapping state. Remarkable, really.
+This is the in-repo first-party service path.
 
 ## Planned Routes
 
-- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Personal Apple (busy)
-- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Personal Apple (busy)
-- Personal Google -> Work Microsoft 365, Contract Microsoft 365 (busy)
+- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
+- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
+- Personal Google -> Work Microsoft 365, Contract Microsoft 365, Family Google, Personal Apple (subject)
+- Family Google -> Work Microsoft 365, Contract Microsoft 365, Personal Google, Personal Apple (subject)
 
-## Intended Providers
+## Provider Runtime
 
-- Microsoft Graph for Microsoft 365 and Outlook
-- Google Calendar API if a Google hub remains relevant
-- CalDAV for optional Apple calendar support
+- Microsoft: marvin-engine
+- Google: marvin-engine
+- CalDAV: manual-caldav
 
-## Local Test Sequence
+## Policy Guarantees Under Design
 
-1. Run npm run marvin:dry-run
-2. Run npm run marvin:apply-mock
-3. Inspect artifacts/marvin-engine/marvin-example.mappings.json
+- private-by-default mirrored events
+- family-calendar visibility overrides
+- per-source prefixes
+- preserved source timezone behavior
+- account connection status tracked per calendar

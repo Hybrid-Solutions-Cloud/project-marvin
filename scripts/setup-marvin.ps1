@@ -1,16 +1,28 @@
 param(
+  [Alias('WorkspaceId')]
   [string]$ProfileName = "marvin.local",
   [string]$Timezone = "America/New_York",
   [int]$SyncWindowDays = 45,
+  [Alias('WorkspaceEmail')]
+  [string]$MarvinOperatorEmail = "marvin@example.com",
   [string]$WorkEmail,
   [string]$ContractEmail,
   [string]$GoogleEmail,
+  [string]$FamilyEmail,
   [string]$AppleEmail,
+  [string]$AppleCalDavServerUrl = "",
+  [string]$AppleCalDavUsername = "",
+  [string]$AppleCalDavAppPassword = "",
   [string]$WorkTenantId = "11111111-1111-1111-1111-111111111111",
   [string]$ContractTenantId = "22222222-2222-2222-2222-222222222222",
   [string]$AutomationTenantId = "00000000-0000-0000-0000-000000000000",
   [string]$AutomationEnvironmentUrl = "https://org000000.crm.dynamics.com",
-  [string]$MirrorMode = "busy",
+  [string]$MirrorMode = "subject",
+  [string]$MarvinUrl = "",
+  [string]$MicrosoftClientId = "",
+  [string]$MicrosoftClientSecret = "",
+  [string]$GoogleClientId = "",
+  [string]$GoogleClientSecret = "",
   [switch]$IncludeApple,
   [switch]$NoPrompt,
   [switch]$RunGenerators
@@ -18,6 +30,15 @@ param(
 
 $root = Resolve-Path (Join-Path $PSScriptRoot '..')
 $profilesDir = Join-Path $root 'profiles'
+$stateDir = Join-Path $root '.marvin'
+$providerSecretsDir = Join-Path $stateDir 'provider-secrets'
+$connectionsDir = Join-Path $stateDir 'connections'
+$tokensDir = Join-Path $stateDir 'tokens'
+
+if ([string]::IsNullOrWhiteSpace($MarvinUrl)) {
+  $localMarvinPort = if ([string]::IsNullOrWhiteSpace($env:MARVIN_UI_PORT)) { '4177' } else { [string]$env:MARVIN_UI_PORT }
+  $MarvinUrl = "http://127.0.0.1:$localMarvinPort"
+}
 
 function Ask([string]$Prompt, [string]$Default = '') {
   if ($NoPrompt) {
@@ -35,17 +56,69 @@ function Ask([string]$Prompt, [string]$Default = '') {
   return Read-Host $Prompt
 }
 
-$ProfileName = Ask 'Profile name' $ProfileName
+function Sanitize-ProfileName([string]$Value) {
+  if ([string]::IsNullOrWhiteSpace($Value)) {
+    return 'marvin.local'
+  }
+
+  return ([string]$Value).ToLowerInvariant() -replace '[^a-z0-9._-]+', '-'
+}
+
+function Write-Json([string]$Path, $Value) {
+  $directory = Split-Path -Parent $Path
+  if (-not [string]::IsNullOrWhiteSpace($directory)) {
+    New-Item -ItemType Directory -Path $directory -Force | Out-Null
+  }
+  $json = $Value | ConvertTo-Json -Depth 12
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($Path, $json, $utf8NoBom)
+}
+
+function New-TargetConfig([string]$TargetId, [bool]$FamilyVisible = $false, [string]$Prefix = 'BUSY: ') {
+  if ($FamilyVisible) {
+    return [ordered]@{
+      calendarId = $TargetId
+      visibility = 'default'
+      detailMode = 'full'
+      subjectPrefix = $Prefix
+      copyLocation = $true
+      copyDescription = $true
+    }
+  }
+
+  return [ordered]@{
+    calendarId = $TargetId
+    visibility = 'private'
+    detailMode = $MirrorMode
+    subjectPrefix = $Prefix
+    copyLocation = $false
+    copyDescription = $false
+  }
+}
+
+foreach ($directory in @($profilesDir, $stateDir, $providerSecretsDir, $connectionsDir, $tokensDir)) {
+  New-Item -ItemType Directory -Path $directory -Force | Out-Null
+}
+
+$ProfileName = Ask 'Workspace ID' $ProfileName
+$ProfileSlug = Sanitize-ProfileName $ProfileName
 $Timezone = Ask 'Timezone' $Timezone
 $windowInput = Ask 'Sync window days' $SyncWindowDays
 $SyncWindowDays = [int]$windowInput
+$MarvinOperatorEmail = Ask 'Marvin account email' $MarvinOperatorEmail
 $AutomationTenantId = Ask 'Power Automate runtime tenant ID' $AutomationTenantId
 $AutomationEnvironmentUrl = Ask 'Power Platform environment URL' $AutomationEnvironmentUrl
+$MarvinUrl = Ask 'Marvin base URL' $MarvinUrl
+$MicrosoftClientId = Ask 'Microsoft client ID (optional)' $MicrosoftClientId
+$MicrosoftClientSecret = Ask 'Microsoft client secret (optional)' $MicrosoftClientSecret
+$GoogleClientId = Ask 'Google client ID (optional)' $GoogleClientId
+$GoogleClientSecret = Ask 'Google client secret (optional)' $GoogleClientSecret
 $WorkEmail = if ($WorkEmail) { $WorkEmail } else { Ask 'Work Microsoft 365 email' 'you@work.example.com' }
 $WorkTenantId = Ask 'Work Microsoft 365 tenant ID' $WorkTenantId
 $ContractEmail = if ($ContractEmail) { $ContractEmail } else { Ask 'Contract Microsoft 365 email' 'you@contract.example.com' }
 $ContractTenantId = Ask 'Contract Microsoft 365 tenant ID' $ContractTenantId
-$GoogleEmail = if ($GoogleEmail) { $GoogleEmail } else { Ask 'Google email (leave blank to skip Google track)' 'you@gmail.com' }
+$GoogleEmail = if ($GoogleEmail) { $GoogleEmail } else { Ask 'Personal Google email (leave blank to skip)' 'you@gmail.com' }
+$FamilyEmail = if ($FamilyEmail) { $FamilyEmail } else { Ask 'Family calendar email (leave blank to skip)' 'family@gmail.com' }
 
 if (-not $IncludeApple -and -not $NoPrompt) {
   $appleAnswer = Ask 'Include Apple Calendar support? (y/N)' 'N'
@@ -56,49 +129,110 @@ if (-not $IncludeApple -and -not $NoPrompt) {
 
 if ($IncludeApple) {
   $AppleEmail = if ($AppleEmail) { $AppleEmail } else { Ask 'Apple/iCloud email' 'you@icloud.com' }
+  $AppleCalDavServerUrl = Ask 'Apple / CalDAV server URL' $AppleCalDavServerUrl
+  if ([string]::IsNullOrWhiteSpace($AppleCalDavUsername)) {
+    $AppleCalDavUsername = $AppleEmail
+  }
+  $AppleCalDavUsername = Ask 'Apple / CalDAV username' $AppleCalDavUsername
+  $AppleCalDavAppPassword = Ask 'Apple / CalDAV app password' $AppleCalDavAppPassword
 }
 
 $calendars = @(
-  [ordered]@{ id = 'work_m365'; label = 'Work Microsoft 365'; provider = 'm365'; email = $WorkEmail; tenantId = $WorkTenantId },
-  [ordered]@{ id = 'contract_m365'; label = 'Contract Microsoft 365'; provider = 'm365'; email = $ContractEmail; tenantId = $ContractTenantId }
+  [ordered]@{ id = 'work_m365'; label = 'Work Microsoft 365'; provider = 'm365'; email = $WorkEmail; tenantId = $WorkTenantId; scope = 'work'; sourcePrefix = 'WORK: '; connectionStatus = 'pending' },
+  [ordered]@{ id = 'contract_m365'; label = 'Contract Microsoft 365'; provider = 'm365'; email = $ContractEmail; tenantId = $ContractTenantId; scope = 'contract'; sourcePrefix = 'CONTRACT: '; connectionStatus = 'pending' }
 )
 
 if (-not [string]::IsNullOrWhiteSpace($GoogleEmail)) {
-  $calendars += [ordered]@{ id = 'personal_google'; label = 'Personal Google'; provider = 'google'; email = $GoogleEmail }
+  $calendars += [ordered]@{ id = 'personal_google'; label = 'Personal Google'; provider = 'google'; email = $GoogleEmail; scope = 'personal'; sourcePrefix = 'GOOGLE: '; connectionStatus = 'pending' }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($FamilyEmail)) {
+  $calendars += [ordered]@{ id = 'family_google'; label = 'Family Google'; provider = 'google'; email = $FamilyEmail; scope = 'family'; sourcePrefix = 'FAMILY: '; connectionStatus = 'pending' }
 }
 
 if ($IncludeApple -and -not [string]::IsNullOrWhiteSpace($AppleEmail)) {
-  $calendars += [ordered]@{ id = 'personal_apple'; label = 'Personal Apple'; provider = 'apple-caldav'; email = $AppleEmail; optional = $true }
-}
-
-function TargetIds([string]$SourceId) {
-  return @($calendars | Where-Object { $_.id -ne $SourceId } | ForEach-Object { $_.id })
+  $calendars += [ordered]@{
+    id = 'personal_apple'
+    label = 'Personal Apple'
+    provider = 'apple-caldav'
+    email = $AppleEmail
+    scope = 'personal'
+    optional = $true
+    sourcePrefix = 'APPLE: '
+    connectionStatus = 'pending'
+    caldavServerUrl = $AppleCalDavServerUrl
+    caldavUsername = $AppleCalDavUsername
+  }
 }
 
 $routes = @()
 foreach ($calendar in $calendars) {
-  if ($calendar.id -eq 'personal_apple') {
-    continue
+  $targets = @()
+  foreach ($target in $calendars | Where-Object { $_.id -ne $calendar.id }) {
+    $targets += New-TargetConfig -TargetId $target.id -FamilyVisible:($target.scope -eq 'family') -Prefix $calendar.sourcePrefix
   }
 
-  $targets = TargetIds $calendar.id
   if ($targets.Count -gt 0) {
     $routes += [ordered]@{
       source = $calendar.id
-      targets = $targets
       mirrorMode = $MirrorMode
-      subjectPrefix = 'BUSY: '
+      subjectPrefix = $calendar.sourcePrefix
+      targets = $targets
     }
   }
 }
 
+$providerConnections = [ordered]@{
+  microsoft = [ordered]@{
+    provider = 'm365'
+    authMode = 'marvin-engine'
+    clientId = $MicrosoftClientId
+    tenantMode = 'multi-tenant'
+    bridgeBaseUrl = ''
+    marvinBaseUrl = $MarvinUrl
+    authorizePath = '/marvin-api/oauth/microsoft/start'
+  }
+  google = [ordered]@{
+    provider = 'google'
+    authMode = 'marvin-engine'
+    clientId = $GoogleClientId
+    bridgeBaseUrl = ''
+    marvinBaseUrl = $MarvinUrl
+    authorizePath = '/marvin-api/oauth/google/start'
+  }
+  caldav = [ordered]@{
+    provider = 'apple-caldav'
+    authMode = 'manual-caldav'
+    bridgeBaseUrl = ''
+    marvinBaseUrl = $MarvinUrl
+    authorizePath = ''
+    serverUrl = ''
+    username = ''
+  }
+}
+
+$deployment = [ordered]@{
+  subscriptionId = ''
+  workloadName = 'marvin'
+  environment = 'dev'
+  regionShort = 'wus3'
+  location = 'westus3'
+  instance = '01'
+  keeperUrl = ''
+  marvinUrl = $MarvinUrl
+}
+
 $profile = [ordered]@{
-  name = $ProfileName
+  name = $ProfileSlug
   timezone = $Timezone
   syncWindowDays = $SyncWindowDays
   privacyDefaults = [ordered]@{
     mirrorMode = $MirrorMode
     visibility = 'private'
+    subjectPrefix = 'SRC: '
+    copyLocation = $false
+    copyDescription = $false
+    preserveOriginalTimezone = $true
   }
   runtime = [ordered]@{
     powerAutomate = [ordered]@{
@@ -108,6 +242,8 @@ $profile = [ordered]@{
       graphAppDisplayName = 'Project Marvin Flow Runtime'
       supportedAccountTypes = 'AzureADMultipleOrgs'
     }
+    deployment = $deployment
+    providerConnections = $providerConnections
   }
   calendars = $calendars
   routes = $routes
@@ -119,8 +255,10 @@ $events = [ordered]@{
       id = 'evt-work-1'
       calendarId = 'work_m365'
       subject = 'Example work meeting'
+      description = 'Quarterly planning and staffing review.'
       start = '2026-07-29T10:00:00-04:00'
       end = '2026-07-29T11:00:00-04:00'
+      timezone = $Timezone
       location = 'Teams'
       status = 'confirmed'
     },
@@ -128,48 +266,256 @@ $events = [ordered]@{
       id = 'evt-contract-1'
       calendarId = 'contract_m365'
       subject = 'Example contract block'
+      description = 'Client delivery review.'
       start = '2026-07-29T13:00:00-04:00'
       end = '2026-07-29T14:00:00-04:00'
+      timezone = $Timezone
       location = 'Remote'
       status = 'confirmed'
     }
   )
 }
 
-if ($GoogleEmail) {
+if (-not [string]::IsNullOrWhiteSpace($GoogleEmail)) {
   $events.events += [ordered]@{
     id = 'evt-google-1'
     calendarId = 'personal_google'
     subject = 'Example personal block'
+    description = 'Doctor appointment.'
     start = '2026-07-30T09:00:00-04:00'
     end = '2026-07-30T10:00:00-04:00'
+    timezone = $Timezone
     location = 'Errands'
     status = 'confirmed'
   }
 }
 
-$profilePath = Join-Path $profilesDir "$ProfileName.json"
-$eventsPath = Join-Path $profilesDir "$ProfileName.events.json"
-$profile | ConvertTo-Json -Depth 10 | Set-Content -Path $profilePath
-$events | ConvertTo-Json -Depth 10 | Set-Content -Path $eventsPath
+if ($IncludeApple -and -not [string]::IsNullOrWhiteSpace($AppleEmail)) {
+  $events.events += [ordered]@{
+    id = 'evt-apple-1'
+    calendarId = 'personal_apple'
+    subject = 'Example Apple block'
+    description = 'Private calendar hold.'
+    start = '2026-07-30T15:00:00-04:00'
+    end = '2026-07-30T16:00:00-04:00'
+    timezone = $Timezone
+    location = 'Personal'
+    status = 'confirmed'
+  }
+}
+
+$providerSecrets = [ordered]@{
+  microsoftClientSecret = $MicrosoftClientSecret
+  googleClientSecret = $GoogleClientSecret
+  caldavPassword = ''
+  caldavPasswords = [ordered]@{}
+}
+
+if ($IncludeApple -and -not [string]::IsNullOrWhiteSpace($AppleCalDavAppPassword)) {
+  $providerSecrets.caldavPasswords.personal_apple = $AppleCalDavAppPassword
+}
+
+$providerSecretStatus = [ordered]@{
+  microsoftClientSecretConfigured = -not [string]::IsNullOrWhiteSpace($MicrosoftClientSecret)
+  googleClientSecretConfigured = -not [string]::IsNullOrWhiteSpace($GoogleClientSecret)
+  caldavPasswordConfigured = ($providerSecrets.caldavPasswords.Count -gt 0)
+  caldavPasswordsConfigured = [ordered]@{}
+}
+
+foreach ($calendar in $calendars | Where-Object { $_.provider -eq 'apple-caldav' }) {
+  $providerSecretStatus.caldavPasswordsConfigured[$calendar.id] = [bool]$providerSecrets.caldavPasswords[$calendar.id]
+}
+
+$providerRequirements = [ordered]@{
+  marvinBaseUrl = $MarvinUrl
+  microsoft = [ordered]@{
+    required = [bool](@($calendars | Where-Object { $_.provider -eq 'm365' -or $_.provider -eq 'outlook' }).Count -gt 0)
+    clientIdConfigured = -not [string]::IsNullOrWhiteSpace($MicrosoftClientId)
+    signInAudience = 'AzureADMultipleOrgs'
+    suggestedDisplayName = "Project Marvin $ProfileSlug Microsoft"
+    startUrl = $(if ([string]::IsNullOrWhiteSpace($MarvinUrl)) { '' } else { "$MarvinUrl/marvin-api/oauth/microsoft/start" })
+    redirectUri = $(if ([string]::IsNullOrWhiteSpace($MarvinUrl)) { '' } else { "$MarvinUrl/marvin-api/oauth/microsoft/callback" })
+    graphResourceAppId = '00000003-0000-0000-c000-000000000000'
+    delegatedPermissions = @(
+      [ordered]@{ name = 'User.Read'; id = 'e1fe6dd8-ba31-4d61-89e7-88639da4683d'; type = 'Scope' },
+      [ordered]@{ name = 'Calendars.ReadWrite'; id = '1ec239c2-d7c9-4623-a91a-a9775856bb36'; type = 'Scope' }
+    )
+    oidcScopes = @('offline_access','openid','profile')
+  }
+  google = [ordered]@{
+    required = [bool](@($calendars | Where-Object { $_.provider -eq 'google' }).Count -gt 0)
+    clientIdConfigured = -not [string]::IsNullOrWhiteSpace($GoogleClientId)
+    suggestedDisplayName = "Project Marvin $ProfileSlug Google"
+    startUrl = $(if ([string]::IsNullOrWhiteSpace($MarvinUrl)) { '' } else { "$MarvinUrl/marvin-api/oauth/google/start" })
+    redirectUri = $(if ([string]::IsNullOrWhiteSpace($MarvinUrl)) { '' } else { "$MarvinUrl/marvin-api/oauth/google/callback" })
+    scopes = @('openid','email','profile','https://www.googleapis.com/auth/calendar')
+  }
+}
+
+$connectionRecords = @()
+foreach ($calendar in $calendars) {
+  $connectionRecords += [ordered]@{
+    calendarId = $calendar.id
+    provider = $calendar.provider
+    email = $calendar.email
+    status = 'pending'
+    connectedAt = ''
+    lastValidatedAt = ''
+    accountRef = ''
+    authSession = $null
+  }
+}
+
+$connectionSummaryCalendars = @()
+foreach ($calendar in $calendars) {
+  $providerKey = if ($calendar.provider -eq 'google') { 'google' } elseif ($calendar.provider -eq 'apple-caldav') { 'caldav' } else { 'microsoft' }
+  $runtimeConfig = $providerConnections[$providerKey]
+  $providerLabel = if ($calendar.provider -eq 'google') { 'Google Calendar' } elseif ($calendar.provider -eq 'apple-caldav') { 'Apple / CalDAV' } else { 'Microsoft 365 / Outlook' }
+  $authUrl = ''
+  $connectorMode = $runtimeConfig.authMode
+  $connectorReady = $true
+  $reason = ''
+  $supportsRealtime = $true
+
+  if ($calendar.provider -eq 'apple-caldav') {
+    $connectorReady = (-not [string]::IsNullOrWhiteSpace($calendar.caldavServerUrl)) -and (-not [string]::IsNullOrWhiteSpace($calendar.caldavUsername)) -and [bool]$providerSecrets.caldavPasswords[$calendar.id]
+    if ($connectorReady) {
+      $reason = 'Apple / CalDAV credentials are stored in Marvin.'
+    } else {
+      $reason = 'Enter Apple / CalDAV server URL, username, and app password.'
+    }
+  } else {
+    $hasClientId = -not [string]::IsNullOrWhiteSpace($runtimeConfig.clientId)
+    $connectorReady = $hasClientId
+    if ($hasClientId -and -not [string]::IsNullOrWhiteSpace($MarvinUrl)) {
+      $authUrl = "$MarvinUrl$($runtimeConfig.authorizePath)"
+    }
+    if ($hasClientId) {
+      $reason = 'Provider auth can be started through marvin-engine.'
+    } else {
+      $reason = 'Set the provider client ID in Marvin before connecting this calendar.'
+    }
+  }
+
+  $connectionSummaryCalendars += [ordered]@{
+    calendarId = $calendar.id
+    label = $calendar.label
+    provider = $calendar.provider
+    providerLabel = $providerLabel
+    connectorMode = $connectorMode
+    connectorReady = $connectorReady
+    supportsRealtime = $supportsRealtime
+    authUrl = $authUrl
+    bridgeBaseUrl = $runtimeConfig.bridgeBaseUrl
+    marvinBaseUrl = $runtimeConfig.marvinBaseUrl
+    missingRequired = @()
+    missingRecommended = @()
+    status = 'pending'
+    reason = $reason
+  }
+}
+
+$setupAccounts = @()
+foreach ($calendar in $calendars) {
+  $summary = $connectionSummaryCalendars | Where-Object { $_.calendarId -eq $calendar.id } | Select-Object -First 1
+  $setupAccounts += [ordered]@{
+    id = $calendar.id
+    label = $calendar.label
+    provider = $calendar.provider
+    email = $calendar.email
+    tenantId = $(if ($calendar.tenantId) { $calendar.tenantId } else { '' })
+    scope = $calendar.scope
+    sourcePrefix = $calendar.sourcePrefix
+    connectionStatus = 'pending'
+    connectedAt = ''
+    connectionReason = $summary.reason
+    connectorReady = $summary.connectorReady
+    connectorMode = $summary.connectorMode
+    authUrl = $summary.authUrl
+    supportsRealtime = $summary.supportsRealtime
+    lastValidatedAt = ''
+    accountRef = ''
+    tokenStatus = 'missing'
+    tokenReason = ''
+    tokenExpiresAt = ''
+    caldavServerUrl = $(if ($calendar.caldavServerUrl) { $calendar.caldavServerUrl } else { '' })
+    caldavUsername = $(if ($calendar.caldavUsername) { $calendar.caldavUsername } else { '' })
+    caldavPasswordConfigured = $(if ($calendar.provider -eq 'apple-caldav') { [bool]$providerSecrets.caldavPasswords[$calendar.id] } else { $false })
+  }
+}
+
+$setupConfig = [ordered]@{
+  marvinOperator = $MarvinOperatorEmail
+  profileName = $profile.name
+  updatedAt = [DateTime]::UtcNow.ToString('o')
+  accounts = $setupAccounts
+  preferences = [ordered]@{}
+  runtime = $profile.runtime
+  deployment = $deployment
+  providerCredentials = [ordered]@{
+    microsoftClientId = $MicrosoftClientId
+    googleClientId = $GoogleClientId
+  }
+  providerConnections = $providerConnections
+  providerSecretStatus = $providerSecretStatus
+  providerRequirements = $providerRequirements
+  connectionSummary = [ordered]@{
+    calendars = $connectionSummaryCalendars
+    summary = [ordered]@{
+      total = $calendars.Count
+      connected = 0
+      pending = $calendars.Count
+      invalid = 0
+      connectorNotReady = @($connectionSummaryCalendars | Where-Object { -not $_.connectorReady }).Count
+    }
+    readyForLiveSync = ($connectionSummaryCalendars.Count -gt 0) -and (@($connectionSummaryCalendars | Where-Object { $_.connectorReady }).Count -eq $connectionSummaryCalendars.Count)
+    providerRuntime = $providerConnections
+  }
+  connectionState = [ordered]@{ records = $connectionRecords }
+  tokenSummary = [ordered]@{ total = $calendars.Count; usable = 0; pending = 0; expired = 0; error = 0; missing = $calendars.Count }
+  tokenState = [ordered]@{ records = @() }
+}
+
+$profilePath = Join-Path $profilesDir "$ProfileSlug.json"
+$eventsPath = Join-Path $profilesDir "$ProfileSlug.events.json"
+$setupPath = Join-Path $stateDir "$ProfileSlug.setup.json"
+$providerSecretsPath = Join-Path $providerSecretsDir "$ProfileSlug.secrets.json"
+$connectionsPath = Join-Path $connectionsDir "$ProfileSlug.connections.json"
+$latestPath = Join-Path $stateDir 'latest.json'
+
+Write-Json -Path $profilePath -Value $profile
+Write-Json -Path $eventsPath -Value $events
+Write-Json -Path $setupPath -Value $setupConfig
+Write-Json -Path $providerSecretsPath -Value $providerSecrets
+Write-Json -Path $connectionsPath -Value ([ordered]@{ records = $connectionRecords })
+Write-Json -Path $latestPath -Value ([ordered]@{ operatorEmail = $MarvinOperatorEmail; profileName = $profile.name })
 
 Write-Host "Created profile: $profilePath" -ForegroundColor Green
 Write-Host "Created event fixture: $eventsPath" -ForegroundColor Green
+Write-Host "Created setup state: $setupPath" -ForegroundColor Green
+Write-Host "Created provider secrets: $providerSecretsPath" -ForegroundColor Green
+Write-Host "Created connection state: $connectionsPath" -ForegroundColor Green
 
 if ($RunGenerators) {
   Push-Location $root
   try {
     npm run solutions:build -- $profilePath | Out-Host
-    powershell -ExecutionPolicy Bypass -File .\solutions\paranoid-keeper\setup-env.ps1 -ProfilePath $profilePath | Out-Host
   } finally {
     Pop-Location
   }
 
-  Write-Host "Generated local solution artifacts for $ProfileName." -ForegroundColor Green
+  Write-Host "Generated local solution artifacts for $ProfileSlug." -ForegroundColor Green
 }
 
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "1. Review the generated profile, tenant IDs, and emails."
-Write-Host "2. Run npm run solutions:build -- $profilePath if you did not use -RunGenerators."
-Write-Host "3. Run npm run solutions:test for local validation."
-Write-Host "4. Pick one solution track under solutions/."
+Write-Host "1. Run npm run marvin:ui if the Marvin local console is not already running."
+Write-Host "2. If you need a Microsoft app-registration plan first, run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName $ProfileSlug -EmitOnly."
+Write-Host "3. Open the Marvin console, confirm the generated accounts, and use Connect Calendars for Microsoft and Google auth or Apple validation."
+Write-Host "4. Run npm run marvin:doctor for a repo-level health check and next verification guidance."
+Write-Host "5. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check."
+Write-Host "6. Run npm run marvin:dry-run to inspect mirror planning from the saved Marvin profile."
+Write-Host "7. Run npm run marvin:verify-local for the current broader local verification flow."
+
+
+
+

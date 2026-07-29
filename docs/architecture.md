@@ -1,81 +1,117 @@
 # Architecture Direction
 
-## Goal
+## Product objective
 
-Maintain availability across multiple calendars without exposing full meeting details to every tenant or account.
+Project Marvin is supposed to become one product-owned sync service that keeps multiple calendars aligned without leaking sensitive meeting details across work, contracting, family, and personal contexts.
 
-## Required capabilities
+The required behavior is:
 
-- Multi-provider support:
-  - Microsoft 365 / Outlook
-  - Apple Calendar / iCloud via CalDAV
-  - Optional Google support later
-- Two-way mirroring
-- Private or obfuscated destination events
-- Reliable update and delete propagation
-- Recurring event handling
-- Deployable through scripts
-- Low ongoing maintenance
+- any connected calendar can originate an event
+- the event is mirrored to the other connected calendars
+- mirrored events are private by default
+- selected target calendars can receive fuller visibility, such as family calendars
+- mirrored events carry a per-source prefix so the origin remains obvious
+- source timezone behavior is preserved instead of hardcoding one display timezone
+- the entire system runs continuously once deployed
 
-## Preferred event model
+## Canonical model
 
-Each source event should create one or more managed mirror events in destination calendars.
+Use one central Marvin sync engine with a mapping store and provider adapters.
+Do not daisy-chain sync products together as the final architecture.
 
-Recommended mirrored payload:
+### Core entities
 
-- Subject:
-  - either original subject, or a policy-controlled replacement such as `Busy`
-- Description:
-  - empty by default unless explicitly allowed
-- Location:
-  - optional
-- Visibility:
-  - private where the provider supports it
-- Busy status:
-  - busy
-- Mapping metadata:
-  - source provider
-  - source calendar id
-  - source event id
-  - target provider
-  - target calendar id
-  - target event id
-  - content hash or last sync fingerprint
+- `calendar account`
+  - provider
+  - address
+  - tenant or server identity
+  - connected-account status
+  - source prefix
+- `route`
+  - source calendar
+  - destination calendars
+  - per-target visibility policy
+  - per-target detail policy
+  - per-target prefix override when needed
+- `mapping`
+  - source event identity
+  - target event identity
+  - last fingerprint
+  - timezone metadata
+  - last sync timestamp
 
-## Sync model
+## Mirror policy
 
-Use star topology around one canonical sync engine.
+Every mirrored event should be computed from:
 
-Example:
+- source event data
+- source calendar prefix
+- target visibility rule
+- target detail rule
+- timezone preservation rule
 
-- Work M365 calendar
-- Contracting M365 or Outlook calendar
-- Personal Apple calendar
+### Default target policy
 
-The engine watches each source, normalizes events, applies privacy policy, and pushes managed mirrors to the other calendars.
+- visibility: `private`
+- detail mode: `subject`
+- subject format: `<SOURCE_PREFIX><SUBJECT>`
+- location: stripped unless allowed
+- description: stripped unless allowed
 
-This is better than daisy-chaining automations because:
+### Family override example
 
-- it reduces loop risk
-- it centralizes mapping state
-- it makes privacy policy consistent
-- it is easier to deploy and test
+A family calendar may use:
 
-## Suggested phases
+- visibility: `default`
+- detail mode: `full`
+- location: copied
+- description: copied when allowed
 
-### Phase 1
+## Engine responsibilities
 
-- Mirror time blocks only
-- Support create, update, delete
-- Support Microsoft 365 to Microsoft 365 and Microsoft 365 to Apple
+Marvin Engine is intended to own:
 
-### Phase 2
+- provider auth and token lifecycle
+- source event ingestion
+- normalization across providers
+- bidirectional route planning
+- loop prevention
+- create, update, and delete propagation
+- recurrence handling
+- mapping persistence
+- health reporting
+- installer and deployment automation
+- operator onboarding and management UI
 
-- Add selective detail copying
-- Add recurrence hardening
-- Add health checks and alerting
+## Current implementation status on July 29, 2026
 
-### Phase 3
+Implemented now:
 
-- Add Google support if needed
-- Add admin UI or config generator
+- richer Marvin profile model
+- per-source prefixes
+- per-target visibility and detail rules
+- connected-account state in the profile
+- timezone preservation metadata in mirror payloads and mappings
+- provider readiness and connection-state assessment in Marvin
+- Marvin-owned Microsoft and Google OAuth start/callback flow
+- Marvin-owned Apple / CalDAV credential validation with per-account app passwords
+- local setup, token, provider-secret, connection, and runtime state under `.marvin/`
+- live Microsoft, Google, and Apple / CalDAV adapter smoke coverage
+- stale-mirror cleanup across Microsoft, Google, and Apple / CalDAV targets when a source event disappears from a successfully loaded source calendar
+- daemon-style recurring sync loop with runtime-status persistence
+- local scripted setup generation through `setup-marvin.ps1`
+
+Not implemented or not yet proven:
+
+- fully verified live customer-owned provider sync across all supported calendars
+- recurrence-specific proof beyond the current general event path
+- webhook or subscription receivers
+- production-safe secret storage and encryption for final runtime deployments
+- full production deployment and operations proof for Marvin's final always-on lifecycle
+
+## Transition position of Keeper
+
+`Paranoid Keeper` remains a reference and interim hosting track in this repo.
+It is not Marvin's final product boundary.
+
+The target architecture remains Marvin at the product, policy, auth, and sync-engine layers.

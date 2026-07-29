@@ -3,8 +3,12 @@
   "timezone": "America/New_York",
   "syncWindowDays": 45,
   "privacyDefaults": {
-    "mirrorMode": "busy",
-    "visibility": "private"
+    "mirrorMode": "subject",
+    "visibility": "private",
+    "subjectPrefix": "SRC: ",
+    "copyLocation": false,
+    "copyDescription": false,
+    "preserveOriginalTimezone": true
   },
   "runtime": {
     "powerAutomate": {
@@ -13,6 +17,38 @@
       "deploymentModel": "graph-http-entra-id",
       "graphAppDisplayName": "Project Marvin Flow Runtime",
       "supportedAccountTypes": "AzureADMultipleOrgs"
+    },
+    "deployment": {
+      "keeperUrl": "",
+      "marvinUrl": ""
+    },
+    "providerConnections": {
+      "microsoft": {
+        "provider": "m365",
+        "authMode": "marvin-engine",
+        "clientId": "",
+        "tenantMode": "multi-tenant",
+        "bridgeBaseUrl": "",
+        "marvinBaseUrl": "",
+        "authorizePath": "/auth/outlook"
+      },
+      "google": {
+        "provider": "google",
+        "authMode": "marvin-engine",
+        "clientId": "",
+        "bridgeBaseUrl": "",
+        "marvinBaseUrl": "",
+        "authorizePath": "/auth/google"
+      },
+      "caldav": {
+        "provider": "apple-caldav",
+        "authMode": "manual-caldav",
+        "bridgeBaseUrl": "",
+        "marvinBaseUrl": "",
+        "authorizePath": "",
+        "serverUrl": "",
+        "username": ""
+      }
     }
   },
   "calendars": [
@@ -21,47 +57,180 @@
       "label": "Work Microsoft 365",
       "provider": "m365",
       "email": "you@work.example.com",
-      "tenantId": "11111111-1111-1111-1111-111111111111"
+      "tenantId": "11111111-1111-1111-1111-111111111111",
+      "scope": "work",
+      "sourcePrefix": "WORK: ",
+      "connectionStatus": "pending"
     },
     {
       "id": "contract_m365",
       "label": "Contract Microsoft 365",
       "provider": "m365",
       "email": "you@contract.example.com",
-      "tenantId": "22222222-2222-2222-2222-222222222222"
+      "tenantId": "22222222-2222-2222-2222-222222222222",
+      "scope": "contract",
+      "sourcePrefix": "CONTRACT: ",
+      "connectionStatus": "pending"
     },
     {
       "id": "personal_google",
       "label": "Personal Google",
       "provider": "google",
-      "email": "you@gmail.com"
+      "email": "you@gmail.com",
+      "scope": "personal",
+      "sourcePrefix": "GOOGLE: ",
+      "connectionStatus": "pending"
+    },
+    {
+      "id": "family_google",
+      "label": "Family Google",
+      "provider": "google",
+      "email": "family@gmail.com",
+      "scope": "family",
+      "sourcePrefix": "FAMILY: ",
+      "connectionStatus": "pending",
+      "inboundOverrides": {
+        "visibility": "default",
+        "detailMode": "full",
+        "copyLocation": true,
+        "copyDescription": true
+      }
     },
     {
       "id": "personal_apple",
       "label": "Personal Apple",
       "provider": "apple-caldav",
       "email": "you@icloud.com",
-      "optional": true
+      "scope": "personal",
+      "optional": true,
+      "sourcePrefix": "APPLE: ",
+      "connectionStatus": "pending",
+      "caldavServerUrl": "https://caldav.icloud.example.com/calendars/personal",
+      "caldavUsername": "you@icloud.com"
     }
   ],
   "routes": [
     {
       "source": "work_m365",
-      "targets": ["contract_m365", "personal_google", "personal_apple"],
-      "mirrorMode": "busy",
-      "subjectPrefix": "BUSY: "
+      "targets": [
+        {
+          "calendarId": "contract_m365",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "WORK: "
+        },
+        {
+          "calendarId": "personal_google",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "WORK: "
+        },
+        {
+          "calendarId": "family_google",
+          "visibility": "default",
+          "detailMode": "full",
+          "subjectPrefix": "WORK: ",
+          "copyLocation": true,
+          "copyDescription": true
+        },
+        {
+          "calendarId": "personal_apple",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "WORK: "
+        }
+      ]
     },
     {
       "source": "contract_m365",
-      "targets": ["work_m365", "personal_google", "personal_apple"],
-      "mirrorMode": "busy",
-      "subjectPrefix": "BUSY: "
+      "targets": [
+        {
+          "calendarId": "work_m365",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "CONTRACT: "
+        },
+        {
+          "calendarId": "personal_google",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "CONTRACT: "
+        },
+        {
+          "calendarId": "family_google",
+          "visibility": "default",
+          "detailMode": "full",
+          "subjectPrefix": "CONTRACT: ",
+          "copyLocation": true,
+          "copyDescription": true
+        },
+        {
+          "calendarId": "personal_apple",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "CONTRACT: "
+        }
+      ]
     },
     {
       "source": "personal_google",
-      "targets": ["work_m365", "contract_m365"],
-      "mirrorMode": "busy",
-      "subjectPrefix": "BUSY: "
+      "targets": [
+        {
+          "calendarId": "work_m365",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "GOOGLE: "
+        },
+        {
+          "calendarId": "contract_m365",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "GOOGLE: "
+        },
+        {
+          "calendarId": "family_google",
+          "visibility": "default",
+          "detailMode": "full",
+          "subjectPrefix": "GOOGLE: ",
+          "copyLocation": true,
+          "copyDescription": true
+        },
+        {
+          "calendarId": "personal_apple",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "GOOGLE: "
+        }
+      ]
+    },
+    {
+      "source": "family_google",
+      "targets": [
+        {
+          "calendarId": "work_m365",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "FAMILY: "
+        },
+        {
+          "calendarId": "contract_m365",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "FAMILY: "
+        },
+        {
+          "calendarId": "personal_google",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "FAMILY: "
+        },
+        {
+          "calendarId": "personal_apple",
+          "visibility": "private",
+          "detailMode": "subject",
+          "subjectPrefix": "FAMILY: "
+        }
+      ]
     }
   ]
 }

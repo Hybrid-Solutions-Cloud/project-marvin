@@ -1,7 +1,37 @@
 {
   "profile": "marvin-example",
-  "generatedAt": "2026-07-28T22:22:06.464Z",
-  "routes": 3,
+  "generatedAt": "2026-07-29T15:37:37.992Z",
+  "routes": 4,
+  "providerRuntime": {
+    "microsoft": {
+      "provider": "m365",
+      "authMode": "marvin-engine",
+      "clientId": "",
+      "tenantMode": "multi-tenant",
+      "bridgeBaseUrl": "",
+      "marvinBaseUrl": "",
+      "authorizePath": "/auth/outlook"
+    },
+    "google": {
+      "provider": "google",
+      "authMode": "marvin-engine",
+      "clientId": "",
+      "bridgeBaseUrl": "",
+      "marvinBaseUrl": "",
+      "authorizePath": "/auth/google"
+    },
+    "caldav": {
+      "provider": "apple-caldav",
+      "authMode": "manual-caldav",
+      "bridgeBaseUrl": "",
+      "marvinBaseUrl": "",
+      "authorizePath": "",
+      "serverUrl": "",
+      "username": "",
+      "passwordConfigured": false,
+      "passwords": {}
+    }
+  },
   "solutions": [
     {
       "name": "paranoid-keeper",

@@ -1,0 +1,292 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "7699648528718144659"
+    }
+  },
+  "parameters": {
+    "managedBy": {
+      "type": "string",
+      "defaultValue": "bicep"
+    },
+    "location": {
+      "type": "string"
+    },
+    "workloadName": {
+      "type": "string",
+      "defaultValue": "marvin"
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev"
+    },
+    "regionShort": {
+      "type": "string",
+      "defaultValue": "wus3"
+    },
+    "instance": {
+      "type": "string",
+      "defaultValue": "01"
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "logAnalyticsWorkspaceName": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "fileShareName": {
+      "type": "string",
+      "defaultValue": "marvinstate"
+    },
+    "storageLinkName": {
+      "type": "string",
+      "defaultValue": "marvinstate"
+    },
+    "containerAppEnvironmentName": {
+      "type": "string"
+    },
+    "marvinAppName": {
+      "type": "string"
+    },
+    "containerImage": {
+      "type": "string"
+    },
+    "registryServer": {
+      "type": "string"
+    },
+    "registryUsername": {
+      "type": "string"
+    },
+    "registryPassword": {
+      "type": "securestring"
+    },
+    "stateMountPath": {
+      "type": "string",
+      "defaultValue": "/data"
+    },
+    "marvinUiPort": {
+      "type": "int",
+      "defaultValue": 4177
+    },
+    "runtimeIntervalSeconds": {
+      "type": "int",
+      "defaultValue": 300
+    },
+    "runtimeWindowDays": {
+      "type": "int",
+      "defaultValue": 45
+    },
+    "containerCpu": {
+      "type": "string",
+      "defaultValue": "0.5"
+    },
+    "containerMemory": {
+      "type": "string",
+      "defaultValue": "1Gi"
+    }
+  },
+  "variables": {
+    "combinedTags": "[union(createObject('ManagedBy', parameters('managedBy'), 'Workload', parameters('workloadName'), 'Environment', parameters('environment'), 'Region', parameters('regionShort'), 'Instance', parameters('instance')), parameters('tags'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[parameters('logAnalyticsWorkspaceName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('combinedTags')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "tags": "[variables('combinedTags')]",
+      "properties": {
+        "allowBlobPublicAccess": false,
+        "minimumTlsVersion": "TLS1_2",
+        "supportsHttpsTrafficOnly": true
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/default/{1}', parameters('storageAccountName'), parameters('fileShareName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('containerAppEnvironmentName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('combinedTags')]",
+      "properties": {
+        "appLogsConfiguration": {
+          "destination": "log-analytics",
+          "logAnalyticsConfiguration": {
+            "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2023-09-01').customerId]",
+            "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2023-09-01').primarySharedKey]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/managedEnvironments/storages",
+      "apiVersion": "2024-03-01",
+      "name": "[format('{0}/{1}', parameters('containerAppEnvironmentName'), parameters('storageLinkName'))]",
+      "properties": {
+        "azureFile": {
+          "accountName": "[parameters('storageAccountName')]",
+          "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').keys[0].value]",
+          "shareName": "[parameters('fileShareName')]",
+          "accessMode": "ReadWrite"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('marvinAppName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('combinedTags')]",
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]",
+        "configuration": {
+          "ingress": {
+            "external": true,
+            "targetPort": "[parameters('marvinUiPort')]",
+            "transport": "auto"
+          },
+          "registries": [
+            {
+              "server": "[parameters('registryServer')]",
+              "username": "[parameters('registryUsername')]",
+              "passwordSecretRef": "registry-password"
+            }
+          ],
+          "secrets": [
+            {
+              "name": "registry-password",
+              "value": "[parameters('registryPassword')]"
+            }
+          ]
+        },
+        "template": {
+          "volumes": [
+            {
+              "name": "marvin-state",
+              "storageType": "AzureFile",
+              "storageName": "[parameters('storageLinkName')]"
+            }
+          ],
+          "containers": [
+            {
+              "name": "marvin",
+              "image": "[parameters('containerImage')]",
+              "resources": {
+                "cpu": "[json(parameters('containerCpu'))]",
+                "memory": "[parameters('containerMemory')]"
+              },
+              "env": [
+                {
+                  "name": "MARVIN_ROOT_DIR",
+                  "value": "[parameters('stateMountPath')]"
+                },
+                {
+                  "name": "MARVIN_APP_DIR",
+                  "value": "/app"
+                },
+                {
+                  "name": "MARVIN_UI_PORT",
+                  "value": "[string(parameters('marvinUiPort'))]"
+                },
+                {
+                  "name": "MARVIN_HOSTED",
+                  "value": "true"
+                },
+                {
+                  "name": "MARVIN_AUTO_START",
+                  "value": "true"
+                },
+                {
+                  "name": "MARVIN_DEPLOY_ENABLED",
+                  "value": "false"
+                },
+                {
+                  "name": "MARVIN_SYNC_INTERVAL_SECONDS",
+                  "value": "[string(parameters('runtimeIntervalSeconds'))]"
+                },
+                {
+                  "name": "MARVIN_WINDOW_DAYS",
+                  "value": "[string(parameters('runtimeWindowDays'))]"
+                }
+              ],
+              "volumeMounts": [
+                {
+                  "mountPath": "[parameters('stateMountPath')]",
+                  "volumeName": "marvin-state"
+                }
+              ]
+            }
+          ],
+          "scale": {
+            "minReplicas": 1,
+            "maxReplicas": 1
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "marvinUrl": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', parameters('marvinAppName')), '2024-03-01').configuration.ingress.fqdn)]"
+    },
+    "marvinFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.App/containerApps', parameters('marvinAppName')), '2024-03-01').configuration.ingress.fqdn]"
+    },
+    "storageAccount": {
+      "type": "string",
+      "value": "[parameters('storageAccountName')]"
+    },
+    "fileShare": {
+      "type": "string",
+      "value": "[format('{0}/default/{1}', parameters('storageAccountName'), parameters('fileShareName'))]"
+    },
+    "containerEnvironment": {
+      "type": "string",
+      "value": "[parameters('containerAppEnvironmentName')]"
+    }
+  }
+}

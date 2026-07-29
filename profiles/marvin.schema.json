@@ -3,17 +3,64 @@
   "$id": "https://hybrid-solutions-cloud.github.io/project-marvin/schema/marvin-profile.json",
   "title": "Project Marvin Profile",
   "type": "object",
-  "required": ["name", "timezone", "syncWindowDays", "privacyDefaults", "calendars", "routes"],
+  "required": [
+    "name",
+    "timezone",
+    "syncWindowDays",
+    "privacyDefaults",
+    "calendars",
+    "routes"
+  ],
   "properties": {
-    "name": { "type": "string", "minLength": 1 },
-    "timezone": { "type": "string", "minLength": 1 },
-    "syncWindowDays": { "type": "integer", "minimum": 1 },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timezone": {
+      "type": "string",
+      "minLength": 1
+    },
+    "syncWindowDays": {
+      "type": "integer",
+      "minimum": 1
+    },
     "privacyDefaults": {
       "type": "object",
-      "required": ["mirrorMode", "visibility"],
+      "required": [
+        "mirrorMode",
+        "visibility",
+        "subjectPrefix",
+        "preserveOriginalTimezone"
+      ],
       "properties": {
-        "mirrorMode": { "type": "string", "enum": ["busy", "subject"] },
-        "visibility": { "type": "string", "enum": ["private"] }
+        "mirrorMode": {
+          "type": "string",
+          "enum": [
+            "busy",
+            "subject",
+            "full"
+          ]
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "private",
+            "default"
+          ]
+        },
+        "subjectPrefix": {
+          "type": "string",
+          "minLength": 1
+        },
+        "copyLocation": {
+          "type": "boolean"
+        },
+        "copyDescription": {
+          "type": "boolean"
+        },
+        "preserveOriginalTimezone": {
+          "type": "boolean"
+        }
       }
     },
     "runtime": {
@@ -22,11 +69,136 @@
         "powerAutomate": {
           "type": "object",
           "properties": {
-            "automationTenantId": { "type": "string", "minLength": 1 },
-            "environmentUrl": { "type": "string", "minLength": 1 },
-            "deploymentModel": { "type": "string", "enum": ["graph-http-entra-id"] },
-            "graphAppDisplayName": { "type": "string", "minLength": 1 },
-            "supportedAccountTypes": { "type": "string", "enum": ["AzureADMultipleOrgs"] }
+            "automationTenantId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "environmentUrl": {
+              "type": "string",
+              "minLength": 1
+            },
+            "deploymentModel": {
+              "type": "string",
+              "enum": [
+                "graph-http-entra-id"
+              ]
+            },
+            "graphAppDisplayName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "supportedAccountTypes": {
+              "type": "string",
+              "enum": [
+                "AzureADMultipleOrgs"
+              ]
+            }
+          }
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "keeperUrl": {
+              "type": "string"
+            },
+            "marvinUrl": {
+              "type": "string"
+            }
+          }
+        },
+        "providerConnections": {
+          "type": "object",
+          "properties": {
+            "microsoft": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "authMode": {
+                  "type": "string",
+                  "enum": [
+                    "marvin-engine",
+                    "paranoid-keeper-bridge",
+                    "manual-caldav"
+                  ]
+                },
+                "clientId": {
+                  "type": "string"
+                },
+                "tenantMode": {
+                  "type": "string"
+                },
+                "bridgeBaseUrl": {
+                  "type": "string"
+                },
+                "marvinBaseUrl": {
+                  "type": "string"
+                },
+                "authorizePath": {
+                  "type": "string"
+                }
+              }
+            },
+            "google": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "authMode": {
+                  "type": "string",
+                  "enum": [
+                    "marvin-engine",
+                    "paranoid-keeper-bridge",
+                    "manual-caldav"
+                  ]
+                },
+                "clientId": {
+                  "type": "string"
+                },
+                "bridgeBaseUrl": {
+                  "type": "string"
+                },
+                "marvinBaseUrl": {
+                  "type": "string"
+                },
+                "authorizePath": {
+                  "type": "string"
+                }
+              }
+            },
+            "caldav": {
+              "type": "object",
+              "properties": {
+                "provider": {
+                  "type": "string"
+                },
+                "authMode": {
+                  "type": "string",
+                  "enum": [
+                    "manual-caldav",
+                    "marvin-engine",
+                    "paranoid-keeper-bridge"
+                  ]
+                },
+                "bridgeBaseUrl": {
+                  "type": "string"
+                },
+                "marvinBaseUrl": {
+                  "type": "string"
+                },
+                "authorizePath": {
+                  "type": "string"
+                },
+                "serverUrl": {
+                  "type": "string"
+                },
+                "username": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -36,14 +208,100 @@
       "minItems": 2,
       "items": {
         "type": "object",
-        "required": ["id", "label", "provider", "email"],
+        "required": [
+          "id",
+          "label",
+          "provider",
+          "email",
+          "sourcePrefix",
+          "connectionStatus"
+        ],
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "label": { "type": "string", "minLength": 1 },
-          "provider": { "type": "string", "enum": ["m365", "outlook", "google", "apple-caldav"] },
-          "email": { "type": "string", "minLength": 3 },
-          "tenantId": { "type": "string" },
-          "optional": { "type": "boolean" }
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "m365",
+              "outlook",
+              "google",
+              "apple-caldav"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "minLength": 3
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "work",
+              "personal",
+              "contract",
+              "family"
+            ]
+          },
+          "sourcePrefix": {
+            "type": "string",
+            "minLength": 1
+          },
+          "connectionStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "connected",
+              "invalid",
+              "connector-not-ready",
+              "error"
+            ]
+          },
+          "connectedAt": {
+            "type": "string"
+          },
+          "tenantId": {
+            "type": "string"
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "caldavServerUrl": {
+            "type": "string"
+          },
+          "caldavUsername": {
+            "type": "string"
+          },
+          "inboundOverrides": {
+            "type": "object",
+            "properties": {
+              "visibility": {
+                "type": "string",
+                "enum": [
+                  "private",
+                  "default"
+                ]
+              },
+              "detailMode": {
+                "type": "string",
+                "enum": [
+                  "busy",
+                  "subject",
+                  "full"
+                ]
+              },
+              "copyLocation": {
+                "type": "boolean"
+              },
+              "copyDescription": {
+                "type": "boolean"
+              }
+            }
+          }
         }
       }
     },
@@ -51,12 +309,66 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["source", "targets", "mirrorMode", "subjectPrefix"],
+        "required": [
+          "source",
+          "targets"
+        ],
         "properties": {
-          "source": { "type": "string", "minLength": 1 },
-          "targets": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
-          "mirrorMode": { "type": "string", "enum": ["busy", "subject"] },
-          "subjectPrefix": { "type": "string" }
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "mirrorMode": {
+            "type": "string",
+            "enum": [
+              "busy",
+              "subject",
+              "full"
+            ]
+          },
+          "subjectPrefix": {
+            "type": "string"
+          },
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "calendarId"
+              ],
+              "properties": {
+                "calendarId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "visibility": {
+                  "type": "string",
+                  "enum": [
+                    "private",
+                    "default"
+                  ]
+                },
+                "detailMode": {
+                  "type": "string",
+                  "enum": [
+                    "busy",
+                    "subject",
+                    "full"
+                  ]
+                },
+                "subjectPrefix": {
+                  "type": "string"
+                },
+                "copyLocation": {
+                  "type": "boolean"
+                },
+                "copyDescription": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
         }
       }
     }

@@ -1,95 +1,51 @@
 # Google Hub Of Last Resort
 
-## Summary
+## Status
 
-Google Hub Of Last Resort is the OGCS-based path using `OutlookGoogleCalendarSync`.
-It is the fallback strategy when you accept Google Calendar as the bridge between Outlook calendars.
+Google Hub Of Last Resort is a **legacy desktop fallback reference** based on `OutlookGoogleCalendarSync`.
+It is kept in the repo for comparison, research, and migration context only.
 
-## Design
+It does **not** satisfy Project Marvin's unattended automation requirement by itself.
 
-### Problem fit
+## Why it is not the main path
 
-Use this solution when:
+This track depends on:
 
-- you are willing to let Google be the central availability hub
-- you are comfortable with a desktop-managed sync tool
-- you want a practical fallback rather than a clean platform story
-
-### Architecture
-
-Components:
-
-- local Marvin profile
-- generated OGCS XML settings
-- generated OGCS runbook
-- local OGCS desktop runtime
+- a desktop runtime
 - manual provider sign-in inside OGCS
+- Google acting as the structural bridge
+- ongoing client-state health on the machine where OGCS runs
 
-### Data flow
+That makes it useful as a reference, but not the primary Marvin answer.
 
-1. Marvin onboarding collects the calendar inventory.
-2. Marvin generator creates OGCS XML from the profile.
-3. The rendered settings file is copied into the OGCS runtime folder.
-4. The operator signs into Outlook and Google inside OGCS.
-5. OGCS performs the synchronization through the Google hub.
+## When to read this page
 
-## Implementation
+Use this page only when you need to understand:
 
-### Repo files
+- how earlier Outlook-to-Google sync tooling approached the problem
+- what compromises appear when Google becomes the hub
+- what a desktop-managed fallback would require
 
-- `solutions/google-hub/install-ogcs.ps1`
-- `solutions/google-hub/render-settings.ps1`
-- `solutions/google-hub/validate.ps1`
-- `solutions/google-hub/test.ps1`
-- `artifacts/solutions/<profile>/google-hub/settings.template.xml`
+## Repo scope
 
-### Environment requirements
+The repo only automates the generated configuration artifacts around this reference track.
+It does **not** turn OGCS into a fully unattended Marvin deployment.
 
-- OGCS installed locally
-- Google account available as central hub
-- Outlook account sign-in in OGCS
+## Fast truth
 
-### Validation model
+- unattended product path: **no**
+- useful research reference: **yes**
+- preferred new-user starting point: **no**
 
-The repo validation checks only the generated local files.
-Provider authentication and live testing occur in the OGCS desktop UI.
+## Start with Marvin instead
 
-## How To Use
+If your goal is the real repo product path, use:
 
-### Fast path
+- [Getting Started](/getting-started)
+- [Marvin Engine](/solutions/marvin-engine)
+- [Marvin on Azure](/solutions/marvin-azure)
+- [Onboarding UI](/operator/onboarding-ui)
 
-```powershell
-npm install
-npm run marvin:onboard
-powershell -ExecutionPolicy Bypass -File .\solutions\google-hub\test.ps1
-powershell -ExecutionPolicy Bypass -File .\solutions\google-hub\render-settings.ps1
-```
+## Kept for credits and research
 
-### Then do this
-
-1. Install OGCS.
-2. Render the generated XML into the OGCS config location.
-3. Open OGCS.
-4. Sign in to Outlook and Google.
-5. Map the Outlook calendars to the Google hub.
-6. Test with a limited date window.
-
-## Testing plan
-
-### First pilot
-
-- create event in work Outlook calendar
-- verify it appears as expected in the Google hub
-- verify other Outlook path reflects it through the hub
-- validate privacy settings on mirrored entries
-
-## Risks
-
-- desktop runtime dependence
-- Google becomes a structural dependency
-- Apple remains outside the main path
-- operational behavior depends on OGCS client state
-
-## Recommendation
-
-Use this only if the Google hub compromise is acceptable.
+This page remains because the repo gives credit to the community tools that informed Marvin's design, including `OutlookGoogleCalendarSync`.

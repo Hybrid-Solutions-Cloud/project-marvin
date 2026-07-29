@@ -12,6 +12,7 @@ export default defineConfig({
     logo: "/favicon.svg",
     nav: [
       { text: "Home", link: "/" },
+      { text: "Getting Started", link: "/getting-started" },
       { text: "Architecture", link: "/architecture" },
       { text: "Research", link: "/research/" },
       { text: "Solutions", link: "/solutions" },
@@ -22,6 +23,8 @@ export default defineConfig({
         text: "Project",
         items: [
           { text: "Overview", link: "/" },
+          { text: "Getting Started", link: "/getting-started" },
+          { text: "Requirements", link: "/requirements" },
           { text: "Architecture", link: "/architecture" },
           { text: "Solutions Index", link: "/solutions" },
           { text: "Onboarding UI", link: "/operator/onboarding-ui" },
@@ -29,15 +32,22 @@ export default defineConfig({
         ]
       },
       {
-        text: "Solution Guides",
+        text: "Primary Marvin Guides",
+        items: [
+          { text: "Marvin Engine", link: "/solutions/marvin-engine" },
+          { text: "Marvin on Azure", link: "/solutions/marvin-azure" },
+          { text: "Solutions Index", link: "/solutions" }
+        ]
+      },
+      {
+        text: "Reference Guides",
         items: [
           { text: "Paranoid Keeper", link: "/solutions/paranoid-keeper" },
           { text: "Keeper Hosting", link: "/solutions/paranoid-keeper-hosting" },
           { text: "Keeper on Azure", link: "/solutions/paranoid-keeper-azure" },
           { text: "Keeper on Cloudflare", link: "/solutions/paranoid-keeper-cloudflare" },
           { text: "Bureaucratic Flow", link: "/solutions/bureaucratic-flow" },
-          { text: "Google Hub", link: "/solutions/google-hub" },
-          { text: "Marvin Engine", link: "/solutions/marvin-engine" }
+          { text: "Google Hub", link: "/solutions/google-hub" }
         ]
       },
       {

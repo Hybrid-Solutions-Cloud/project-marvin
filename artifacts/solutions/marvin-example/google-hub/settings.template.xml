@@ -7,13 +7,13 @@
     <GoogleCalendar>you@gmail.com</GoogleCalendar>
     <SyncDirection>Bidirectional</SyncDirection>
     <TargetPrivacy>Private</TargetPrivacy>
-    <TargetSubjectPrefix>BUSY:</TargetSubjectPrefix>
+    <TargetSubjectPrefix>WORK: </TargetSubjectPrefix>
   </Profile>
   <Profile index="2" name="OGCS-2">
     <OutlookCalendar>you@contract.example.com</OutlookCalendar>
     <GoogleCalendar>you@gmail.com</GoogleCalendar>
     <SyncDirection>Bidirectional</SyncDirection>
     <TargetPrivacy>Private</TargetPrivacy>
-    <TargetSubjectPrefix>BUSY:</TargetSubjectPrefix>
+    <TargetSubjectPrefix>CONTRACT: </TargetSubjectPrefix>
   </Profile>
 </OGCSConfig>

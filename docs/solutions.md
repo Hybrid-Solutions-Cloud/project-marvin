@@ -1,94 +1,43 @@
 # Solutions
+## Read this first
+The setup wizard is not a solution picker.
+It is Marvin's onboarding flow.
+If you are cloning this repo to get a working product path, start with Marvin:
 
-## Start Here
-
-If you are here as an operator, this is the shortest path:
-
-1. Run `npm install`
-2. Run `npm run marvin:onboard`
-3. Run `npm run solutions:test`
-4. Choose **one** solution below
-
-If you do not know which one to choose, start with:
-
-- [Paranoid Keeper](/solutions/paranoid-keeper)
-
-## Automation reality check
-
-Not every path in this repo satisfies the same level of automation.
-
-| Solution | Fully unattended after setup | Best fit |
+1. Read [Getting Started](/getting-started).
+2. Run `npm run marvin:install`.
+3. Run `npm run marvin:ui` if the console is not already open.
+4. Create the Marvin admin sign-in, add calendars, link accounts, review sync policy, and start Marvin automation.
+## Product path vs reference paths
+| Path | Purpose | Automation status |
 | --- | --- | --- |
-| Paranoid Keeper on always-on host | Yes | Microsoft 365 plus Google and future Apple/CalDAV |
-| Bureaucratic Flow | Yes | Microsoft 365 across one or more tenants |
-| Google Hub Of Last Resort | No | desktop fallback only |
-| Marvin Engine | No | prototype path |
-
+| Marvin | Primary product path | Automated after Marvin setup and runtime start |
+| Paranoid Keeper | Bridge-hosting reference | Automated only after separate hosted bridge deployment |
+| Bureaucratic Flow | Microsoft-focused Power Automate reference | Automated only after Power Automate deployment |
+| Google Hub Of Last Resort | Legacy desktop fallback reference | Not fully unattended |
 ## Important clarification
-
-`Marvin Engine` is **not** the installer for the other solutions.
-
-Instead:
-
-- `Paranoid Keeper` is the cross-provider hosted service path
-- `Bureaucratic Flow` is the Power Automate path
-- `Google Hub Of Last Resort` is the desktop fallback path
-- `Marvin Engine` is the repo's own custom engine path
-
-## One onboarding flow
-
-Every solution starts from one source of truth:
-
-- generated profile JSON
-- generated event fixture JSON
-- solution-specific rendered artifacts
-
-Run this first from a fresh clone:
-
-```powershell
-npm install
-npm run marvin:onboard
-npm run solutions:test
-```
-
-## Recommended solution guides
-
-### Paranoid Keeper
-
-Use this if you need one automated hosted service across Microsoft 365 and Google.
-
+Marvin Engine is not a solution picker or installer for the other tracks.
+It is the sync engine behind the repo's main product path.
+The other documented tracks remain in the repo for comparison, credits, migration context, and bridge-hosting ideas.
+They are not the recommended first-run path, and they should not appear as choices in Marvin's product onboarding.
+## Recommended reading
+### Start here for the actual Marvin product path
+- [Getting Started](/getting-started)
+- [Marvin Engine](/solutions/marvin-engine)
+- [Marvin on Azure](/solutions/marvin-azure)
+- [Onboarding UI](/operator/onboarding-ui)
+- [Architecture](/architecture)
+### Reference and comparison material
 - [Paranoid Keeper](/solutions/paranoid-keeper)
 - [Keeper Hosting Matrix](/solutions/paranoid-keeper-hosting)
 - [Deploy Keeper to Azure Container Apps](/solutions/paranoid-keeper-azure)
-
-### Bureaucratic Flow
-
-Use this if you specifically want Power Automate and Microsoft 365.
-
 - [Bureaucratic Flow](/solutions/bureaucratic-flow)
-
-### Google Hub Of Last Resort
-
-This remains documented, but it does **not** satisfy the fully unattended requirement.
-
 - [Google Hub Of Last Resort](/solutions/google-hub)
-
-### Marvin Engine
-
-Use this if you want the repo's custom engine path and understand that it is still prototype-oriented for live integrations.
-
-- [Marvin Engine](/solutions/marvin-engine)
-
-## Shared input
-
-All solution tracks share:
-
-- `profiles/marvin.example.json`
-- `profiles/marvin.example.events.json`
-- generated local profiles from `scripts/setup-marvin.ps1`
-
-Run the whole local test pass with:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\test-all-solutions.ps1
-```
+- [Credits](/credits)
+## Shared repo artifacts
+The repo still generates shared planning artifacts that reference the historical tracks:
+- profiles/marvin.example.json
+- profiles/marvin.example.events.json
+- generated local Marvin account configurations from Marvin onboarding or marvin:setup
+- generated artifacts from scripts/build-calendar-options.mjs
+That shared artifact generation does not change the preferred product path: Marvin comes first.

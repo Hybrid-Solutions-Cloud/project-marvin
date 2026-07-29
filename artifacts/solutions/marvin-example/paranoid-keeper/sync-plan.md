@@ -4,47 +4,62 @@ Profile: marvin-example
 Timezone: America/New_York
 Sync window: 45 days
 
-Yes, this is the least ridiculous external option.
+This remains the external runtime reference while Marvin Engine becomes the product-owned path.
 
 ## Route Summary
 
-- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Personal Apple (busy)
-- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Personal Apple (busy)
-- Personal Google -> Work Microsoft 365, Contract Microsoft 365 (busy)
+- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
+- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
+- Personal Google -> Work Microsoft 365, Contract Microsoft 365, Family Google, Personal Apple (subject)
+- Family Google -> Work Microsoft 365, Contract Microsoft 365, Personal Google, Personal Apple (subject)
 
 ## Provider Coverage
 
-- Microsoft 365 and Outlook: supported via Microsoft OAuth
-- Google: supported via Google OAuth
-- Apple Calendar: optional via iCloud or CalDAV setup
+- Microsoft 365 and Outlook: marvin-engine
+- Google: marvin-engine
+- Apple Calendar: manual-caldav
 
-## Test Sequence
+## Policy Coverage
 
-1. Create the local .env with solutions/paranoid-keeper/setup-env.ps1
-2. Validate prerequisites with solutions/paranoid-keeper/validate.ps1
-3. Start the stack with solutions/paranoid-keeper/start.ps1
-4. Configure provider connections in Keeper UI
-5. Apply the routes listed below
+- private-by-default mirrored events
+- per-target visibility overrides
+- automatic per-source prefixes
+- preserve original event timezone
 
 ## Detailed Route Notes
 
 ## Work Microsoft 365
 
 Source provider: m365
-Mirror mode: busy
-Targets: Contract Microsoft 365, Personal Google, Personal Apple
-Subject prefix: BUSY: 
+Source prefix: WORK: 
+- Contract Microsoft 365: visibility=private, detailMode=subject, prefix=WORK: 
+- Personal Google: visibility=private, detailMode=subject, prefix=WORK: 
+- Family Google: visibility=default, detailMode=full, prefix=WORK: 
+- Personal Apple: visibility=private, detailMode=subject, prefix=WORK: 
 
 ## Contract Microsoft 365
 
 Source provider: m365
-Mirror mode: busy
-Targets: Work Microsoft 365, Personal Google, Personal Apple
-Subject prefix: BUSY: 
+Source prefix: CONTRACT: 
+- Work Microsoft 365: visibility=private, detailMode=subject, prefix=CONTRACT: 
+- Personal Google: visibility=private, detailMode=subject, prefix=CONTRACT: 
+- Family Google: visibility=default, detailMode=full, prefix=CONTRACT: 
+- Personal Apple: visibility=private, detailMode=subject, prefix=CONTRACT: 
 
 ## Personal Google
 
 Source provider: google
-Mirror mode: busy
-Targets: Work Microsoft 365, Contract Microsoft 365
-Subject prefix: BUSY: 
+Source prefix: GOOGLE: 
+- Work Microsoft 365: visibility=private, detailMode=subject, prefix=GOOGLE: 
+- Contract Microsoft 365: visibility=private, detailMode=subject, prefix=GOOGLE: 
+- Family Google: visibility=default, detailMode=full, prefix=GOOGLE: 
+- Personal Apple: visibility=private, detailMode=subject, prefix=GOOGLE: 
+
+## Family Google
+
+Source provider: google
+Source prefix: FAMILY: 
+- Work Microsoft 365: visibility=private, detailMode=subject, prefix=FAMILY: 
+- Contract Microsoft 365: visibility=private, detailMode=subject, prefix=FAMILY: 
+- Personal Google: visibility=private, detailMode=subject, prefix=FAMILY: 
+- Personal Apple: visibility=private, detailMode=subject, prefix=FAMILY: 

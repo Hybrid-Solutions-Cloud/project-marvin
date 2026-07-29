@@ -5,64 +5,144 @@
       "sourceEventId": "evt-work-1",
       "targetCalendarId": "contract_m365",
       "targetEventId": "contract_m365__evt-work-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.409Z"
+      "sourceSubject": "Client architecture review",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "WORK: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.425Z"
     },
     {
       "sourceCalendarId": "work_m365",
       "sourceEventId": "evt-work-1",
       "targetCalendarId": "personal_google",
       "targetEventId": "personal_google__evt-work-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Client architecture review",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "WORK: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
+    },
+    {
+      "sourceCalendarId": "work_m365",
+      "sourceEventId": "evt-work-1",
+      "targetCalendarId": "family_google",
+      "targetEventId": "family_google__evt-work-1",
+      "sourceSubject": "Client architecture review",
+      "mirrorMode": "full",
+      "visibility": "default",
+      "subjectPrefix": "WORK: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     },
     {
       "sourceCalendarId": "work_m365",
       "sourceEventId": "evt-work-1",
       "targetCalendarId": "personal_apple",
       "targetEventId": "personal_apple__evt-work-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Client architecture review",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "WORK: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     },
     {
       "sourceCalendarId": "contract_m365",
       "sourceEventId": "evt-contract-1",
       "targetCalendarId": "work_m365",
       "targetEventId": "work_m365__evt-contract-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Contract planning block",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "CONTRACT: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     },
     {
       "sourceCalendarId": "contract_m365",
       "sourceEventId": "evt-contract-1",
       "targetCalendarId": "personal_google",
       "targetEventId": "personal_google__evt-contract-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Contract planning block",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "CONTRACT: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
+    },
+    {
+      "sourceCalendarId": "contract_m365",
+      "sourceEventId": "evt-contract-1",
+      "targetCalendarId": "family_google",
+      "targetEventId": "family_google__evt-contract-1",
+      "sourceSubject": "Contract planning block",
+      "mirrorMode": "full",
+      "visibility": "default",
+      "subjectPrefix": "CONTRACT: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     },
     {
       "sourceCalendarId": "contract_m365",
       "sourceEventId": "evt-contract-1",
       "targetCalendarId": "personal_apple",
       "targetEventId": "personal_apple__evt-contract-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Contract planning block",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "CONTRACT: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     },
     {
       "sourceCalendarId": "personal_google",
       "sourceEventId": "evt-google-1",
       "targetCalendarId": "work_m365",
       "targetEventId": "work_m365__evt-google-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Personal appointment",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "GOOGLE: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     },
     {
       "sourceCalendarId": "personal_google",
       "sourceEventId": "evt-google-1",
       "targetCalendarId": "contract_m365",
       "targetEventId": "contract_m365__evt-google-1",
-      "mirrorMode": "busy",
-      "updatedAt": "2026-07-28T17:28:02.410Z"
+      "sourceSubject": "Personal appointment",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "GOOGLE: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
+    },
+    {
+      "sourceCalendarId": "personal_google",
+      "sourceEventId": "evt-google-1",
+      "targetCalendarId": "family_google",
+      "targetEventId": "family_google__evt-google-1",
+      "sourceSubject": "Personal appointment",
+      "mirrorMode": "full",
+      "visibility": "default",
+      "subjectPrefix": "GOOGLE: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
+    },
+    {
+      "sourceCalendarId": "personal_google",
+      "sourceEventId": "evt-google-1",
+      "targetCalendarId": "personal_apple",
+      "targetEventId": "personal_apple__evt-google-1",
+      "sourceSubject": "Personal appointment",
+      "mirrorMode": "subject",
+      "visibility": "private",
+      "subjectPrefix": "GOOGLE: ",
+      "sourceEventTimezone": "America/New_York",
+      "updatedAt": "2026-07-29T15:37:40.426Z"
     }
   ]
 }

@@ -1,10 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
+import { resolveActiveProfile } from "../solutions/marvin-engine/src/util/active-profile.mjs";
+import { buildProviderRuntime } from "../solutions/marvin-engine/src/util/provider-connections.mjs";
 
-const profilePath = process.argv[2] ?? "profiles/marvin.example.json";
-const root = process.cwd();
+const root = process.env.MARVIN_ROOT_DIR ? path.resolve(process.env.MARVIN_ROOT_DIR) : process.cwd();
+const explicitProfilePath = process.argv[2] ?? "";
+const activeProfile = resolveActiveProfile(root, explicitProfilePath);
+const profilePath = activeProfile.profilePath;
 const fullProfilePath = path.resolve(root, profilePath);
 const profile = JSON.parse(fs.readFileSync(fullProfilePath, "utf8"));
+const providerRuntime = buildProviderRuntime({
+  providerConnections: profile?.runtime?.providerConnections,
+  deployment: profile?.runtime?.deployment
+});
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -23,10 +31,14 @@ function getCalendar(id) {
   return calendar;
 }
 
+function getTargetConfig(targetRef) {
+  return typeof targetRef === "string" ? { calendarId: targetRef } : targetRef;
+}
+
 function formatRoute(route) {
   const source = getCalendar(route.source);
-  const targets = route.targets.map(getCalendar);
-  return `- ${source.label} -> ${targets.map((item) => item.label).join(", ")} (${route.mirrorMode})`;
+  const targets = route.targets.map(getTargetConfig).map((item) => getCalendar(item.calendarId));
+  return `- ${source.label} -> ${targets.map((item) => item.label).join(", ")} (${route.mirrorMode ?? profile.privacyDefaults.mirrorMode})`;
 }
 
 const outRoot = path.join(root, "artifacts", "solutions", profile.name);
@@ -36,21 +48,23 @@ const keeperRoot = path.join(outRoot, "paranoid-keeper");
 const keeperRoutes = profile.routes
   .map((route) => {
     const source = getCalendar(route.source);
-    const targets = route.targets.map(getCalendar);
+    const targets = route.targets.map(getTargetConfig).map((item) => ({
+      config: item,
+      calendar: getCalendar(item.calendarId)
+    }));
     return [
       `## ${source.label}`,
       "",
       `Source provider: ${source.provider}`,
-      `Mirror mode: ${route.mirrorMode}`,
-      `Targets: ${targets.map((item) => item.label).join(", ")}`,
-      `Subject prefix: ${route.subjectPrefix}`
+      `Source prefix: ${source.sourcePrefix}`,
+      ...targets.map((item) => `- ${item.calendar.label}: visibility=${item.config.visibility ?? profile.privacyDefaults.visibility}, detailMode=${item.config.detailMode ?? route.mirrorMode ?? profile.privacyDefaults.mirrorMode}, prefix=${item.config.subjectPrefix ?? source.sourcePrefix}`)
     ].join("\n");
   })
   .join("\n\n");
 
 writeFile(
   path.join(keeperRoot, "sync-plan.md"),
-  `# Paranoid Keeper Sync Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nYes, this is the least ridiculous external option.\n\n## Route Summary\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Coverage\n\n- Microsoft 365 and Outlook: supported via Microsoft OAuth\n- Google: supported via Google OAuth\n- Apple Calendar: optional via iCloud or CalDAV setup\n\n## Test Sequence\n\n1. Create the local .env with solutions/paranoid-keeper/setup-env.ps1\n2. Validate prerequisites with solutions/paranoid-keeper/validate.ps1\n3. Start the stack with solutions/paranoid-keeper/start.ps1\n4. Configure provider connections in Keeper UI\n5. Apply the routes listed below\n\n## Detailed Route Notes\n\n${keeperRoutes}\n`
+  `# Paranoid Keeper Sync Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis remains the external runtime reference while Marvin Engine becomes the product-owned path.\n\n## Route Summary\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Coverage\n\n- Microsoft 365 and Outlook: ${providerRuntime.microsoft.authMode}\n- Google: ${providerRuntime.google.authMode}\n- Apple Calendar: ${providerRuntime.caldav.authMode}\n\n## Policy Coverage\n\n- private-by-default mirrored events\n- per-target visibility overrides\n- automatic per-source prefixes\n- preserve original event timezone\n\n## Detailed Route Notes\n\n${keeperRoutes}\n`
 );
 
 writeFile(
@@ -59,9 +73,9 @@ writeFile(
     `BETTER_AUTH_SECRET=`,
     `ENCRYPTION_KEY=`,
     `TRUSTED_ORIGINS=http://localhost:3000`,
-    `GOOGLE_CLIENT_ID=`,
+    `GOOGLE_CLIENT_ID=${providerRuntime.google.clientId ?? ""}`,
     `GOOGLE_CLIENT_SECRET=`,
-    `MICROSOFT_CLIENT_ID=`,
+    `MICROSOFT_CLIENT_ID=${providerRuntime.microsoft.clientId ?? ""}`,
     `MICROSOFT_CLIENT_SECRET=`
   ].join("\n") + "\n"
 );
@@ -69,8 +83,8 @@ writeFile(
 const paRoot = path.join(outRoot, "bureaucratic-flow");
 const paCalendars = profile.calendars.filter((item) => item.provider === "m365" || item.provider === "outlook");
 const paRoutes = profile.routes.filter(
-  (route) => getCalendar(route.source).provider === "m365" && route.targets.every((id) => {
-    const target = getCalendar(id);
+  (route) => (getCalendar(route.source).provider === "m365" || getCalendar(route.source).provider === "outlook") && route.targets.every((targetRef) => {
+    const target = getCalendar(getTargetConfig(targetRef).calendarId);
     return target.provider === "m365" || target.provider === "outlook";
   })
 );
@@ -84,9 +98,10 @@ writeFile(
       syncWindowDays: profile.syncWindowDays,
       eligibleCalendars: paCalendars,
       eligibleRoutes: paRoutes,
+      providerRuntime: providerRuntime.microsoft,
       notes: [
         "This solution is intentionally narrowed to Outlook and Microsoft 365 calendars.",
-        "Routes involving Google or Apple are excluded, because naturally the easy thing would have been too easy."
+        "Routes involving Google or Apple are excluded because the Power Automate baseline is not the full Marvin target architecture."
       ]
     },
     null,
@@ -96,7 +111,7 @@ writeFile(
 
 writeFile(
   path.join(paRoot, "import-checklist.md"),
-  `# Bureaucratic Flow Import Checklist\n\nProfile: ${profile.name}\n\nThis is the pragmatic Microsoft-only route. Slow, visual, and irritating, but still usable.\n\n## Eligible Calendars\n\n${paCalendars.map((item) => `- ${item.label} (${item.email})`).join("\n")}\n\n## Eligible Routes\n\n${paRoutes.length ? paRoutes.map(formatRoute).join("\n") : "- None in this profile."}\n\n## Test Sequence\n\n1. Validate local generated inputs with solutions/bureaucratic-flow/validate.ps1\n2. Build the staging bundle with solutions/bureaucratic-flow/build-solution.ps1\n3. Create Office 365 Outlook connections in Power Automate\n4. Import or rebuild the MShekow flow package\n5. Apply the settings from flow-settings.json\n6. Run a 1-day test window before increasing to ${profile.syncWindowDays} days\n`
+  `# Bureaucratic Flow Import Checklist\n\nProfile: ${profile.name}\n\nThis is the pragmatic Microsoft-only route.\n\n## Eligible Calendars\n\n${paCalendars.map((item) => `- ${item.label} (${item.email})`).join("\n")}\n\n## Eligible Routes\n\n${paRoutes.length ? paRoutes.map(formatRoute).join("\n") : "- None in this profile."}\n\n## Runtime Mode\n\n- auth mode: ${providerRuntime.microsoft.authMode}\n- bridge URL: ${providerRuntime.microsoft.bridgeBaseUrl || "not configured"}\n`
 );
 
 const ogcsRoot = path.join(outRoot, "google-hub");
@@ -110,28 +125,29 @@ const ogcsPairs = googleHub
     }))
   : [];
 
-const xmlProfiles = ogcsPairs.map((pair, index) => `  <Profile index="${index + 1}" name="${pair.profileName}">\n    <OutlookCalendar>${pair.outlook.email}</OutlookCalendar>\n    <GoogleCalendar>${pair.google.email}</GoogleCalendar>\n    <SyncDirection>Bidirectional</SyncDirection>\n    <TargetPrivacy>Private</TargetPrivacy>\n    <TargetSubjectPrefix>BUSY:</TargetSubjectPrefix>\n  </Profile>`).join("\n");
+const xmlProfiles = ogcsPairs.map((pair, index) => `  <Profile index="${index + 1}" name="${pair.profileName}">\n    <OutlookCalendar>${pair.outlook.email}</OutlookCalendar>\n    <GoogleCalendar>${pair.google.email}</GoogleCalendar>\n    <SyncDirection>Bidirectional</SyncDirection>\n    <TargetPrivacy>Private</TargetPrivacy>\n    <TargetSubjectPrefix>${pair.outlook.sourcePrefix}</TargetSubjectPrefix>\n  </Profile>`).join("\n");
 
 writeFile(
   path.join(ogcsRoot, "settings.template.xml"),
-  `<OGCSConfig>\n  <ProfileName>${profile.name}</ProfileName>\n  <Timezone>${profile.timezone}</Timezone>\n  <SyncWindowDays>${profile.syncWindowDays}</SyncWindowDays>\n${xmlProfiles || "  <!-- No Google calendar found in the profile; naturally this option collapses without its hub. -->"}\n</OGCSConfig>\n`
+  `<OGCSConfig>\n  <ProfileName>${profile.name}</ProfileName>\n  <Timezone>${profile.timezone}</Timezone>\n  <SyncWindowDays>${profile.syncWindowDays}</SyncWindowDays>\n${xmlProfiles || "  <!-- No Google calendar found in the profile. -->"}\n</OGCSConfig>\n`
 );
 
 writeFile(
   path.join(ogcsRoot, "runbook.md"),
-  `# Google Hub Of Last Resort Runbook\n\nProfile: ${profile.name}\n\nThis is the compromise option. One introduces Google as an availability hub because direct elegance was apparently unavailable.\n\n## Outlook <-> Google Pairs\n\n${ogcsPairs.length ? ogcsPairs.map((pair) => `- ${pair.outlook.label} <-> ${pair.google.label}`).join("\n") : "- No Google calendar found in profile."}\n\n## Test Sequence\n\n1. Validate generated inputs with solutions/google-hub/validate.ps1\n2. Install OGCS with solutions/google-hub/install-ogcs.ps1\n3. Render the XML with solutions/google-hub/render-settings.ps1\n4. Open OGCS and bind Outlook calendars to the Google hub\n5. Start with a limited date window\n\n## Notes\n\n- This is not the strongest fit for direct multi-M365 mirroring.\n- It is useful when you want one Google visibility hub and are comfortable running a desktop sync tool.\n- Apple Calendar is not directly covered by this solution.\n`
+  `# Google Hub Of Last Resort Runbook\n\nProfile: ${profile.name}\n\nThis is still a compromise option, not the primary Marvin target architecture.\n\nCurrent Google runtime mode: ${providerRuntime.google.authMode}\n`
 );
 
 const marvinRoot = path.join(outRoot, "marvin-engine");
 writeFile(
   path.join(marvinRoot, "dry-run-plan.md"),
-  `# Marvin Engine Dry Run Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis is the in-repo first-party service path. It can now execute a deterministic mock sync and write mapping state. Remarkable, really.\n\n## Planned Routes\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Intended Providers\n\n- Microsoft Graph for Microsoft 365 and Outlook\n- Google Calendar API if a Google hub remains relevant\n- CalDAV for optional Apple calendar support\n\n## Local Test Sequence\n\n1. Run npm run marvin:dry-run\n2. Run npm run marvin:apply-mock\n3. Inspect artifacts/marvin-engine/${profile.name}.mappings.json\n`
+  `# Marvin Engine Dry Run Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis is the in-repo first-party service path.\n\n## Planned Routes\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Runtime\n\n- Microsoft: ${providerRuntime.microsoft.authMode}\n- Google: ${providerRuntime.google.authMode}\n- CalDAV: ${providerRuntime.caldav.authMode}\n\n## Policy Guarantees Under Design\n\n- private-by-default mirrored events\n- family-calendar visibility overrides\n- per-source prefixes\n- preserved source timezone behavior\n- account connection status tracked per calendar\n`
 );
 
 const summary = {
   profile: profile.name,
   generatedAt: new Date().toISOString(),
   routes: profile.routes.length,
+  providerRuntime,
   solutions: [
     { name: "paranoid-keeper", path: path.relative(root, keeperRoot) },
     { name: "bureaucratic-flow", path: path.relative(root, paRoot) },
@@ -141,4 +157,5 @@ const summary = {
 };
 
 writeFile(path.join(outRoot, "summary.json"), JSON.stringify(summary, null, 2) + "\n");
-console.log(`Generated solution artifacts for ${profile.name} at ${path.relative(root, outRoot)}`);
+console.log(`Generated solution artifacts for ${profile.name} at ${path.relative(root, outRoot)} (${activeProfile.source})`);
+

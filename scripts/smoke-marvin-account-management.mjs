@@ -1,0 +1,254 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import { spawn } from "node:child_process";
+
+const repoRoot = process.cwd();
+const tempRoot = path.resolve(`C:/tmp/marvin-account-management-smoke-${Date.now()}`);
+const port = 4202;
+const profileName = "marvin-manage-smoke";
+
+fs.mkdirSync(tempRoot, { recursive: true });
+
+const server = spawn(process.execPath, ["scripts/marvin-onboard-ui.mjs"], {
+  cwd: repoRoot,
+  windowsHide: true,
+  env: {
+    ...process.env,
+    MARVIN_ROOT_DIR: tempRoot,
+    MARVIN_UI_PORT: String(port)
+  },
+  stdio: "ignore"
+});
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitFor(predicate, timeoutMs, label) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const value = await predicate();
+    if (value) return value;
+    await sleep(200);
+  }
+  throw new Error(`Timed out waiting for ${label}`);
+}
+
+async function requestJson(url, options = {}) {
+  const response = await fetch(url, options);
+  return response.json();
+}
+
+try {
+  await waitFor(async () => {
+    try {
+      const result = await requestJson(`http://127.0.0.1:${port}/marvin-api/bootstrap`);
+      return result?.ok ? result : null;
+    } catch {
+      return null;
+    }
+  }, 10000, "bootstrap API");
+
+  await requestJson(`http://127.0.0.1:${port}/marvin-api/create-account`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      marvinDisplayName: "Marvin Manager",
+      marvinEmail: "marvin-manager@example.com",
+      marvinPassword: "correct-horse-battery-staple"
+    })
+  });
+
+  const saveConfig = await requestJson(`http://127.0.0.1:${port}/marvin-api/save-config`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      marvinEmail: "marvin-manager@example.com",
+      marvinAccount: {
+        email: "marvin-manager@example.com",
+        displayName: "Marvin Manager",
+        timezone: "America/New_York"
+      },
+      profileName,
+      timezone: "America/New_York",
+      syncWindowDays: 7,
+      accounts: [
+        {
+          id: "work_m365",
+          label: "Work",
+          provider: "m365",
+          email: "work@example.com",
+          scope: "work",
+          sourcePrefix: "WORK: "
+        },
+        {
+          id: "family_google",
+          label: "Family",
+          provider: "google",
+          email: "family@example.com",
+          scope: "family",
+          sourcePrefix: "FAM: "
+        }
+      ],
+      preferences: {
+        defaultDetailMode: "subject",
+        defaultVisibility: "private",
+        familyDetailMode: "full",
+        familyVisibility: "default",
+        subjectPrefix: "SRC: ",
+        copyLocationToFamily: true,
+        copyDescriptionToFamily: true,
+        preserveOriginalTimezone: true
+      },
+      providerCredentials: {
+        microsoftClientId: "ms-client-id",
+        googleClientId: "google-client-id"
+      },
+      providerSecrets: {
+        microsoftClientSecret: "ms-client-secret",
+        googleClientSecret: "google-client-secret"
+      }
+    })
+  });
+
+  assert.equal(saveConfig.ok, true);
+  assert.equal(saveConfig.config.accounts.length, 2);
+
+  const addContract = await requestJson(`http://127.0.0.1:${port}/marvin-api/account-upsert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profileName,
+      account: {
+        label: "Contract",
+        provider: "outlook",
+        email: "contract@example.com",
+        scope: "contract",
+        sourcePrefix: "CONTRACT: ",
+        inboundOverrides: {
+          visibility: "private",
+          detailMode: "subject"
+        }
+      }
+    })
+  });
+
+  assert.equal(addContract.ok, true);
+  assert.equal(addContract.config.accounts.length, 3);
+  const contractAdded = addContract.config.accounts.find((account) => account.email === "contract@example.com");
+  assert.ok(contractAdded);
+  assert.equal(contractAdded.provider, "outlook");
+  assert.equal(contractAdded.sourcePrefix, "CONTRACT: ");
+  assert.equal(contractAdded.inboundOverrides.visibility, "private");
+  assert.equal(contractAdded.inboundOverrides.detailMode, "subject");
+
+  const editContract = await requestJson(`http://127.0.0.1:${port}/marvin-api/account-upsert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profileName,
+      account: {
+        id: contractAdded.id,
+        label: "Contracting",
+        provider: "outlook",
+        email: "contract@example.com",
+        scope: "contract",
+        sourcePrefix: "SIDEGIG: ",
+        inboundOverrides: {
+          visibility: "default",
+          detailMode: "full",
+          copyLocation: true,
+          copyDescription: true
+        }
+      }
+    })
+  });
+
+  assert.equal(editContract.ok, true);
+  const contractEdited = editContract.config.accounts.find((account) => account.id === contractAdded.id);
+  assert.ok(contractEdited);
+  assert.equal(contractEdited.label, "Contracting");
+  assert.equal(contractEdited.sourcePrefix, "SIDEGIG: ");
+  assert.equal(contractEdited.inboundOverrides.visibility, "default");
+  assert.equal(contractEdited.inboundOverrides.detailMode, "full");
+  assert.equal(contractEdited.inboundOverrides.copyLocation, true);
+  assert.equal(contractEdited.inboundOverrides.copyDescription, true);
+
+  const addApple = await requestJson(`http://127.0.0.1:${port}/marvin-api/account-upsert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profileName,
+      account: {
+        label: "Apple Family",
+        provider: "apple-caldav",
+        email: "apple@example.com",
+        scope: "family",
+        sourcePrefix: "APPLE: ",
+        caldavServerUrl: "https://caldav.example.com/family",
+        caldavUsername: "apple@example.com",
+        caldavPassword: "apple-app-password",
+        inboundOverrides: {
+          visibility: "default",
+          detailMode: "full",
+          copyLocation: true,
+          copyDescription: true
+        }
+      }
+    })
+  });
+
+  assert.equal(addApple.ok, true);
+  const appleAdded = addApple.config.accounts.find((account) => account.email === "apple@example.com");
+  assert.ok(appleAdded);
+  assert.equal(appleAdded.provider, "apple-caldav");
+  assert.equal(appleAdded.sourcePrefix, "APPLE: ");
+  assert.equal(appleAdded.caldavServerUrl, "https://caldav.example.com/family");
+  assert.equal(appleAdded.caldavUsername, "apple@example.com");
+  assert.equal(appleAdded.inboundOverrides.visibility, "default");
+  assert.equal(appleAdded.inboundOverrides.detailMode, "full");
+
+  const reloadedConfig = await requestJson(`http://127.0.0.1:${port}/marvin-api/config?profileName=${encodeURIComponent(profileName)}`);
+  assert.equal(reloadedConfig.ok, true);
+  const reloadedApple = reloadedConfig.config.accounts.find((account) => account.id === appleAdded.id);
+  const reloadedContract = reloadedConfig.config.accounts.find((account) => account.id === contractAdded.id);
+  assert.ok(reloadedApple);
+  assert.ok(reloadedContract);
+  assert.equal(reloadedContract.sourcePrefix, "SIDEGIG: ");
+  assert.equal(reloadedContract.inboundOverrides.copyLocation, true);
+  assert.equal(reloadedApple.caldavServerUrl, "https://caldav.example.com/family");
+  assert.equal(reloadedApple.inboundOverrides.copyDescription, true);
+
+  const removeContract = await requestJson(`http://127.0.0.1:${port}/marvin-api/account-remove`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      profileName,
+      accountId: contractAdded.id
+    })
+  });
+
+  assert.equal(removeContract.ok, true);
+  assert.equal(removeContract.config.accounts.length, 3);
+  assert.equal(removeContract.config.accounts.some((account) => account.id === contractAdded.id), false);
+  assert.equal(removeContract.config.accounts.some((account) => account.id === appleAdded.id), true);
+
+  console.log(JSON.stringify({
+    ok: true,
+    profileName,
+    addedAccountId: contractAdded.id,
+    appleAccountId: appleAdded.id,
+    finalAccounts: removeContract.config.accounts.map((account) => ({
+      id: account.id,
+      label: account.label,
+      provider: account.provider,
+      sourcePrefix: account.sourcePrefix,
+      inboundOverrides: account.inboundOverrides || {}
+    }))
+  }, null, 2));
+} finally {
+  try { server.kill("SIGTERM"); } catch {}
+  await sleep(500);
+  fs.rmSync(tempRoot, { recursive: true, force: true });
+}
