@@ -13,7 +13,7 @@ The Marvin UI is the product-owned front door for the Marvin workspace account t
 - showing whether a provider is actually ready for sign-in
 - preserving per-calendar inbound override state in Marvin's saved config and generated profile
 - collecting provider app settings needed for live provider-linking
-- surfacing Marvin-owned provider requirements such as redirect URIs and Microsoft delegated permissions
+- surfacing Marvin-owned provider requirements such as redirect URIs, Microsoft delegated permissions, and copyable provider-plan helper commands
 - keeping provider linking Marvin-native instead of exposing the older bridge-mode auth path in the operator UI
 - collecting Apple / CalDAV server settings and app-password validation data
 - persisting Apple / CalDAV app passwords per calendar account in Marvin's backend state
@@ -58,7 +58,7 @@ The current UI stores and shows:
 - readiness summary with per-account next actions, recommended operator actions, ready-versus-action-required counts, batch validation, and automation-start readiness
 - shorter operator-facing status labels so the calendar list reads like a product console instead of a raw state dump
 - clearer card fields such as Setup saved, Access setup, Link status, Access token, and Apple password
-- a clearer Step 3 flow that focuses on save settings, link accounts, validate access, and only then start automation
+- a clearer Step 3 flow that focuses on save settings, refresh provider setup plans, link accounts, validate access, and only then start automation
 - a console layout where one Calendars list holds inventory, linking, relinking, validation, edit, and remove actions together
 - token-state summary
 - per-account token status and reason

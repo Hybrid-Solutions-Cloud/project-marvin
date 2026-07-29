@@ -1328,6 +1328,9 @@ async function handleProviderPlan(profileName, provider) {
     throw new Error("Profile not found.");
   }
   const normalizedProvider = normalizeString(provider).toLowerCase();
+  const liveConfig = materializeConfigFromProfile(bundle.profile, bundle.config, bundle.config, bundle.connectionState, loadTokenState(bundle.profile.name), normalizeProviderSecrets(readJson(getProviderSecretsPath(bundle.profile.name), {})));
+  const requirements = liveConfig.providerRequirements || {};
+  const marvinBaseUrl = normalizeString(requirements?.marvinBaseUrl || bundle.config?.deployment?.marvinUrl || bundle.profile?.runtime?.deployment?.marvinUrl || "");
   const scriptName = normalizedProvider === "microsoft"
     ? "register-marvin-entra-app.ps1"
     : normalizedProvider === "google"
@@ -1341,6 +1344,7 @@ async function handleProviderPlan(profileName, provider) {
     "-File", path.join("scripts", scriptName),
     "-ProfileName", bundle.profile.name,
     "-RootDir", root,
+    ...(marvinBaseUrl ? ["-MarvinBaseUrl", marvinBaseUrl] : []),
     "-EmitOnly"
   ], {
     cwd: appRoot,
@@ -1351,25 +1355,30 @@ async function handleProviderPlan(profileName, provider) {
   if (!trimmed) {
     throw new Error("Provider plan script returned no output.");
   }
-  const requirements = materializeConfigFromProfile(bundle.profile, bundle.config, bundle.config, bundle.connectionState, loadTokenState(bundle.profile.name), normalizeProviderSecrets(readJson(getProviderSecretsPath(bundle.profile.name), {}))).providerRequirements || {};
   const providerRequirements = normalizedProvider === "microsoft"
     ? requirements.microsoft || {}
     : normalizedProvider === "google"
       ? requirements.google || {}
       : {};
+  const helperCommand = normalizedProvider === "microsoft"
+    ? `pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-entra-app.ps1 -ProfileName ${bundle.profile.name} -MarvinBaseUrl ${marvinBaseUrl || "<marvin-url>"} -EmitOnly`
+    : `pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-google-app.ps1 -ProfileName ${bundle.profile.name} -MarvinBaseUrl ${marvinBaseUrl || "<marvin-url>"} -EmitOnly`;
+  const parsedPlan = JSON.parse(trimmed);
   const plan = {
-    ...JSON.parse(trimmed),
+    ...parsedPlan,
     authorizePath: normalizedProvider === "microsoft"
-      ? providerRequirements.startUrl ? "/marvin-api/oauth/microsoft/start" : "/marvin-api/oauth/microsoft/start"
+      ? "/marvin-api/oauth/microsoft/start"
       : normalizedProvider === "google"
-        ? providerRequirements.startUrl ? "/marvin-api/oauth/google/start" : "/marvin-api/oauth/google/start"
+        ? "/marvin-api/oauth/google/start"
         : undefined,
     startUrl: providerRequirements.startUrl || undefined,
-    redirectUri: providerRequirements.redirectUri || JSON.parse(trimmed).redirectUri
+    redirectUri: providerRequirements.redirectUri || parsedPlan.redirectUri,
+    marvinBaseUrl: marvinBaseUrl || parsedPlan.marvinBaseUrl || undefined
   };
   return {
     profileName: bundle.profile.name,
     provider: normalizedProvider,
+    helperCommand,
     plan
   };
 }
