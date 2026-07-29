@@ -34,11 +34,11 @@ The Marvin UI is the product-owned front door for the Marvin workspace account t
 6. Save the generated Marvin workspace configuration and local `.marvin` state.
 7. Open the management console after setup is saved.
 8. Enter provider access settings in Marvin.
-9. While adding or editing a calendar, Marvin now shows inline provider guidance so the operator knows whether Step 3 needs Microsoft or Google app settings, or whether Apple / CalDAV credentials are entered directly in the calendar form.
-10. Connect each provider account from Marvin's single Calendars management list after Marvin setup has been saved.
-11. Marvin now auto-refreshes local state for a short window after it opens Microsoft or Google provider sign-in.
-12. Use `Refresh Marvin State` if you want an explicit manual reload or if the callback completed outside Marvin's polling window.
-13. Run `Check Access` for the calendars that should now be linked.
+9. Use Marvin's Provider Access panel to refresh the Microsoft or Google setup plan when you need the exact helper command, redirect URI, start URL, or first setup step without leaving the product.
+10. While adding or editing a calendar, Marvin now shows inline provider guidance so the operator knows whether Step 3 needs Microsoft or Google app settings, or whether Apple / CalDAV credentials are entered directly in the calendar form.
+11. Connect each provider account from Marvin's single Calendars management list after Marvin setup has been saved.
+12. Marvin now auto-refreshes local state for a short window after it opens Microsoft or Google provider sign-in.
+13. Use `Refresh Marvin State` if you want an explicit manual reload or if the callback completed outside Marvin's polling window.
 14. Review the Marvin Workspace card plus each calendar card's Setup saved, Access setup, Link status, and Last checked fields to confirm Marvin is actually ready.
 15. For Apple / CalDAV accounts, Marvin validates credentials directly instead of redirecting to OAuth.
 16. Start or stop the Marvin runtime and monitor its status from Marvin after setup has been saved.

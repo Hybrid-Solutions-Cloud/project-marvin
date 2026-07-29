@@ -138,9 +138,10 @@ Recommended local flow:
 
 1. Start Marvin at `http://localhost:4177` unless you overrode `MARVIN_UI_PORT`.
 2. Open the management console.
-3. Enter Microsoft and/or Google client IDs and client secrets in Marvin's Provider Access section. Use the redirect URIs shown in Marvin when you create the provider apps in Microsoft Entra ID or Google Cloud Console.
-4. If you use Apple / CalDAV, enter the CalDAV server URL, username, and app password when you add that Apple calendar account.
-5. Save Marvin setup.
+3. If you want Marvin to generate the exact provider-app plan first, use the Refresh Microsoft Plan or Refresh Google Plan buttons in Marvin's Provider Access section, or run the helper scripts directly.
+4. Enter Microsoft and/or Google client IDs and client secrets in Marvin's Provider Access section. Use the redirect URIs and helper command shown in Marvin when you create the provider apps in Microsoft Entra ID or Google Cloud Console.
+5. If you use Apple / CalDAV, enter the CalDAV server URL, username, and app password when you add that Apple calendar account.
+6. Save Marvin setup.
 6. Open Marvin's Calendars list only after Marvin setup has been saved, link each provider account, let Marvin auto-refresh the returned auth state, and then use `Refresh Marvin State` manually if needed before running `Check Access`.
 7. Check the Marvin Workspace card in the console to confirm Marvin saved the correct workspace-account details, workspace ID, timezone, sync window, and hosted or local automation state.
 8. If an existing calendar needs changes, use Marvin's edit flow from the calendar list instead of rebuilding the Marvin account configuration by hand.
