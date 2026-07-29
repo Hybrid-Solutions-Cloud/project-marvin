@@ -147,7 +147,7 @@ Recommended local flow:
 9. Read the Access setup, Link status, and Access token lines on each calendar card before assuming a connection is ready.
 
 The provider client secrets are stored only in Marvin's local `.marvin/` state, not in tracked repo files.
-Google still requires the actual OAuth client to be created in Google Cloud Console, but Marvin persists the returned client ID and secret into Marvin state once you have them.
+Google still requires the actual OAuth client to be created in Google Cloud Console, but Marvin can emit the exact callback URL, scopes, and follow-up command through `register-marvin-google-app.ps1`, then persist the returned client ID and secret into Marvin state once you have them.
 
 Environment variables are still accepted as a fallback, but they are no longer the only local path:
 

@@ -58,6 +58,7 @@ function buildHostedGuidance(profileName = "marvin") {
     planCommand: "npm run marvin:azure:plan -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3",
     deployCommand: "npm run marvin:azure:deploy -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3",
     entraPlanCommand: `pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-entra-app.ps1 -ProfileName ${safeProfile} -EmitOnly`,
+    googlePlanCommand: `pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-google-app.ps1 -ProfileName ${safeProfile} -MarvinBaseUrl <marvin-url> -EmitOnly`,
     docsPath: "docs/solutions/marvin-azure.md"
   };
 }
@@ -89,10 +90,10 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
   const needsCalDav = calendars.some((calendar) => calendar.provider === "apple-caldav");
 
   if (needsMicrosoft && !config?.providerCredentials?.microsoftClientId) {
-    steps.push("Add a Microsoft client ID and secret in Marvin before linking Microsoft calendars.");
+    steps.push(`Run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName ${sanitizeName(profile?.name || config?.profileName || "marvin.local")} -EmitOnly so Marvin can show the exact Microsoft app-registration plan before you save the client ID and secret.`);
   }
   if (needsGoogle && !config?.providerCredentials?.googleClientId) {
-    steps.push("Add a Google client ID and secret in Marvin before linking Google calendars.");
+    steps.push(`Run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-google-app.ps1 -ProfileName ${sanitizeName(profile?.name || config?.profileName || "marvin.local")} -MarvinBaseUrl <marvin-url> -EmitOnly so Marvin can show the exact Google OAuth plan before you save the client ID and secret.`);
   }
   if (needsCalDav) {
     const missingApple = (config?.accounts || []).filter((account) => account.provider === "apple-caldav" && !account.caldavPasswordConfigured);

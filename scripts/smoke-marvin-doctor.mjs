@@ -97,6 +97,7 @@ try {
   assert.match(report.hosted.planCommand, /marvin:azure:plan/i);
   assert.match(report.hosted.deployCommand, /marvin:azure:deploy/i);
   assert.match(report.hosted.entraPlanCommand, new RegExp(profileName, "i"));
+  assert.match(report.hosted.googlePlanCommand, new RegExp(profileName, "i"));
   assert.ok(Array.isArray(report.nextSteps));
   assert.ok(report.nextSteps.some((step) => /Calendars management list/i.test(step)));
   assert.ok(report.nextSteps.some((step) => /smoke-operator-journey/i.test(step)));
