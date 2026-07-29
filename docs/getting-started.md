@@ -22,7 +22,7 @@ Then follow the one supported first-run path inside Marvin:
 9. Authenticate each calendar from Marvin's Connected Calendars area. Marvin will auto-refresh local auth state for a short window after it opens provider sign-in.
 10. Refresh Marvin state manually if needed, then validate live access.
 11. Review the Marvin Admin card to confirm the saved account name, internal account ID, timezone, sync window, and automation state.
-12. Start Marvin automation only after Marvin shows every calendar as connected and validated.
+12. Start Marvin automation only after Marvin shows every calendar as connected and validated. You can do that from Step 3 or from the management console.
 13. Return to the management console later to add, edit, reconnect, or remove calendars.
 
 ## What works today
@@ -263,6 +263,7 @@ If you need the reference and comparison tracks:
 - [Paranoid Keeper](/solutions/paranoid-keeper)
 - [Bureaucratic Flow](/solutions/bureaucratic-flow)
 - [Credits](/credits)
+
 
 
 

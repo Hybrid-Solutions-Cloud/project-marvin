@@ -80,6 +80,7 @@ try {
       "Per-calendar access and authentication state",
       "Batch validation control",
       "Automation readiness gate messaging",
+      "Setup-step automation start action",
       "No Keeper login copy"
     ]
   }, null, 2));
@@ -88,6 +89,8 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
+
+
 
 
 

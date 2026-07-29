@@ -12,6 +12,7 @@ assert.match(homepage, /const disabled=!state\.setupPersisted/);
 assert.match(homepage, /data-recommend-index="\$\{index\}" \$\{!state\.setupPersisted\?"disabled":""\}/);
 assert.match(homepage, /if\(!state\.setupPersisted\)\{alert\("Save Marvin setup first/);
 assert.match(homepage, /Validate All Calendars/);
+assert.match(homepage, /Start Automation From Setup/);
 assert.match(homepage, /Marvin Admin/);
 
 console.log(JSON.stringify({
@@ -22,6 +23,9 @@ console.log(JSON.stringify({
     "Recommended action buttons render disabled before save",
     "Validation actions gate on saved setup",
     "Batch validation control is present",
+    "Setup-step automation action is present",
     "Marvin admin wording"
   ]
 }, null, 2));
+
+
