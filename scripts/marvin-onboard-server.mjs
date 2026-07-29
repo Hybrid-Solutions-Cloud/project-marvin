@@ -58,6 +58,15 @@ function sendBuffer(res, statusCode, body, contentType = "application/octet-stre
   res.end(body);
 }
 
+function sendText(res, statusCode, body, contentType = "text/plain; charset=utf-8") {
+  const value = String(body ?? "");
+  res.writeHead(statusCode, {
+    "Content-Type": contentType,
+    "Content-Length": Buffer.byteLength(value)
+  });
+  res.end(value);
+}
+
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
@@ -299,6 +308,63 @@ function loadTokenState(profileName) {
 
 function saveTokenState(profileName, state) {
   getTokenStore(profileName).save(state);
+}
+
+function getSubscriptionStatePath(profileName) {
+  return path.join(stateRoot, "subscriptions", `${sanitizeName(profileName)}.subscriptions.json`);
+}
+
+function getSubscriptionStore(profileName) {
+  return new FileStateStore(getSubscriptionStatePath(profileName), { subscriptions: [], providerSummaries: {}, webhooks: { microsoft: { validationRequests: 0, lastValidationToken: "", lastValidationAt: "", notificationsReceived: 0, lastNotificationAt: "", lastNotificationSample: null } }, updatedAt: "" });
+}
+
+function loadSubscriptionState(profileName) {
+  return getSubscriptionStore(normalizeString(profileName) || "marvin.local").load();
+}
+
+function saveSubscriptionState(profileName, state) {
+  getSubscriptionStore(normalizeString(profileName) || "marvin.local").save(state);
+}
+
+function resolveSubscriptionProfileName() {
+  return getLatestState().profileName || "marvin.local";
+}
+
+function recordMicrosoftWebhookValidation(profileName, validationToken) {
+  const state = loadSubscriptionState(profileName);
+  const next = {
+    ...state,
+    webhooks: {
+      ...(state.webhooks || {}),
+      microsoft: {
+        ...((state.webhooks || {}).microsoft || {}),
+        validationRequests: Number((state.webhooks || {}).microsoft?.validationRequests || 0) + 1,
+        lastValidationToken: normalizeString(validationToken),
+        lastValidationAt: new Date().toISOString()
+      }
+    },
+    updatedAt: new Date().toISOString()
+  };
+  saveSubscriptionState(profileName, next);
+}
+
+function recordMicrosoftWebhookNotifications(profileName, payload) {
+  const state = loadSubscriptionState(profileName);
+  const notifications = Array.isArray(payload?.value) ? payload.value : [];
+  const next = {
+    ...state,
+    webhooks: {
+      ...(state.webhooks || {}),
+      microsoft: {
+        ...((state.webhooks || {}).microsoft || {}),
+        notificationsReceived: Number((state.webhooks || {}).microsoft?.notificationsReceived || 0) + notifications.length,
+        lastNotificationAt: new Date().toISOString(),
+        lastNotificationSample: notifications[0] || payload || null
+      }
+    },
+    updatedAt: new Date().toISOString()
+  };
+  saveSubscriptionState(profileName, next);
 }
 
 function normalizeSecretMap(input = {}) {
@@ -1807,6 +1873,7 @@ export function startMarvinOnboardServer() {
     try {
       const url = new URL(req.url || "/", `http://${req.headers.host}`);
       if (req.method === "GET" && (url.pathname === "/marvin-api/status" || url.pathname === "/api/status" || url.pathname === "/marvin-api/bootstrap")) return sendJson(res, 200, await bootstrapPayload(req));
+      if ((req.method === "GET" || req.method === "POST") && url.pathname === "/marvin-api/webhooks/microsoft") { const profileName = resolveSubscriptionProfileName(); const validationToken = url.searchParams.get("validationToken") || ""; if (validationToken) { recordMicrosoftWebhookValidation(profileName, validationToken); return sendText(res, 200, validationToken); } const payload = req.method === "POST" ? await parseJson(req).catch(() => ({})) : {}; recordMicrosoftWebhookNotifications(profileName, payload); return sendJson(res, 202, { ok: true, provider: "microsoft", profileName, received: Array.isArray(payload?.value) ? payload.value.length : 0 }); }
       if (req.method === "POST" && url.pathname === "/marvin-api/login") { const result = await handleLogin(await parseJson(req)); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "POST" && url.pathname === "/marvin-api/logout") { const result = await handleLogout(req); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/microsoft/start") { const result = await handleOAuthStart("microsoft", url); if (result.redirectUrl) return sendRedirect(res, result.redirectUrl); return sendHtml(res, result.statusCode, result.html); }

@@ -22,8 +22,8 @@ The repo currently supports all of the following **locally**:
 
 | Requirement | Repo truth on July 29, 2026 | Strongest local evidence | Remaining gap |
 | --- | --- | --- | --- |
-| Any connected calendar can originate a meeting or accepted invite. | Partially proven locally | `npm run marvin:smoke-live`, `npm run marvin:smoke-live-readiness` | Not yet proven against real customer-owned live calendars. |
-| Marvin mirrors that event to every other connected calendar. | Partially proven locally | `npm run marvin:smoke-live`, `npm run marvin:smoke-live-readiness` | Not yet proven in a real always-on deployed runtime. |
+| Any connected calendar can originate a meeting or accepted invite. | Partially proven locally | `npm run marvin:smoke-live`, `npm run marvin:smoke-live-readiness`, `npm run marvin:smoke-subscriptions` | Not yet proven against real customer-owned live calendars. |
+| Marvin mirrors that event to every other connected calendar. | Partially proven locally | `npm run marvin:smoke-live`, `npm run marvin:smoke-live-readiness`, `npm run marvin:smoke-subscriptions` | Not yet proven in a real always-on deployed runtime. |
 | Mirrored events are private by default. | Partially proven locally | `npm run marvin:smoke-live` | Not yet proven against real tenant data and viewer permissions. |
 | Selected target calendars, such as family calendars, can receive full detail instead. | Partially proven locally | `npm run marvin:smoke-live`, `npm run marvin:smoke-account-management` | Not yet proven in real customer calendars. |
 | Every mirrored event carries the source calendar prefix. | Proven locally | `npm run marvin:smoke-live`, `npm run marvin:smoke-account-management` | Not yet proven end-to-end in real tenant-backed writes. |

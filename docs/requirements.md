@@ -45,13 +45,13 @@ Implemented now:
 - Marvin-managed provider-side mirror markers for Google and Microsoft mirrored events
 - source-load loop prevention for Marvin-managed mirrored events
 - dry-run, mock-sync, live-adapter smoke, and daemon smoke verification
-- first live CalDAV adapter smoke coverage for REPORT-based source reads and PUT-based mirror writes
+- first live CalDAV adapter smoke coverage for REPORT-based source reads and PUT-based mirror writes`r`n- initial Marvin-owned Microsoft Graph subscription lifecycle with local subscription state persistence, renewal, and webhook receipt recording
 
 Still missing:
 
 - authoritative proof that real live calendars sync automatically across real tenants
 - completed Apple / CalDAV connector implementation beyond today's REPORT/PUT adapter baseline and mocked smoke coverage
-- webhook or subscription lifecycle for production-scale near-real-time sync
+- full production-grade webhook processing and provider parity beyond the initial Microsoft Graph subscription lifecycle
 - fully automated provider readiness and local secret provisioning for every target tenant, while some providers still require console-side OAuth client creation
 - production-grade account-management API and deployment lifecycle proof
 
@@ -64,7 +64,7 @@ The strongest local evidence in this repo today is:
 - `node scripts/smoke-marvin-auth-gating.mjs` proves Marvin requires sign-in after logout, hides saved config from unsigned bootstrap state, returns `401` for protected config access while signed out, and restores protected access after a valid workspace login
 - `node scripts/smoke-marvin-account-management.mjs` proves Marvin can add, edit, reload, and remove accounts while preserving source prefixes, per-target inbound overrides, and Apple / CalDAV account settings through Marvin-owned APIs
 - `node scripts/smoke-marvin-live-readiness.mjs` proves Marvin skips calendars that are disconnected or missing validated provider auth material during live source loading, live writes, and stale-mirror cleanup instead of calling providers that are not actually ready
-- `node scripts/smoke-marvin-operator-journey.mjs` proves a fuller Marvin-owned operator path: Marvin account creation, multi-provider account save, Microsoft OAuth callback, Google pending validation, Apple / CalDAV validation, and runtime start/stop
+- `node scripts/smoke-marvin-operator-journey.mjs` proves a fuller Marvin-owned operator path: Marvin account creation, multi-provider account save, Microsoft OAuth callback, Google pending validation, Apple / CalDAV validation, and runtime start/stop`r`n- `node scripts/smoke-marvin-subscriptions.mjs` proves Marvin can create and renew local Microsoft subscription state, expose a Marvin-owned Microsoft webhook endpoint, and record validation plus notification callbacks into `.marvin/subscriptions/*.subscriptions.json`
 - `npm run marvin:verify-local` aggregates the current local planning, operator-creation, auth-gating, runtime, artifact, documentation-command, onboarding-guidance, and provider smoke coverage
 - `npm run docs:build` proves the current documentation set renders cleanly
 - `npm run marvin:smoke-docs-commands` proves the published docs point at real repo commands and script entrypoints
@@ -80,7 +80,7 @@ Those checks are still local evidence only. They do not yet prove production com
 | Requirement | Current status on July 29, 2026 | Strongest repo evidence | Remaining gap |
 | --- | --- | --- | --- |
 | Any connected calendar can originate a meeting or accepted invite | Partially proven locally | `node scripts/smoke-marvin-live-engine.mjs` exercises source events originating from Microsoft 365, Google, and Apple / CalDAV calendars, while `node scripts/smoke-marvin-live-readiness.mjs` proves calendars without real provider auth material are skipped even if they are falsely marked connected | Not yet proven against real customer-owned live calendars |
-| Marvin mirrors that event to every other connected calendar | Partially proven locally | `node scripts/smoke-marvin-live-engine.mjs` now reports all six bidirectional source-target pairs across three calendars, while `node scripts/smoke-marvin-live-readiness.mjs` proves only calendars with both connected state and validated auth material are targeted in live sync | Not yet proven in real always-on deployed runtime |
+| Marvin mirrors that event to every other connected calendar | Partially proven locally | `node scripts/smoke-marvin-live-engine.mjs` now reports all six bidirectional source-target pairs across three calendars, `node scripts/smoke-marvin-live-readiness.mjs` proves only calendars with both connected state and validated auth material are targeted in live sync, and `node scripts/smoke-marvin-subscriptions.mjs` proves Marvin can maintain initial Microsoft subscription lifecycle state for near-real-time hosted automation | Not yet proven in real always-on deployed runtime |
 | Mirrored events are private by default | Partially proven locally | `node scripts/smoke-marvin-live-engine.mjs` asserts four private mirrored targets and private payload behavior in Graph and CalDAV writes | Not yet proven against real tenant data and real viewer permissions |
 | Selected target calendars can receive full detail instead | Partially proven locally | `node scripts/smoke-marvin-live-engine.mjs` asserts two default-visibility family-style targets with copied location and description; `node scripts/smoke-marvin-account-management.mjs` proves override persistence | Not yet proven in real customer calendars |
 | Every mirrored event carries the source calendar prefix | Proven locally | `node scripts/smoke-marvin-live-engine.mjs` asserts preserved prefixes and emits `prefixesPreserved: true`; `node scripts/smoke-marvin-account-management.mjs` proves edited prefixes persist | Not yet proven in real tenant-backed provider writes observed end-to-end |

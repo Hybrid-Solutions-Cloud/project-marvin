@@ -6,7 +6,8 @@ export function buildRequirementCoverage() {
       status: "partial",
       evidence: [
         "npm run marvin:smoke-live",
-        "npm run marvin:smoke-live-readiness"
+        "npm run marvin:smoke-live-readiness",
+        "npm run marvin:smoke-subscriptions"
       ],
       remainingGap: "Not yet proven against real customer-owned live calendars."
     },
@@ -16,7 +17,8 @@ export function buildRequirementCoverage() {
       status: "partial",
       evidence: [
         "npm run marvin:smoke-live",
-        "npm run marvin:smoke-live-readiness"
+        "npm run marvin:smoke-live-readiness",
+        "npm run marvin:smoke-subscriptions"
       ],
       remainingGap: "Not yet proven in a real always-on deployed runtime."
     },

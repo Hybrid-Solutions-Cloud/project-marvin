@@ -255,6 +255,66 @@ export class MicrosoftGraphAdapter {
     return this.updateTokenRecord(calendar, refreshed.tokenRecord);
   }
 
+  async ensureCalendarWebhookSubscription(calendar, existingRecord = null, options = {}) {
+    const tokenRecord = await this.ensureUsableToken(calendar);
+    if (!isTokenRecordUsable(tokenRecord)) {
+      return {
+        ok: false,
+        reason: "token-not-usable",
+        message: `Microsoft token is not usable for ${calendar.label}.`
+      };
+    }
+
+    const resource = normalizeString(existingRecord?.resource || `/users/${calendar.email}/events`);
+    const method = normalizeString(existingRecord?.subscriptionId) ? "PATCH" : "POST";
+    const url = method === "PATCH"
+      ? `https://graph.microsoft.com/v1.0/subscriptions/${encodeURIComponent(existingRecord.subscriptionId)}`
+      : "https://graph.microsoft.com/v1.0/subscriptions";
+    const response = await this.fetchImpl(url, {
+      method,
+      headers: {
+        Authorization: `${tokenRecord.tokenType || "Bearer"} ${tokenRecord.accessToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        changeType: "created,updated,deleted",
+        notificationUrl: options.notificationUrl,
+        resource,
+        expirationDateTime: options.expiresAt,
+        clientState: options.clientState
+      })
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        ok: false,
+        reason: "graph-subscription-failed",
+        message: payload?.error?.message || `Microsoft Graph subscription request failed with HTTP ${response.status}.`
+      };
+    }
+
+    const checkedAt = new Date(options.nowMs || Date.now()).toISOString();
+    return {
+      ok: true,
+      subscription: {
+        calendarId: calendar.id,
+        provider: "microsoft",
+        subscriptionId: normalizeString(payload.id || existingRecord?.subscriptionId),
+        resource: normalizeString(payload.resource || resource),
+        notificationUrl: normalizeString(payload.notificationUrl || options.notificationUrl),
+        clientState: normalizeString(payload.clientState || options.clientState),
+        changeType: normalizeString(payload.changeType || "created,updated,deleted"),
+        expiresAt: normalizeString(payload.expirationDateTime || options.expiresAt),
+        status: "active",
+        createdAt: normalizeString(existingRecord?.createdAt || checkedAt),
+        lastRenewedAt: checkedAt,
+        lastCheckedAt: checkedAt,
+        lastError: "",
+        updatedAt: checkedAt
+      }
+    };
+  }
+
   async listSourceEvents(calendar, options = {}) {
     const tokenRecord = await this.ensureUsableToken(calendar);
     if (!isTokenRecordUsable(tokenRecord)) {

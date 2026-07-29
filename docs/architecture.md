@@ -99,13 +99,14 @@ Implemented now:
 - live Microsoft, Google, and Apple / CalDAV adapter smoke coverage
 - stale-mirror cleanup across Microsoft, Google, and Apple / CalDAV targets when a source event disappears from a successfully loaded source calendar
 - daemon-style recurring sync loop with runtime-status persistence
+- initial Marvin-owned Microsoft subscription lifecycle with local renewal state and webhook receipt recording
 - local scripted setup generation through `setup-marvin.ps1`
 
 Not implemented or not yet proven:
 
 - fully verified live customer-owned provider sync across all supported calendars
 - recurrence-specific proof beyond the current general event path
-- webhook or subscription receivers
+- full provider webhook processing parity beyond the initial local Microsoft subscription receiver
 - production-safe secret storage and encryption for final runtime deployments
 - full production deployment and operations proof for Marvin's final always-on lifecycle
 

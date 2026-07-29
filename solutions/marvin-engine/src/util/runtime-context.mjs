@@ -4,6 +4,7 @@ import { FileMapStore } from "../storage/file-map-store.mjs";
 import { FileTokenStore, buildTokenStorePath } from "../storage/file-token-store.mjs";
 import { loadTokenStateForProfile } from "./token-state.mjs";
 import { loadProviderSecretsForProfile } from "./provider-secrets.mjs";
+import { createSubscriptionStateStore, loadSubscriptionStateForProfile } from "./subscription-state.mjs";
 import { MicrosoftGraphAdapter } from "../adapters/microsoft-graph.mjs";
 import { GoogleCalendarAdapter } from "../adapters/google-calendar.mjs";
 import { CalDavAdapter } from "../adapters/caldav.mjs";
@@ -20,6 +21,8 @@ export function createRuntimeContext({
   const tokenStore = new FileTokenStore(buildTokenStorePath(rootDir, profile.name));
   const tokenState = loadTokenStateForProfile(rootDir, profile.name);
   const providerSecrets = loadProviderSecretsForProfile(rootDir, profile.name);
+  const subscriptionStore = createSubscriptionStateStore(rootDir, profile.name);
+  const subscriptionState = loadSubscriptionStateForProfile(rootDir, profile.name);
   const store = new FileMapStore(path.join(rootDir, "artifacts", "marvin-engine", `${profile.name}.mappings.json`));
   const onTokenStateChange = async (nextState) => {
     tokenStore.save(nextState);
@@ -43,6 +46,8 @@ export function createRuntimeContext({
     tokenStore,
     tokenState,
     providerSecrets,
+    subscriptionStore,
+    subscriptionState,
     store,
     adapters,
     engine

@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url";
 import { resolveActiveProfile } from "./util/active-profile.mjs";
 import { summarizeTokenState } from "./util/token-state.mjs";
 import { createRuntimeContext } from "./util/runtime-context.mjs";
+import { ensureRuntimeSubscriptions } from "./util/subscription-manager.mjs";
 import { appendRuntimeRun, createRuntimeStatusStore } from "./util/runtime-status.mjs";
 
 function sleep(ms) {
@@ -28,12 +29,14 @@ function parseArgs(argv = process.argv.slice(2)) {
 
 export async function runMarvinSyncCycle(runtime, options = {}) {
   const startedAt = new Date();
+  const subscriptionResult = await ensureRuntimeSubscriptions(runtime, { notificationUrl: options.notificationUrl, forceRenew: options.forceRenewSubscriptions });
   const sourceLoad = await runtime.engine.loadSourceEventsFromProviders({ windowDays: options.windowDays });
   const applyResult = await runtime.engine.applyLiveSync();
   const currentTokenState = runtime.adapters.google.config.tokenState || runtime.tokenState;
   return {
     startedAt: startedAt.toISOString(),
     completedAt: new Date().toISOString(),
+    subscriptionSummary: subscriptionResult.summary,
     sourceLoad,
     applyResult,
     tokenSummary: summarizeTokenState(currentTokenState, runtime.profile.calendars),

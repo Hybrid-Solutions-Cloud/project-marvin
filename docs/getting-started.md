@@ -266,6 +266,7 @@ Inspect:
 - `.marvin/connections/*.connections.json`
 - `.marvin/tokens/*.tokens.json`
 - `.marvin/runtime/*.runtime.json`
+- `.marvin/subscriptions/*.subscriptions.json`
 
 `npm run marvin:smoke-onboard-api` now verifies that a Marvin-owned Microsoft OAuth callback can exchange an authorization code against a local mock token endpoint, persist a connected token/connection record for the management console, and feed the auth-state details the UI uses during provider linking.
 
@@ -274,6 +275,8 @@ Inspect:
 `npm run marvin:smoke-operator-journey` now verifies a fuller local operator path: create the Marvin account, save Microsoft/Google/Apple accounts, keep Google pending until auth, validate Apple / CalDAV directly, complete Microsoft callback auth, and start then stop the Marvin runtime.
 
 `npm run marvin:smoke-batch-validation` now verifies Marvin's one-shot calendar validation sweep: a connected Microsoft calendar, a connected Apple / CalDAV calendar, and a still-pending Google calendar are all summarized back through Marvin's own batch validation API.
+
+`npm run marvin:smoke-subscriptions` now verifies Marvin's initial Microsoft subscription lifecycle: local subscription-state creation, renewal, and Marvin-owned webhook callback recording under `.marvin/subscriptions/*.subscriptions.json`.
 
 `npm run marvin:smoke-docs-commands` now verifies that Marvin's published docs only reference real npm scripts, real `node scripts/*` entrypoints, and real `pwsh -File .\scripts\*` paths that exist in the repo.
 

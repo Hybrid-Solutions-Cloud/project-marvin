@@ -56,6 +56,7 @@ try {
   Invoke-NpmScript 'marvin:smoke-onboarding-guidance'
   Invoke-NpmScript 'marvin:smoke-live'
   Invoke-NpmScript 'marvin:smoke-live-readiness'
+  Invoke-NpmScript 'marvin:smoke-subscriptions'
   Invoke-NpmScript 'marvin:smoke-microsoft-timezone'
   Invoke-NpmScript 'marvin:smoke-daemon'
   Invoke-NpmScript 'marvin:smoke-deploy-plan'

@@ -15,7 +15,7 @@ assert.match(homepage, /document\.getElementById\("startRuntime"\)\.disabled=!au
 assert.match(homepage, /Check All Calendars/);
 assert.match(homepage, /Start Automation/);
 assert.match(homepage, /Save And Open Console/);
-assert.match(homepage, /Workspace Profile/);
+assert.match(homepage, /Workspace Account|Marvin Workspace/);
 assert.match(homepage, /Sign Out/);
 assert.match(homepage, /signInWorkspace\(/);
 assert.match(homepage, /signOutWorkspace\(/);
