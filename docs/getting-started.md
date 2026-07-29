@@ -22,7 +22,7 @@ Then follow the one supported first-run path inside Marvin:
 9. Authenticate each calendar from Marvin's Connected Calendars area. Marvin will auto-refresh local auth state for a short window after it opens provider sign-in.
 10. Refresh Marvin state manually if needed, then validate live access.
 11. Review the Marvin Admin card to confirm the saved account name, internal account ID, timezone, sync window, and automation state.
-12. Start Marvin automation.
+12. Start Marvin automation only after Marvin shows every calendar as connected and validated.
 13. Return to the management console later to add, edit, reconnect, or remove calendars.
 
 ## What works today
@@ -163,7 +163,7 @@ npm run marvin:azure:deploy --
   -Location westus3
 ``` 
 
-Then open the deployed Marvin URL, create the Marvin account, add calendars, configure provider apps, authenticate the calendars from Marvin, refresh Marvin state, validate access, and then start automation.
+Then open the deployed Marvin URL, create the Marvin account, add calendars, configure provider apps, authenticate the calendars from Marvin, refresh Marvin state, validate access, and start automation only after Marvin marks the workspace ready.
 
 See [Marvin on Azure](/solutions/marvin-azure).
 
@@ -263,6 +263,7 @@ If you need the reference and comparison tracks:
 - [Paranoid Keeper](/solutions/paranoid-keeper)
 - [Bureaucratic Flow](/solutions/bureaucratic-flow)
 - [Credits](/credits)
+
 
 
 

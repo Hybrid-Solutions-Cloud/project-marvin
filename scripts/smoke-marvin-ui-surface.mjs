@@ -61,6 +61,7 @@ try {
   assert.match(homepage, /Access setup:/i);
   assert.match(homepage, /Authentication:/i);
   assert.match(homepage, /Validate All Calendars/i);
+  assert.match(homepage, /Automation stays blocked until every calendar below is connected and validated\./i);
 
   assert.doesNotMatch(homepage, /keeper\.sh/i);
   assert.doesNotMatch(homepage, /Welcome back/i);
@@ -78,6 +79,7 @@ try {
       "Readiness-oriented stats",
       "Per-calendar access and authentication state",
       "Batch validation control",
+      "Automation readiness gate messaging",
       "No Keeper login copy"
     ]
   }, null, 2));
@@ -86,3 +88,6 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
+
+
+

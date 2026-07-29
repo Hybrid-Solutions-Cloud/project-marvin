@@ -52,7 +52,7 @@ The current UI stores and shows:
 - source prefix
 - inbound override state for calendars that need custom target behavior
 - connection-state summary
-- readiness summary with per-account next actions, recommended operator actions, ready-versus-action-required counts, and automation-start readiness
+- readiness summary with per-account next actions, recommended operator actions, ready-versus-action-required counts, batch validation, and automation-start readiness
 - token-state summary
 - per-account token status and reason
 - per-account auth-request, callback-received, linked-account, and last-validation timestamps or notes when Marvin has them
@@ -110,7 +110,7 @@ Local validation now proves all of the following:
 - Marvin can refresh its saved connection state back into the UI after an external OAuth callback
 - Marvin can show provider-auth progress in the UI while the operator returns from Microsoft or Google sign-in
 - Marvin can expose provider requirements back to the UI and to local setup scripts through Marvin-owned config and API state
-- Marvin can show the saved Marvin profile ID, timezone, sync window, automation state, and runtime controls inside the management console instead of relying only on bootstrap state
+- Marvin can show the saved Marvin profile ID, timezone, sync window, automation state, and runtime controls inside the management console instead of relying only on bootstrap state`r`n- Marvin now blocks the Start Automation action until every calendar is connected and validated, and surfaces that rule in both Step 3 and the management console
 - Marvin can validate live provider access from the same Connected Calendars area instead of relying only on stored names or pending token records`r`n- Marvin can batch-validate every saved calendar from one Marvin action and return a mixed connected/pending/invalid summary to the management console
 
 Dummy client IDs or secrets still fail at the provider as expected, but the failure now happens at the provider authorize or token endpoint instead of earlier in Marvin. That proves Marvin is using the saved local provider settings.
@@ -140,6 +140,7 @@ That means:
 - a successful validation marks the calendar connected in Marvin
 
 As of July 29, 2026, Marvin's onboarding API and browser UI can store and validate separate Apple / CalDAV app passwords per calendar account, and Marvin's live-engine smokes also cover CalDAV event read/write behavior through the first-party adapter.
+
 
 
 

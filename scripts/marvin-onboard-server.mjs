@@ -1460,6 +1460,13 @@ async function handleRuntimeStart(payload) {
   requireFields(payload, ["profileName"]);
   const bundle = loadConfigBundle(payload.profileName);
   if (!bundle.config || !bundle.profile) throw new Error("Profile not found.");
+  const readinessConfig = materializeConfigFromProfile(bundle.profile, bundle.config, bundle.config, bundle.connectionState, loadTokenState(bundle.profile.name), loadProviderSecrets(bundle.profile.name));
+  const readiness = readinessConfig.readinessSummary || {};
+  if (!readiness.readyToStartAutomation) {
+    const nextSteps = Array.isArray(readiness.nextSteps) ? readiness.nextSteps.filter(Boolean) : [];
+    const detail = nextSteps.length ? ` Next steps: ${nextSteps.join(" ")}` : "";
+    throw new Error(`Marvin cannot start automation yet because not every calendar is connected and validated.${detail}`);
+  }
   startRuntimeProcess(root, {
     profileName: bundle.profile.name,
     profilePath: bundle.profilePath,
@@ -1679,6 +1686,7 @@ export function startMarvinOnboardServer() {
   });
   return server;
 }
+
 
 
 

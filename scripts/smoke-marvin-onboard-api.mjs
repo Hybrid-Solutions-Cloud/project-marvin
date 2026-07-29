@@ -344,45 +344,16 @@ try {
   assert.equal(connectedConfig.config.timezone, "America/New_York");
   assert.equal(connectedConfig.config.syncWindowDays, 7);
 
-  const startRuntime = await requestJson(`http://127.0.0.1:${port}/marvin-api/runtime-start`, {
+  const blockedRuntimeResponse = await fetch(`http://127.0.0.1:${port}/marvin-api/runtime-start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ profileName, intervalSeconds: 1, windowDays: 7 })
   });
+  const blockedRuntime = await blockedRuntimeResponse.json();
 
-  assert.equal(startRuntime.ok, true);
-  assert.equal(startRuntime.runtimeProcess.profileName, profileName);
-  assert.ok(Number(startRuntime.runtimeProcess.pid) > 0);
-  assert.ok(startRuntime.runtimeStatus);
-  assert.ok(Number(startRuntime.runtimeStatus.runCount || 0) >= 1);
-
-  const runtimeStatus = await waitFor(async () => {
-    const result = await requestJson(`http://127.0.0.1:${port}/marvin-api/runtime-status?profileName=${encodeURIComponent(profileName)}`);
-    if (!result?.ok) return null;
-    if (!result.runtimeStatus || Number(result.runtimeStatus.runCount || 0) < 1) return null;
-    return result;
-  }, 10000, "runtime status record");
-
-  assert.equal(runtimeStatus.ok, true);
-  assert.equal(runtimeStatus.runtimeProcess.running, true);
-  assert.ok(runtimeStatus.runtimeStatus.runCount >= 1);
-
-  const stopRuntime = await requestJson(`http://127.0.0.1:${port}/marvin-api/runtime-stop`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ profileName })
-  });
-
-  assert.equal(stopRuntime.ok, true);
-
-  const stoppedStatus = await waitFor(async () => {
-    const result = await requestJson(`http://127.0.0.1:${port}/marvin-api/runtime-status?profileName=${encodeURIComponent(profileName)}`);
-    if (!result?.ok) return null;
-    if (!result.runtimeProcess || result.runtimeProcess.running !== false) return null;
-    if (!result.runtimeStatus || result.runtimeStatus.running !== false) return null;
-    return result;
-  }, 10000, "stopped runtime status");
-
+  assert.equal(blockedRuntimeResponse.status, 500);
+  assert.equal(blockedRuntime.ok, false);
+  assert.match(blockedRuntime.error || "", /cannot start automation yet because not every calendar is connected and validated/i);
   console.log(JSON.stringify({
     ok: true,
     profileName,
@@ -391,9 +362,7 @@ try {
       provider: account.provider,
       authUrl: account.authUrl
     })),
-    runtimePid: startRuntime.runtimeProcess.pid,
-    runCount: runtimeStatus.runtimeStatus.runCount,
-    runtimeStopped: stoppedStatus.runtimeStatus.running === false,
+    runtimeStartBlocked: true,
     tokenExchangeCount: tokenRequests.length,
     authProgressCaptured: true,
     accountMetadataCaptured: true
@@ -405,3 +374,5 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
+
+

@@ -65,7 +65,8 @@ const server = spawn(process.execPath, ["scripts/marvin-onboard-ui.mjs"], {
     MARVIN_ROOT_DIR: tempRoot,
     MARVIN_UI_PORT: String(port),
     MARVIN_SYNC_INTERVAL_SECONDS: "1",
-    MARVIN_MOCK_MICROSOFT_TOKEN_URL: `http://127.0.0.1:${tokenPort}/microsoft/token`
+    MARVIN_MOCK_MICROSOFT_TOKEN_URL: `http://127.0.0.1:${tokenPort}/microsoft/token`,
+    MARVIN_MOCK_GOOGLE_TOKEN_URL: `http://127.0.0.1:${tokenPort}/google/token`
   },
   stdio: "ignore"
 });
@@ -196,6 +197,23 @@ try {
   assert.equal(validateGooglePending.ok, true);
   assert.equal(validateGooglePending.validation.status, "pending");
 
+  const beginGoogle = await requestJson(`http://127.0.0.1:${port}/marvin-api/connection-begin`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ profileName, calendarId: "family_google" })
+  });
+  assert.equal(beginGoogle.ok, true);
+  assert.ok(beginGoogle.launchUrl.includes("/marvin-api/oauth/google/start?state="));
+  const googleAuthState = beginGoogle.authSession?.state;
+  assert.ok(googleAuthState);
+  const googleOauthStart = await fetch(beginGoogle.launchUrl, { redirect: "manual" });
+  assert.equal(googleOauthStart.status, 302);
+
+  const googleOauthCallback = await fetch(`http://127.0.0.1:${port}/marvin-api/oauth/google/callback?state=${encodeURIComponent(googleAuthState)}&code=marvin-google-code&scope=${encodeURIComponent("openid profile email https://www.googleapis.com/auth/calendar")}`);
+  const googleOauthCallbackHtml = await googleOauthCallback.text();
+  assert.equal(googleOauthCallback.status, 200);
+  assert.match(googleOauthCallbackHtml, /connected/i);
+
   const connectApple = await requestJson(`http://127.0.0.1:${port}/marvin-api/connection-begin`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -228,7 +246,8 @@ try {
   const appleAccount = configAfterAuth.config.accounts.find((account) => account.id === "apple_family");
   assert.equal(workAccount.connectionStatus, "connected");
   assert.equal(workAccount.tokenStatus, "usable");
-  assert.equal(googleAccount.connectionStatus, "pending");
+  assert.equal(googleAccount.connectionStatus, "connected");
+  assert.equal(googleAccount.tokenStatus, "usable");
   assert.equal(appleAccount.connectionStatus, "connected");
   assert.equal(appleAccount.caldavPasswordConfigured, true);
 
@@ -252,7 +271,7 @@ try {
     profileName,
     accountCreated: true,
     accountsConfigured: saveConfig.config.accounts.length,
-    googlePendingValidation: validateGooglePending.validation.status,
+    googleConnected: googleAccount.connectionStatus,
     appleValidated: connectApple.connectionRecord.status,
     microsoftConnected: workAccount.connectionStatus,
     runtimeStarted: Boolean(startRuntime.runtimeStatus),
@@ -268,3 +287,4 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
+
