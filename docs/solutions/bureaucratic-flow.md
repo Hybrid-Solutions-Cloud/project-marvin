@@ -54,12 +54,14 @@ Each target calendar tenant must:
 
 ### Scripted path
 
-1. Generate Marvin profile and artifacts.
+1. Generate Marvin profile and artifacts. If you want the lower-level setup generator to ask for Bureaucratic Flow runtime values interactively, run `npm run marvin:setup` through `scripts/setup-marvin.ps1` with `-IncludeBureaucraticFlow`.
 2. Build the Power Automate staging bundle.
 3. Generate the automation runtime plan.
 4. Import the solution through `pac solution import`.
 5. Bind Graph-backed connection references.
 6. Grant multitenant app consent in each calendar tenant.
+
+The repo now also carries an explicit opt-in proof command for this reference path: `npm run marvin:smoke-bureaucratic-flow-opt-in`.
 
 ### Repo files
 

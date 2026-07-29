@@ -1,13 +1,13 @@
 # Solutions
 ## Read this first
 The setup wizard is not a solution picker.
-It is Marvin's onboarding flow.
+It is Marvin's onboarding and sign-in flow.
 If you are cloning this repo to get a working product path, start with Marvin:
 
 1. Read [Getting Started](/getting-started).
 2. Run `npm run marvin:install`.
 3. Run `npm run marvin:ui` if the console is not already open.
-4. Create the Marvin admin sign-in, add calendars, link accounts, review sync policy, and start Marvin automation.
+4. Create the Marvin workspace account, or sign in if it already exists, then add calendars, link accounts, review sync policy, and start Marvin automation.
 ## Product path vs reference paths
 | Path | Purpose | Automation status |
 | --- | --- | --- |

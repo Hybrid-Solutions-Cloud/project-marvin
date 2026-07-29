@@ -167,6 +167,10 @@ function hasCalDavCredentials(config = {}, calendar = {}) {
   return Boolean(connection.serverUrl && connection.username && connection.password);
 }
 
+export function isCalDavCalendarReady(config = {}, calendar = {}) {
+  return hasCalDavCredentials(config, calendar);
+}
+
 export class CalDavAdapter {
   constructor(config = {}) {
     this.config = config;
@@ -175,7 +179,7 @@ export class CalDavAdapter {
 
   describe() {
     const calendars = Array.isArray(this.config.profile?.calendars) ? this.config.profile.calendars.filter((calendar) => calendar.provider === "apple-caldav") : [];
-    const ready = calendars.filter((calendar) => hasCalDavCredentials(this.config, calendar)).length;
+    const ready = calendars.filter((calendar) => isCalDavCalendarReady(this.config, calendar)).length;
     return {
       provider: "apple-caldav",
       status: ready > 0 ? "credential-ready" : "credential-missing",
@@ -185,19 +189,23 @@ export class CalDavAdapter {
     };
   }
 
+  hasCalendarAuthMaterial(calendar) {
+    return isCalDavCalendarReady(this.config, calendar);
+  }
+
   planWrite(operation) {
     return {
       adapter: "caldav",
       action: "put-ics-event",
       targetCalendar: operation.target.label,
-      ready: hasCalDavCredentials(this.config, operation.target),
+      ready: this.hasCalendarAuthMaterial(operation.target),
       payload: operation.payload
     };
   }
 
   async listSourceEvents(calendar, options = {}) {
     const connection = resolveCalendarConnection(this.config, calendar);
-    if (!hasCalDavCredentials(this.config, calendar)) {
+    if (!isCalDavCalendarReady(this.config, calendar)) {
       return [];
     }
     const response = await this.fetchImpl(connection.serverUrl, {
@@ -219,7 +227,7 @@ export class CalDavAdapter {
 
   async upsertEvent(operation, context = {}) {
     const connection = resolveCalendarConnection(this.config, operation.target);
-    if (!hasCalDavCredentials(this.config, operation.target)) {
+    if (!isCalDavCalendarReady(this.config, operation.target)) {
       throw new Error(`CalDAV credentials are not usable for ${operation.target.label}.`);
     }
     const resourceName = buildResourceName(operation, context.existingMapping);
@@ -243,7 +251,7 @@ export class CalDavAdapter {
 
   async deleteEvent(targetCalendar, targetEventId) {
     const connection = resolveCalendarConnection(this.config, targetCalendar);
-    if (!hasCalDavCredentials(this.config, targetCalendar)) {
+    if (!isCalDavCalendarReady(this.config, targetCalendar)) {
       throw new Error(`CalDAV credentials are not usable for ${targetCalendar.label}.`);
     }
     const targetUrl = `${connection.serverUrl}/${encodeURIComponent(normalizeString(targetEventId))}`;

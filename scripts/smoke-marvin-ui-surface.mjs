@@ -48,10 +48,10 @@ try {
   assert.match(homepage, /Setup Assistant/i);
   assert.match(homepage, /Management Console/i);
   assert.match(homepage, /Marvin Account|Workspace/i);
-  assert.match(homepage, /Linked Accounts|Account Connections|Connection Center|Connected Calendars/i);
+  assert.match(homepage, /Access And Linking|Manage Calendars|Calendars/i);
   assert.match(homepage, /automation status/i);
-  assert.match(homepage, /Create your Marvin admin sign-in|Create your Marvin account/i);
-  assert.match(homepage, /Link And Start|Connect And Start|Connect And Launch|Access, Connect, Automate/i);
+  assert.match(homepage, /Sign in to Marvin|Sign In To Marvin|Create your Marvin workspace account|Review your Marvin workspace account|Create your Marvin account/i);
+  assert.match(homepage, /Access And Linking|Save rules, connect calendars, start sync|Access, Connect, Automate/i);
   assert.match(homepage, /Automation/i);
   assert.match(homepage, /Start Automation/i);
   assert.match(homepage, /Refresh Runtime/i);
@@ -59,9 +59,9 @@ try {
   assert.match(homepage, /Ready/i);
   assert.match(homepage, /Set up Marvin once\. Keep every calendar current\./i);
   assert.match(homepage, /Access setup:/i);
-  assert.match(homepage, /Authentication:/i);
-  assert.match(homepage, /Validate All Calendars/i);
-  assert.match(homepage, /Automation stays blocked until every calendar below is connected and validated\./i);
+  assert.match(homepage, /Link status:/i);
+  assert.match(homepage, /Check All Calendars/i);
+  assert.match(homepage, /Automation stays blocked until every calendar below is linked and (validated|passes validation)\./i);
 
   assert.doesNotMatch(homepage, /keeper\.sh/i);
   assert.doesNotMatch(homepage, /Welcome back/i);
@@ -71,13 +71,13 @@ try {
     ok: true,
     checked: [
       "Project Marvin branding",
-      "Account-first setup flow",
+      "Workspace-account-first setup and sign-in flow",
       "Management Console",
-      "Marvin admin summary",
-      "Account Connections",
+      "Marvin workspace summary",
+      "Calendars management surface",
       "Automation controls",
       "Readiness-oriented stats",
-      "Per-calendar access and authentication state",
+      "Per-calendar access and provider-link state",
       "Batch validation control",
       "Automation readiness gate messaging",
       "Setup-step automation start action",
@@ -89,6 +89,7 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
+
 
 
 

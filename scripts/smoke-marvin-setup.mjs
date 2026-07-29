@@ -33,7 +33,7 @@ function cleanup() {
 cleanup();
 
 try {
-  execFileSync("powershell", [
+  const output = execFileSync("powershell", [
     "-ExecutionPolicy", "Bypass",
     "-File", ".\\scripts\\setup-marvin.ps1",
     "-ProfileName", profileName,
@@ -53,7 +53,7 @@ try {
     "-MicrosoftClientSecret", "ms-secret",
     "-GoogleClientId", "google-client",
     "-GoogleClientSecret", "google-secret"
-  ], { cwd: root, stdio: "pipe" });
+  ], { cwd: root, stdio: "pipe", encoding: "utf8" });
 
   const profilePath = path.join(root, "profiles", `${profileSlug}.json`);
   const eventsPath = path.join(root, "profiles", `${profileSlug}.events.json`);
@@ -65,6 +65,8 @@ try {
   for (const filePath of [profilePath, eventsPath, setupPath, secretsPath, connectionsPath, summaryPath]) {
     assert.equal(fs.existsSync(filePath), true, `Expected generated file: ${filePath}`);
   }
+
+  const setupScript = fs.readFileSync(path.join(root, "scripts", "setup-marvin.ps1"), "utf8");
 
   const profile = readJson(profilePath);
   const events = readJson(eventsPath);
@@ -108,6 +110,12 @@ try {
   assert.equal(connections.records.length, 5);
   assert.equal(summary.profile, profileSlug);
   assert.equal(summary.solutions.length, 4);
+  assert.match(setupScript, /IncludeBureaucraticFlow/);
+  assert.match(setupScript, /Bureaucratic Flow runtime tenant ID/);
+  assert.doesNotMatch(setupScript, /Power Automate runtime tenant ID/);
+  assert.match(output, /Open the Calendars list, finish Access setup, link each calendar, and run Check Access until Link status shows ready\./);
+  assert.match(output, /Review the Marvin Workspace card and each calendar card before starting automation\./);
+  assert.match(output, /npm run marvin:verify-local/);
 
   console.log(JSON.stringify({
     ok: true,

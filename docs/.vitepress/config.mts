@@ -14,6 +14,7 @@ export default defineConfig({
       { text: "Home", link: "/" },
       { text: "Getting Started", link: "/getting-started" },
       { text: "Architecture", link: "/architecture" },
+      { text: "Status", link: "/status" },
       { text: "Research", link: "/research/" },
       { text: "Solutions", link: "/solutions" },
       { text: "Credits", link: "/credits" }
@@ -25,6 +26,7 @@ export default defineConfig({
           { text: "Overview", link: "/" },
           { text: "Getting Started", link: "/getting-started" },
           { text: "Requirements", link: "/requirements" },
+          { text: "Status", link: "/status" },
           { text: "Architecture", link: "/architecture" },
           { text: "Solutions Index", link: "/solutions" },
           { text: "Onboarding UI", link: "/operator/onboarding-ui" },

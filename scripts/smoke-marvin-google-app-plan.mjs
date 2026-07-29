@@ -44,7 +44,7 @@ fs.writeFileSync(profilePath, JSON.stringify({
         authMode: "marvin-engine",
         clientId: "",
         marvinBaseUrl: "",
-        authorizePath: "/auth/google"
+        authorizePath: "/marvin-api/oauth/google/start"
       }
     }
   }

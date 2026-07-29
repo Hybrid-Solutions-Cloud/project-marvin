@@ -38,8 +38,16 @@ async function waitFor(predicate, timeoutMs, label) {
   throw new Error(`Timed out waiting for ${label}`);
 }
 
+let sessionCookie = "";
+
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, options);
+  const headers = { ...(options.headers || {}) };
+  if (sessionCookie) headers.Cookie = sessionCookie;
+  const response = await fetch(url, { ...options, headers });
+  const setCookie = response.headers.get("set-cookie");
+  if (setCookie) {
+    sessionCookie = setCookie.split(";")[0];
+  }
   return response.json();
 }
 

@@ -28,6 +28,9 @@ const deployEnabled = (process.env.MARVIN_DEPLOY_ENABLED || "true").toLowerCase(
 const hostedMode = (process.env.MARVIN_HOSTED || "false").toLowerCase() === "true";
 const mockMicrosoftTokenUrl = normalizeString(process.env.MARVIN_MOCK_MICROSOFT_TOKEN_URL);
 const mockGoogleTokenUrl = normalizeString(process.env.MARVIN_MOCK_GOOGLE_TOKEN_URL);
+const sessionCookieName = "marvin_session";
+const sessionTtlSeconds = 60 * 60 * 12;
+const sessionStore = new Map();
 
 const mimeMap = {
   ".html": "text/html; charset=utf-8",
@@ -37,11 +40,12 @@ const mimeMap = {
   ".json": "application/json; charset=utf-8"
 };
 
-function sendJson(res, statusCode, payload) {
+function sendJson(res, statusCode, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload, null, 2);
   res.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
-    "Content-Length": Buffer.byteLength(body)
+    "Content-Length": Buffer.byteLength(body),
+    ...extraHeaders
   });
   res.end(body);
 }
@@ -91,6 +95,103 @@ function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   return { salt, hash };
+}
+
+function verifyPassword(password, storedPassword) {
+  if (!storedPassword?.salt || !storedPassword?.hash) {
+    return false;
+  }
+  const candidate = crypto.scryptSync(String(password || ""), storedPassword.salt, 64).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(candidate, "hex"), Buffer.from(storedPassword.hash, "hex"));
+}
+
+function listOperators() {
+  if (!fs.existsSync(operatorsRoot)) {
+    return [];
+  }
+  return fs.readdirSync(operatorsRoot)
+    .filter((name) => name.endsWith(".account.json"))
+    .map((name) => readJson(path.join(operatorsRoot, name), null))
+    .filter(Boolean);
+}
+
+function getPrimaryOperator() {
+  const latest = getLatestState();
+  if (latest.operatorEmail) {
+    const latestOperator = readJson(getOperatorPath(latest.operatorEmail), null);
+    if (latestOperator) {
+      return latestOperator;
+    }
+  }
+  return listOperators()[0] || null;
+}
+
+function toPublicOperator(operator) {
+  return operator ? {
+    displayName: operator.displayName,
+    email: operator.email,
+    createdAt: operator.createdAt,
+    updatedAt: operator.updatedAt
+  } : null;
+}
+
+function parseCookies(req) {
+  const header = String(req?.headers?.cookie || "");
+  return Object.fromEntries(header.split(";").map((segment) => segment.trim()).filter(Boolean).map((segment) => {
+    const index = segment.indexOf("=");
+    if (index < 0) return [segment, ""];
+    return [segment.slice(0, index), decodeURIComponent(segment.slice(index + 1))];
+  }));
+}
+
+function buildSessionCookie(token) {
+  return `${sessionCookieName}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${sessionTtlSeconds}`;
+}
+
+function buildClearedSessionCookie() {
+  return `${sessionCookieName}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`;
+}
+
+function pruneExpiredSessions() {
+  const now = Date.now();
+  for (const [token, session] of sessionStore.entries()) {
+    if (!session?.expiresAt || session.expiresAt <= now) sessionStore.delete(token);
+  }
+}
+
+function createSession(operator) {
+  pruneExpiredSessions();
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiresAt = Date.now() + (sessionTtlSeconds * 1000);
+  sessionStore.set(token, { operatorEmail: operator.email, expiresAt });
+  return { token, expiresAt, operator: toPublicOperator(operator), cookie: buildSessionCookie(token) };
+}
+
+function getAuthContext(req) {
+  pruneExpiredSessions();
+  const token = parseCookies(req)[sessionCookieName] || "";
+  if (!token) return { authenticated: false, operator: null, sessionToken: "" };
+  const session = sessionStore.get(token);
+  if (!session) return { authenticated: false, operator: null, sessionToken: token };
+  const operator = readJson(getOperatorPath(session.operatorEmail), null);
+  if (!operator) {
+    sessionStore.delete(token);
+    return { authenticated: false, operator: null, sessionToken: token };
+  }
+  return { authenticated: true, operator, sessionToken: token };
+}
+
+function createAuthError(message = "Sign in to the Marvin workspace account to continue.") {
+  const error = new Error(message);
+  error.statusCode = 401;
+  error.payload = { ok: false, error: message, requiresLogin: true };
+  return error;
+}
+
+function requireAuth(req) {
+  const auth = getAuthContext(req);
+  if (!auth.authenticated || !auth.operator) throw createAuthError();
+  return auth;
 }
 
 function requireFields(payload, fields) {
@@ -282,7 +383,6 @@ function buildProviderConnections(input = {}) {
   const runtime = buildProviderRuntime({
     providerConnections: input.providerConnections,
     deployment: input.deployment,
-    keeperUrl: input.deployment?.keeperUrl,
     marvinUrl: input.deployment?.marvinUrl,
     microsoftClientId: input.providerCredentials?.microsoftClientId || input.microsoftClientId,
     googleClientId: input.providerCredentials?.googleClientId || input.googleClientId,
@@ -360,7 +460,6 @@ function buildProfile(input) {
     regionShort: normalizeString(input.deployment?.regionShort || "wus3"),
     location: normalizeString(input.deployment?.location || "westus3"),
     instance: normalizeString(input.deployment?.instance || "01"),
-    keeperUrl: normalizeString(input.deployment?.keeperUrl),
     marvinUrl: normalizeString(input.deployment?.marvinUrl || `http://127.0.0.1:${port}`)
   };
   return {
@@ -375,23 +474,28 @@ function buildProfile(input) {
       copyDescription: false,
       preserveOriginalTimezone: preferences.preserveOriginalTimezone
     },
-    runtime: {
-      powerAutomate: {
-        automationTenantId: input.automationTenantId || "",
-        environmentUrl: input.automationEnvironmentUrl || "",
-        deploymentModel: "graph-http-entra-id",
-        graphAppDisplayName: "Project Marvin Flow Runtime",
-        supportedAccountTypes: "AzureADMultipleOrgs"
-      },
-      deployment,
-      providerConnections: buildProviderConnections({
-        providerConnections: input.providerConnections,
-        providerCredentials: input.providerCredentials,
+    runtime: (() => {
+      const runtime = {
         deployment,
-        microsoftClientId: input.microsoftClientId,
-        googleClientId: input.googleClientId
-      })
-    },
+        providerConnections: buildProviderConnections({
+          providerConnections: input.providerConnections,
+          providerCredentials: input.providerCredentials,
+          deployment,
+          microsoftClientId: input.microsoftClientId,
+          googleClientId: input.googleClientId
+        })
+      };
+      if (normalizeString(input.automationTenantId) || normalizeString(input.automationEnvironmentUrl)) {
+        runtime.powerAutomate = {
+          automationTenantId: input.automationTenantId || "",
+          environmentUrl: input.automationEnvironmentUrl || "",
+          deploymentModel: "graph-http-entra-id",
+          graphAppDisplayName: "Project Marvin Flow Runtime",
+          supportedAccountTypes: "AzureADMultipleOrgs"
+        };
+      }
+      return runtime;
+    })(),
     calendars,
     routes: calendars.map((calendar) => ({
       source: calendar.id,
@@ -928,9 +1032,9 @@ function describeAccountReadiness(account) {
   if (account.connectionStatus === "connector-not-ready") {
     return {
       readinessState: "action-required",
-      readinessLabel: "Finish Provider Setup",
-      readinessDetail: account.connectionReason || `${providerLabel} still needs provider setup before Marvin can connect it.`,
-      nextActionLabel: account.provider === "apple-caldav" ? "Add App Password" : "Save Provider App"
+      readinessLabel: "Finish Access Setup",
+      readinessDetail: account.connectionReason || `${providerLabel} still needs access setup before Marvin can connect it.`,
+      nextActionLabel: account.provider === "apple-caldav" ? "Add App Password" : "Open Access Settings"
     };
   }
   if (account.connectionStatus === "invalid") {
@@ -1131,14 +1235,14 @@ async function persistProfileAndConfig(profile, payload, existingConfig = null, 
   return { profilePath, eventsPath, statePath: getConfigPath(profile.name), config };
 }
 
-async function handleCreateAccount(payload) {
+async function handleCreateAccount(payload, auth = null) {
   requireFields(payload, ["marvinDisplayName", "marvinEmail"]);
+  const primaryOperator = getPrimaryOperator();
+  if (primaryOperator && !auth?.authenticated) throw createAuthError("Sign in to edit the Marvin workspace account.");
   const email = payload.marvinEmail.trim();
   const existing = readJson(getOperatorPath(email), null);
   const password = normalizeString(payload.marvinPassword);
-  if (!existing && !password) {
-    throw new Error("Missing required fields: marvinPassword");
-  }
+  if (!existing && !password) throw new Error("Missing required fields: marvinPassword");
   const now = new Date().toISOString();
   const operator = {
     accountId: sanitizeName(email),
@@ -1148,14 +1252,40 @@ async function handleCreateAccount(payload) {
     updatedAt: now,
     password: password ? hashPassword(password) : existing?.password
   };
-  if (!operator.password) {
-    throw new Error("Marvin account password is missing.");
-  }
+  if (!operator.password) throw new Error("Marvin account password is missing.");
   writeJson(getOperatorPath(operator.email), operator);
   setLatestState({ ...getLatestState(), operatorEmail: operator.email });
-  return { operator: { displayName: operator.displayName, email: operator.email, createdAt: operator.createdAt, updatedAt: operator.updatedAt }, nextStep: "accounts" };
+  const session = createSession(operator);
+  let config = null;
+  const latest = getLatestState();
+  if (latest.profileName) {
+    try { config = (await handleLoadConfig(latest.profileName)).config; }
+    catch { config = readJson(getConfigPath(latest.profileName), null); }
+  }
+  return { operator: session.operator, authenticated: true, requiresLogin: false, config, nextStep: "accounts", headers: { "Set-Cookie": session.cookie } };
 }
 
+async function handleLogin(payload) {
+  requireFields(payload, ["marvinEmail", "marvinPassword"]);
+  const email = payload.marvinEmail.trim();
+  const operator = readJson(getOperatorPath(email), null);
+  if (!operator || !verifyPassword(payload.marvinPassword, operator.password)) throw createAuthError("Invalid Marvin workspace email or password.");
+  setLatestState({ ...getLatestState(), operatorEmail: operator.email });
+  const session = createSession(operator);
+  let config = null;
+  const latest = getLatestState();
+  if (latest.profileName) {
+    try { config = (await handleLoadConfig(latest.profileName)).config; }
+    catch { config = readJson(getConfigPath(latest.profileName), null); }
+  }
+  return { operator: session.operator, authenticated: true, requiresLogin: false, config, headers: { "Set-Cookie": session.cookie } };
+}
+
+async function handleLogout(req) {
+  const auth = getAuthContext(req);
+  if (auth.sessionToken) sessionStore.delete(auth.sessionToken);
+  return { signedOut: true, headers: { "Set-Cookie": buildClearedSessionCookie() } };
+}
 
 async function handleSaveConfig(payload) {
   payload = {
@@ -1625,11 +1755,28 @@ async function handleOAuthCallback(provider, url) {
   return { statusCode: tokenOk ? 200 : 502, html: renderAuthCompletionHtml(`Marvin processed the ${provider} authorization callback`, tokenMessage, tokenOk) };
 }
 
-function bootstrapPayload() {
+async function bootstrapPayload(req) {
   const latest = getLatestState();
-  const operator = latest.operatorEmail ? readJson(getOperatorPath(latest.operatorEmail), null) : null;
-  const config = latest.profileName ? readJson(getConfigPath(latest.profileName), null) : null;
-  return { ok: true, port, product: "marvin", deployEnabled, hostedMode, hasOperator: Boolean(operator), hasConfig: Boolean(config), operator: operator ? { displayName: operator.displayName, email: operator.email, createdAt: operator.createdAt } : null, config };
+  const operator = getPrimaryOperator();
+  const auth = getAuthContext(req);
+  let config = null;
+  if (auth.authenticated && latest.profileName) {
+    try { config = (await handleLoadConfig(latest.profileName)).config; }
+    catch { config = readJson(getConfigPath(latest.profileName), null); }
+  }
+  return {
+    ok: true,
+    port,
+    product: "marvin",
+    deployEnabled,
+    hostedMode,
+    hasOperator: Boolean(operator),
+    hasConfig: Boolean(latest.profileName && readJson(getConfigPath(latest.profileName), null)),
+    authenticated: Boolean(auth.authenticated),
+    requiresLogin: Boolean(operator) && !auth.authenticated,
+    operator: toPublicOperator(operator),
+    config
+  };
 }
 
 function parseJson(req) {
@@ -1650,35 +1797,39 @@ export function startMarvinOnboardServer() {
   const server = http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url || "/", `http://${req.headers.host}`);
-      if (req.method === "GET" && (url.pathname === "/marvin-api/status" || url.pathname === "/api/status" || url.pathname === "/marvin-api/bootstrap")) return sendJson(res, 200, bootstrapPayload());
+      if (req.method === "GET" && (url.pathname === "/marvin-api/status" || url.pathname === "/api/status" || url.pathname === "/marvin-api/bootstrap")) return sendJson(res, 200, await bootstrapPayload(req));
+      if (req.method === "POST" && url.pathname === "/marvin-api/login") { const result = await handleLogin(await parseJson(req)); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/logout") { const result = await handleLogout(req); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/microsoft/start") { const result = await handleOAuthStart("microsoft", url); if (result.redirectUrl) return sendRedirect(res, result.redirectUrl); return sendHtml(res, result.statusCode, result.html); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/google/start") { const result = await handleOAuthStart("google", url); if (result.redirectUrl) return sendRedirect(res, result.redirectUrl); return sendHtml(res, result.statusCode, result.html); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/microsoft/callback") { const result = await handleOAuthCallback("microsoft", url); return sendHtml(res, result.statusCode, result.html); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/google/callback") { const result = await handleOAuthCallback("google", url); return sendHtml(res, result.statusCode, result.html); }
-      if (req.method === "GET" && url.pathname === "/marvin-api/connections") return sendJson(res, 200, { ok: true, profileName: url.searchParams.get("profileName") || "", connectionState: loadConnectionState(url.searchParams.get("profileName") || ""), tokenState: loadTokenState(url.searchParams.get("profileName") || "") });
-      if (req.method === "GET" && url.pathname === "/marvin-api/runtime-status") { const profileName = url.searchParams.get("profileName") || getLatestState().profileName || ""; return sendJson(res, 200, { ok: true, profileName, runtimeStatus: loadRuntimeStatus(profileName), runtimeProcess: loadRuntimeProcessStatus(profileName) }); }
-      if (req.method === "GET" && url.pathname === "/marvin-api/config") return sendJson(res, 200, { ok: true, ...(await handleLoadConfig(url.searchParams.get("profileName") || getLatestState().profileName || "")) });
-      if (req.method === "GET" && url.pathname === "/marvin-api/provider-requirements") return sendJson(res, 200, { ok: true, ...(await handleProviderRequirements(url.searchParams.get("profileName") || getLatestState().profileName || "")) });
-      if (req.method === "GET" && url.pathname === "/marvin-api/provider-plan") return sendJson(res, 200, { ok: true, ...(await handleProviderPlan(url.searchParams.get("profileName") || getLatestState().profileName || "", url.searchParams.get("provider") || "")) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/create-account") return sendJson(res, 200, { ok: true, ...(await handleCreateAccount(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/save-config") return sendJson(res, 200, { ok: true, ...(await handleSaveConfig(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/account-upsert") return sendJson(res, 200, { ok: true, ...(await handleAccountUpsert(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/account-remove") return sendJson(res, 200, { ok: true, ...(await handleAccountRemove(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/provider-config") return sendJson(res, 200, { ok: true, ...(await handleProviderConfig(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/connection-update") return sendJson(res, 200, { ok: true, ...(await handleConnectionUpdate(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/connection-begin") return sendJson(res, 200, { ok: true, ...(await handleConnectionBegin(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/connection-validate") return sendJson(res, 200, { ok: true, ...(await handleConnectionValidate(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/connection-validate-all") return sendJson(res, 200, { ok: true, ...(await handleConnectionValidateAll(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/runtime-start") return sendJson(res, 200, { ok: true, ...(await handleRuntimeStart(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/runtime-stop") return sendJson(res, 200, { ok: true, ...(await handleRuntimeStop(await parseJson(req))) });
-      if (req.method === "POST" && url.pathname === "/marvin-api/deploy") return sendJson(res, 200, { ok: true, ...(await handleDeploy(await parseJson(req))) });
+      if (req.method === "GET" && url.pathname === "/marvin-api/connections") { requireAuth(req); return sendJson(res, 200, { ok: true, profileName: url.searchParams.get("profileName") || "", connectionState: loadConnectionState(url.searchParams.get("profileName") || ""), tokenState: loadTokenState(url.searchParams.get("profileName") || "") }); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/runtime-status") { requireAuth(req); const profileName = url.searchParams.get("profileName") || getLatestState().profileName || ""; return sendJson(res, 200, { ok: true, profileName, runtimeStatus: loadRuntimeStatus(profileName), runtimeProcess: loadRuntimeProcessStatus(profileName) }); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/config") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleLoadConfig(url.searchParams.get("profileName") || getLatestState().profileName || "")) }); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/provider-requirements") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderRequirements(url.searchParams.get("profileName") || getLatestState().profileName || "")) }); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/provider-plan") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderPlan(url.searchParams.get("profileName") || getLatestState().profileName || "", url.searchParams.get("provider") || "")) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/create-account") { const result = await handleCreateAccount(await parseJson(req), getAuthContext(req)); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/save-config") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleSaveConfig(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/account-upsert") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleAccountUpsert(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/account-remove") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleAccountRemove(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/provider-config") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderConfig(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/connection-update") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleConnectionUpdate(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/connection-begin") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleConnectionBegin(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/connection-validate") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleConnectionValidate(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/connection-validate-all") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleConnectionValidateAll(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/runtime-start") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleRuntimeStart(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/runtime-stop") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleRuntimeStop(await parseJson(req))) }); }
+      if (req.method === "POST" && url.pathname === "/marvin-api/deploy") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleDeploy(await parseJson(req))) }); }
       const requestedPath = url.pathname === "/" ? "index.html" : url.pathname.replace(/^\/+/, "");
       const resolvedPath = path.normalize(path.join(publicRoot, requestedPath));
       if (!resolvedPath.startsWith(publicRoot)) return sendJson(res, 403, { ok: false, error: "Forbidden" });
       if (!fs.existsSync(resolvedPath) || fs.statSync(resolvedPath).isDirectory()) return sendJson(res, 404, { ok: false, error: "Not found" });
       return sendBuffer(res, 200, fs.readFileSync(resolvedPath), mimeMap[path.extname(resolvedPath).toLowerCase()] || "application/octet-stream");
     } catch (error) {
-      return sendJson(res, 500, { ok: false, error: error instanceof Error ? error.message : String(error) });
+      const statusCode = Number(error?.statusCode) || 500;
+      const payload = error?.payload && typeof error.payload === "object" ? error.payload : { ok: false, error: error instanceof Error ? error.message : String(error) };
+      return sendJson(res, statusCode, payload, error?.headers || {});
     }
   });
   server.listen(port, () => {
@@ -1686,6 +1837,8 @@ export function startMarvinOnboardServer() {
   });
   return server;
 }
+
+
 
 
 

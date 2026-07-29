@@ -2,7 +2,7 @@
 
 ## Summary
 
-This is the first-party hosted deployment path for Project Marvin as of Wednesday, July 29, 2026.
+This is the first-party hosted deployment path for Project Marvin as of Wednesday, July 29, 2026. It is the recommended hosted path in this repo, but it is still only locally proven rather than fully production-proven across real customer calendars.
 
 Use this path if you want:
 
@@ -81,17 +81,23 @@ Before deploying to Azure, the easiest local prereq path remains:
 npm run marvin:install
 ```
 
+If you only want the Marvin workspace account created before deployment, run:
+
+```powershell
+npm run marvin:create-operator -- --email you@example.com --display-name "Project Marvin" --password "use-a-real-password"
+```
+
 That gives you the same local Marvin account configuration and state shape the hosted UI expects. If you want the local bootstrap to be fully scripted, call `scripts/install-marvin.ps1` directly with `-NoPrompt` and your initial account inputs before deploying.
 
 
-1. create the Marvin account
+1. create or review the Marvin workspace account
 2. add calendar accounts
 3. generate or create the Microsoft provider app with `pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName <profile> -MarvinBaseUrl <deployed-url>` if you want a scripted Entra path
 4. enter provider app settings for Microsoft and Google
 5. authenticate calendars from Marvin, refresh Marvin state, and validate access
 6. confirm the runtime status in Marvin
 
-Once the Marvin account exists, hosted Marvin auto-starts the runtime for the latest saved account.
+Once the Marvin workspace account exists, hosted Marvin auto-starts the runtime for the latest saved account. The repo proves the hosted bootstrap and runtime handoff locally, but it does not yet prove real provider linking and live cross-tenant sync from a production Azure deployment.
 
 ## Files used
 
@@ -109,7 +115,7 @@ The repo currently proves all of the following locally:
 
 - the hosted Marvin bootstrap path starts successfully
 - the hosted UI answers `/marvin-api/bootstrap`
-- hosted Marvin auto-starts the runtime when `.marvin/latest.json` points at a saved Marvin account
+- hosted Marvin auto-starts the runtime when `.marvin/latest.json` points at a saved Marvin workspace account
 - hosted Marvin stops the stale runtime and switches to the new latest saved account when `.marvin/latest.json` changes
 - hosted Marvin stops the active runtime when the latest saved account disappears or its profile file is removed
 - hosted Marvin writes runtime process and runtime status records

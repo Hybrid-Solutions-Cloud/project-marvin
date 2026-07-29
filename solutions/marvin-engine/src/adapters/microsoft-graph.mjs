@@ -1,5 +1,5 @@
 import { MARVIN_MIRROR_MARKER } from "../core/policy.mjs";
-import { getTokenRecord, isTokenRecordUsable } from "../util/token-state.mjs";
+import { getTokenRecord, hasTokenRecordMaterial, isTokenRecordUsable } from "../util/token-state.mjs";
 import { refreshProviderToken } from "../util/oauth-refresh.mjs";
 
 function normalizeString(value) {
@@ -171,14 +171,16 @@ export class MicrosoftGraphAdapter {
   }
 
   describe() {
-    const tokenState = this.config.tokenState || { records: [] };
-    const usable = (tokenState.records || []).filter((record) => (record.provider === "m365" || record.provider === "outlook") && isTokenRecordUsable(record)).length;
+    const calendars = Array.isArray(this.config.profile?.calendars)
+      ? this.config.profile.calendars.filter((calendar) => calendar.provider === "m365" || calendar.provider === "outlook")
+      : [];
+    const ready = calendars.filter((calendar) => this.hasCalendarAuthMaterial(calendar)).length;
     return {
       provider: "m365",
-      status: usable > 0 ? "token-ready" : "token-missing",
-      notes: usable > 0
-        ? "Microsoft Graph token records exist. Marvin can attempt live read/write calls for connected calendars."
-        : "No usable Microsoft Graph tokens found yet. Complete Marvin auth and token exchange first."
+      status: ready > 0 ? "token-ready" : "token-missing",
+      notes: ready > 0
+        ? "Microsoft Graph auth material exists. Marvin can attempt live read/write calls for connected calendars with valid Marvin auth state."
+        : "No usable Microsoft Graph auth material found yet. Complete Marvin auth and token exchange first."
     };
   }
 
@@ -195,6 +197,20 @@ export class MicrosoftGraphAdapter {
 
   getTokenRecord(calendarId) {
     return getTokenRecord(this.config.tokenState, calendarId);
+  }
+
+  hasCalendarAuthMaterial(calendar) {
+    const currentRecord = this.getTokenRecord(calendar.id);
+    if (isTokenRecordUsable(currentRecord)) {
+      return true;
+    }
+    if (!hasTokenRecordMaterial(currentRecord)) {
+      return false;
+    }
+    const runtime = this.config.profile?.runtime?.providerConnections?.microsoft || {};
+    const clientId = normalizeString(runtime.clientId);
+    const clientSecret = normalizeString(this.config.providerSecrets?.microsoftClientSecret || process.env.MICROSOFT_CLIENT_SECRET || process.env.MARVIN_MICROSOFT_CLIENT_SECRET);
+    return Boolean(clientId && clientSecret && normalizeString(currentRecord?.refreshToken));
   }
 
   async updateTokenRecord(calendar, nextRecord) {

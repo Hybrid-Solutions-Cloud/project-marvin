@@ -30,9 +30,8 @@
     "authMode": "marvin-engine",
     "clientId": "",
     "tenantMode": "multi-tenant",
-    "bridgeBaseUrl": "",
     "marvinBaseUrl": "",
-    "authorizePath": "/auth/outlook"
+    "authorizePath": "/marvin-api/oauth/microsoft/start"
   },
   "notes": [
     "This solution is intentionally narrowed to Outlook and Microsoft 365 calendars.",

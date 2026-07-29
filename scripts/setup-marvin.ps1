@@ -15,8 +15,8 @@ param(
   [string]$AppleCalDavAppPassword = "",
   [string]$WorkTenantId = "11111111-1111-1111-1111-111111111111",
   [string]$ContractTenantId = "22222222-2222-2222-2222-222222222222",
-  [string]$AutomationTenantId = "00000000-0000-0000-0000-000000000000",
-  [string]$AutomationEnvironmentUrl = "https://org000000.crm.dynamics.com",
+  [string]$AutomationTenantId = "",
+  [string]$AutomationEnvironmentUrl = "",
   [string]$MirrorMode = "subject",
   [string]$MarvinUrl = "",
   [string]$MicrosoftClientId = "",
@@ -24,6 +24,7 @@ param(
   [string]$GoogleClientId = "",
   [string]$GoogleClientSecret = "",
   [switch]$IncludeApple,
+  [switch]$IncludeBureaucraticFlow,
   [switch]$NoPrompt,
   [switch]$RunGenerators
 )
@@ -106,8 +107,10 @@ $Timezone = Ask 'Timezone' $Timezone
 $windowInput = Ask 'Sync window days' $SyncWindowDays
 $SyncWindowDays = [int]$windowInput
 $MarvinOperatorEmail = Ask 'Marvin account email' $MarvinOperatorEmail
-$AutomationTenantId = Ask 'Power Automate runtime tenant ID' $AutomationTenantId
-$AutomationEnvironmentUrl = Ask 'Power Platform environment URL' $AutomationEnvironmentUrl
+if ($IncludeBureaucraticFlow) {
+  $AutomationTenantId = Ask 'Bureaucratic Flow runtime tenant ID' $AutomationTenantId
+  $AutomationEnvironmentUrl = Ask 'Bureaucratic Flow Power Platform environment URL' $AutomationEnvironmentUrl
+}
 $MarvinUrl = Ask 'Marvin base URL' $MarvinUrl
 $MicrosoftClientId = Ask 'Microsoft client ID (optional)' $MicrosoftClientId
 $MicrosoftClientSecret = Ask 'Microsoft client secret (optional)' $MicrosoftClientSecret
@@ -188,7 +191,6 @@ $providerConnections = [ordered]@{
     authMode = 'marvin-engine'
     clientId = $MicrosoftClientId
     tenantMode = 'multi-tenant'
-    bridgeBaseUrl = ''
     marvinBaseUrl = $MarvinUrl
     authorizePath = '/marvin-api/oauth/microsoft/start'
   }
@@ -196,14 +198,12 @@ $providerConnections = [ordered]@{
     provider = 'google'
     authMode = 'marvin-engine'
     clientId = $GoogleClientId
-    bridgeBaseUrl = ''
     marvinBaseUrl = $MarvinUrl
     authorizePath = '/marvin-api/oauth/google/start'
   }
   caldav = [ordered]@{
     provider = 'apple-caldav'
     authMode = 'manual-caldav'
-    bridgeBaseUrl = ''
     marvinBaseUrl = $MarvinUrl
     authorizePath = ''
     serverUrl = ''
@@ -218,8 +218,22 @@ $deployment = [ordered]@{
   regionShort = 'wus3'
   location = 'westus3'
   instance = '01'
-  keeperUrl = ''
   marvinUrl = $MarvinUrl
+}
+
+$runtime = [ordered]@{
+  deployment = $deployment
+  providerConnections = $providerConnections
+}
+
+if ($IncludeBureaucraticFlow -or -not [string]::IsNullOrWhiteSpace($AutomationTenantId) -or -not [string]::IsNullOrWhiteSpace($AutomationEnvironmentUrl)) {
+  $runtime.powerAutomate = [ordered]@{
+    automationTenantId = $AutomationTenantId
+    environmentUrl = $AutomationEnvironmentUrl
+    deploymentModel = 'graph-http-entra-id'
+    graphAppDisplayName = 'Project Marvin Flow Runtime'
+    supportedAccountTypes = 'AzureADMultipleOrgs'
+  }
 }
 
 $profile = [ordered]@{
@@ -234,17 +248,7 @@ $profile = [ordered]@{
     copyDescription = $false
     preserveOriginalTimezone = $true
   }
-  runtime = [ordered]@{
-    powerAutomate = [ordered]@{
-      automationTenantId = $AutomationTenantId
-      environmentUrl = $AutomationEnvironmentUrl
-      deploymentModel = 'graph-http-entra-id'
-      graphAppDisplayName = 'Project Marvin Flow Runtime'
-      supportedAccountTypes = 'AzureADMultipleOrgs'
-    }
-    deployment = $deployment
-    providerConnections = $providerConnections
-  }
+  runtime = $runtime
   calendars = $calendars
   routes = $routes
 }
@@ -391,7 +395,7 @@ foreach ($calendar in $calendars) {
       $authUrl = "$MarvinUrl$($runtimeConfig.authorizePath)"
     }
     if ($hasClientId) {
-      $reason = 'Provider auth can be started through marvin-engine.'
+      $reason = 'Provider auth can be started directly through Marvin.'
     } else {
       $reason = 'Set the provider client ID in Marvin before connecting this calendar.'
     }
@@ -406,7 +410,6 @@ foreach ($calendar in $calendars) {
     connectorReady = $connectorReady
     supportsRealtime = $supportsRealtime
     authUrl = $authUrl
-    bridgeBaseUrl = $runtimeConfig.bridgeBaseUrl
     marvinBaseUrl = $runtimeConfig.marvinBaseUrl
     missingRequired = @()
     missingRecommended = @()
@@ -509,12 +512,13 @@ if ($RunGenerators) {
 
 Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "1. Run npm run marvin:ui if the Marvin local console is not already running."
-Write-Host "2. If you need a Microsoft app-registration plan first, run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName $ProfileSlug -EmitOnly."
-Write-Host "3. Open the Marvin console, confirm the generated accounts, and use Connect Calendars for Microsoft and Google auth or Apple validation."
-Write-Host "4. Run npm run marvin:doctor for a repo-level health check and next verification guidance."
-Write-Host "5. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check."
-Write-Host "6. Run npm run marvin:dry-run to inspect mirror planning from the saved Marvin profile."
-Write-Host "7. Run npm run marvin:verify-local for the current broader local verification flow."
+Write-Host "2. If you need the Bureaucratic Flow / Power Platform reference path, rerun setup with -IncludeBureaucraticFlow or run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName $ProfileSlug -EmitOnly."
+Write-Host "3. Open the Calendars list, finish Access setup, link each calendar, and run Check Access until Link status shows ready."
+Write-Host "4. Review the Marvin Workspace card and each calendar card before starting automation."
+Write-Host "5. Run npm run marvin:doctor for a repo-level health check and next verification guidance."
+Write-Host "6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check."
+Write-Host "7. Run npm run marvin:dry-run to inspect mirror planning from the saved Marvin profile."
+Write-Host "8. Run npm run marvin:verify-local for the current broader local verification flow."
 
 
 

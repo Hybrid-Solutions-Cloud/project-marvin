@@ -10,7 +10,7 @@
       "visibility": "private",
       "subjectPrefix": "WORK: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.681Z"
+      "updatedAt": "2026-07-29T21:10:33.516Z"
     },
     {
       "sourceCalendarId": "work_m365",
@@ -22,7 +22,7 @@
       "visibility": "private",
       "subjectPrefix": "WORK: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "work_m365",
@@ -34,7 +34,7 @@
       "visibility": "default",
       "subjectPrefix": "WORK: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "work_m365",
@@ -46,7 +46,7 @@
       "visibility": "private",
       "subjectPrefix": "WORK: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -58,7 +58,7 @@
       "visibility": "private",
       "subjectPrefix": "CONTRACT: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -70,7 +70,7 @@
       "visibility": "private",
       "subjectPrefix": "CONTRACT: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -82,7 +82,7 @@
       "visibility": "default",
       "subjectPrefix": "CONTRACT: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "contract_m365",
@@ -94,7 +94,7 @@
       "visibility": "private",
       "subjectPrefix": "CONTRACT: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "personal_google",
@@ -106,7 +106,7 @@
       "visibility": "private",
       "subjectPrefix": "GOOGLE: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "personal_google",
@@ -118,7 +118,7 @@
       "visibility": "private",
       "subjectPrefix": "GOOGLE: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "personal_google",
@@ -130,7 +130,7 @@
       "visibility": "default",
       "subjectPrefix": "GOOGLE: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     },
     {
       "sourceCalendarId": "personal_google",
@@ -142,7 +142,7 @@
       "visibility": "private",
       "subjectPrefix": "GOOGLE: ",
       "sourceEventTimezone": "America/New_York",
-      "updatedAt": "2026-07-29T16:22:22.682Z"
+      "updatedAt": "2026-07-29T21:10:33.518Z"
     }
   ]
 }

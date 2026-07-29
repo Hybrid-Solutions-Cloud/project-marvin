@@ -16,4 +16,4 @@ This is the pragmatic Microsoft-only route.
 ## Runtime Mode
 
 - auth mode: marvin-engine
-- bridge URL: not configured
+- auth path: Marvin-native provider linking

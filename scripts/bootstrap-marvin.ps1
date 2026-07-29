@@ -8,6 +8,9 @@ param(
   [int]$SyncWindowDays = 45,
   [Alias('WorkspaceEmail')]
   [string]$MarvinOperatorEmail = 'marvin@example.com',
+  [string]$MarvinOperatorDisplayName = 'Marvin Operator',
+  [Alias('WorkspacePassword')]
+  [string]$MarvinOperatorPassword = '',
   [string]$WorkEmail,
   [string]$ContractEmail,
   [string]$GoogleEmail,
@@ -18,8 +21,8 @@ param(
   [string]$AppleCalDavAppPassword = '',
   [string]$WorkTenantId = '11111111-1111-1111-1111-111111111111',
   [string]$ContractTenantId = '22222222-2222-2222-2222-222222222222',
-  [string]$AutomationTenantId = '00000000-0000-0000-0000-000000000000',
-  [string]$AutomationEnvironmentUrl = 'https://org000000.crm.dynamics.com',
+  [string]$AutomationTenantId = '',
+  [string]$AutomationEnvironmentUrl = '',
   [string]$MirrorMode = 'subject',
   [string]$MarvinUrl = '',
   [string]$MicrosoftClientId = '',
@@ -159,15 +162,36 @@ try {
     throw 'setup-marvin.ps1 failed during Marvin bootstrap.'
   }
 
+  if (-not [string]::IsNullOrWhiteSpace($MarvinOperatorPassword)) {
+    Write-Host 'Creating local Marvin workspace sign-in...' -ForegroundColor Cyan
+    node .\scripts\create-marvin-operator.mjs --email $MarvinOperatorEmail --display-name $MarvinOperatorDisplayName --password $MarvinOperatorPassword
+    if ($LASTEXITCODE -ne 0) {
+      throw 'create-marvin-operator.mjs failed during Marvin bootstrap.'
+    }
+  }
+
   Write-Host ''
   Write-Host 'Bootstrap complete.' -ForegroundColor Green
   Write-Host 'Next steps:' -ForegroundColor Cyan
-  Write-Host '1. Run npm run marvin:ui'
-  Write-Host '2. Open the Marvin console and complete provider linking.'
-  Write-Host '3. Run npm run marvin:doctor for a repo-level health check and next verification guidance.'
-  Write-Host '4. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
-  Write-Host '5. Use npm run marvin:runtime:start after the account setup is complete.'
-  Write-Host '6. Use npm run marvin:verify-local when you want to validate the broader local Marvin workflow.'
+  if (-not [string]::IsNullOrWhiteSpace($MarvinOperatorPassword)) {
+    Write-Host '1. Run npm run marvin:ui'
+    Write-Host '2. Sign in with the Marvin workspace account created by this bootstrap run.'
+    Write-Host '3. Open the Calendars list, finish Access setup, link each calendar, and run Check Access until Link status shows ready.'
+    Write-Host '4. Review the Marvin Workspace card and each calendar card before starting automation.'
+    Write-Host '5. Run npm run marvin:doctor for a repo-level health check and next verification guidance.'
+    Write-Host '6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
+    Write-Host '7. Use npm run marvin:runtime:start after the account setup is complete.'
+    Write-Host '8. Use npm run marvin:verify-local when you want to validate the broader local Marvin workflow.'
+  } else {
+    Write-Host '1. Run npm run marvin:ui'
+    Write-Host '2. Open the Marvin console, create the Marvin workspace account, add calendars, and save Marvin setup.'
+    Write-Host '3. Finish Access setup, link each calendar, and run Check Access until Link status shows ready.'
+    Write-Host '4. Review the Marvin Workspace card and each calendar card before starting automation.'
+    Write-Host '5. Run npm run marvin:doctor for a repo-level health check and next verification guidance.'
+    Write-Host '6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
+    Write-Host '7. Use npm run marvin:runtime:start after the account setup is complete.'
+    Write-Host '8. Use npm run marvin:verify-local when you want to validate the broader local Marvin workflow.'
+  }
 } finally {
   Pop-Location
 }

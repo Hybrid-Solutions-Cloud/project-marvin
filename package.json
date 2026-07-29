@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "docs:dev": "vitepress dev docs",
+    "predocs:build": "npm run marvin:render-status-doc",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
     "solutions:build": "node scripts/build-calendar-options.mjs",
@@ -20,6 +21,7 @@
     "marvin:ui": "node scripts/marvin-onboard-ui.mjs",
     "marvin:install": "powershell -ExecutionPolicy Bypass -File .\\scripts\\install-marvin.ps1",
     "marvin:doctor": "node scripts/marvin-doctor.mjs",
+    "marvin:render-status-doc": "node scripts/render-marvin-status-doc.mjs",
     "keeper:azure:deploy": "powershell -ExecutionPolicy Bypass -File .\\solutions\\paranoid-keeper\\deploy-azure-container-app.ps1",
     "marvin:azure:plan": "pwsh -ExecutionPolicy Bypass -File .\\solutions\\marvin-engine\\deploy-azure-container-app.ps1 -EmitPlanOnly",
     "marvin:azure:deploy": "powershell -ExecutionPolicy Bypass -File .\\solutions\\marvin-engine\\deploy-azure-container-app.ps1",
@@ -57,11 +59,19 @@
     "marvin:smoke-batch-validation": "node scripts/smoke-marvin-batch-validation.mjs",
     "marvin:smoke-entra-plan": "node scripts/smoke-marvin-entra-plan.mjs",
     "marvin:smoke-google-app-plan": "node scripts/smoke-marvin-google-app-plan.mjs",
-    "marvin:smoke-provider-plan-api": "node scripts/smoke-marvin-provider-plan-api.mjs"
+    "marvin:smoke-provider-plan-api": "node scripts/smoke-marvin-provider-plan-api.mjs",
+    "marvin:create-operator": "node scripts/create-marvin-operator.mjs",
+    "marvin:smoke-create-operator": "node scripts/smoke-create-marvin-operator.mjs",
+    "marvin:smoke-auth-gating": "node scripts/smoke-marvin-auth-gating.mjs",
+    "marvin:smoke-live-readiness": "node scripts/smoke-marvin-live-readiness.mjs",
+    "marvin:smoke-docs-commands": "node scripts/smoke-marvin-docs-commands.mjs",
+    "marvin:smoke-onboarding-guidance": "node scripts/smoke-marvin-onboarding-guidance.mjs",
+    "marvin:smoke-bureaucratic-flow-opt-in": "node scripts/smoke-marvin-bureaucratic-flow-opt-in.mjs",
+    "marvin:smoke-runtime-track-split": "node scripts/smoke-marvin-runtime-track-split.mjs",
+    "marvin:smoke-status-reporting": "node scripts/smoke-marvin-status-reporting.mjs",
+    "marvin:smoke-route-policy": "node scripts/smoke-marvin-route-policy.mjs"
   },
   "devDependencies": {
     "vitepress": "next"
   }
 }
-
-

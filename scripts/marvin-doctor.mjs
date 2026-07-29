@@ -3,6 +3,7 @@ import path from "node:path";
 import { resolveActiveProfile, loadLatestProfileState } from "../solutions/marvin-engine/src/util/active-profile.mjs";
 import { assessProfileConnections } from "../solutions/marvin-engine/src/util/provider-connections.mjs";
 import { getRuntimeProcessStatus } from "../solutions/marvin-engine/src/util/runtime-process.mjs";
+import { buildRequirementCoverage } from "./lib/marvin-status.mjs";
 
 function readJson(filePath, fallback = null) {
   if (!fs.existsSync(filePath)) {
@@ -39,9 +40,14 @@ function buildPaths(rootDir, profileName) {
 function buildVerificationGuidance() {
   return {
     verifyLocalCommand: "npm run marvin:verify-local",
+    operatorCreationCommand: "npm run marvin:create-operator -- --email <email> --display-name <name> --password <password>",
+    operatorCreationProofCommand: "npm run marvin:smoke-create-operator",
+    authGatingProofCommand: "npm run marvin:smoke-auth-gating",
     operatorJourneyCommand: "npm run marvin:smoke-operator-journey",
     syncProofCommand: "npm run marvin:smoke-live",
-    docsPath: "docs/requirements.md"
+    statusReportingProofCommand: "npm run marvin:smoke-status-reporting",
+    requirementsDocsPath: "docs/requirements.md",
+    onboardingDocsPath: "docs/operator/onboarding-ui.md"
   };
 }
 
@@ -51,7 +57,7 @@ function buildHostedGuidance(profileName = "marvin") {
     supported: true,
     planCommand: "npm run marvin:azure:plan -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3",
     deployCommand: "npm run marvin:azure:deploy -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3",
-    entraPlanCommand: `pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName ${safeProfile} -EmitOnly`,
+    entraPlanCommand: `pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-entra-app.ps1 -ProfileName ${safeProfile} -EmitOnly`,
     docsPath: "docs/solutions/marvin-azure.md"
   };
 }
@@ -63,6 +69,7 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
 
   if (!hasProfile && !hasConfig) {
     steps.push("Run npm run marvin:install or npm run marvin:bootstrap to scaffold Marvin locally.");
+    steps.push("If you want the Marvin workspace account created before opening the UI, run npm run marvin:create-operator -- --email <email> --display-name <name> --password <password>.");
     steps.push("Run npm run marvin:ui to open the Marvin setup and management UI.");
     steps.push("If you plan to host Marvin on Azure, run npm run marvin:azure:plan to review the deployment shape before a live deploy.");
     return steps;
@@ -94,7 +101,7 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
     }
   }
   if ((connectionSummary?.summary?.connected || 0) < (connectionSummary?.summary?.total || 0)) {
-    steps.push("Use Marvin's Connection Center to authenticate or validate every calendar you expect to sync.");
+    steps.push("Use Marvin's Calendars management list to authenticate or validate every calendar you expect to sync.");
   }
   steps.push("Use npm run marvin:smoke-operator-journey when you want one Marvin-owned verification path for Marvin account setup, provider auth state, validation state, and runtime control.");
   if (!runtimeProcess?.running || runtimeStatus?.running === false || !runtimeStatus) {
@@ -103,6 +110,7 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
   if (hasConfig) {
     steps.push("Use npm run marvin:azure:plan if you want a scriptable preview of the hosted Azure resource names and runtime settings before deployment.");
   }
+  steps.push("Run npm run marvin:doctor -- --json and review requirementCoverage for the current product-level proof and remaining gaps.");
   if (steps.length === 0) {
     steps.push("No obvious local blockers found. The next proof point is live end-to-end sync against real provider accounts.");
   }
@@ -149,7 +157,8 @@ function buildDoctorReport(args) {
       process: runtimeProcess
     },
     verification: buildVerificationGuidance(),
-    hosted: buildHostedGuidance(activeProfile.profileName)
+    hosted: buildHostedGuidance(activeProfile.profileName),
+    requirementCoverage: buildRequirementCoverage()
   };
 
   report.nextSteps = buildNextSteps(profile, config, connectionSummary, runtimeStatus, runtimeProcess, providerSecrets);
@@ -159,3 +168,6 @@ function buildDoctorReport(args) {
 const args = parseArgs();
 const report = buildDoctorReport(args);
 console.log(JSON.stringify(report, null, 2));
+
+
+

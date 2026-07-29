@@ -28,12 +28,14 @@ Implemented now:
 - per-source prefixes
 - per-target visibility and detail rules
 - connected-account state in calendar profiles
+- validated provider-auth-material gating so a calendar must be marked connected and have real token or credential state before live source loading, writes, or stale-mirror cleanup can run
 - computed readiness summaries, ready-versus-action-required stats, and per-account next-action hints for the Marvin management console
 - timezone-preservation metadata in mirror payloads and mappings
 - file-backed mapping store
 - dry-run mode
 - mock apply mode
 - local Microsoft and Google auth launch/callback persistence in Marvin onboarding
+- default generated Marvin Engine profiles now omit Bureaucratic Flow / Power Platform runtime metadata unless that reference track is explicitly chosen
 - local token-state persistence under `.marvin/tokens/*.tokens.json`
 - on-demand refresh-token exchange for expired Microsoft and Google tokens when Marvin has local provider client secrets
 - runtime persistence of refreshed access and refresh tokens back into `.marvin/tokens/*.tokens.json`
@@ -64,7 +66,7 @@ Not implemented or not yet proven:
 
 ### Current engine flow
 
-1. Marvin profile defines calendars, prefixes, privacy defaults, and routes.
+1. Marvin profile defines calendars, prefixes, privacy defaults, and routes. On the default Marvin Engine path, that generated profile carries Marvin runtime deployment and provider-connection state without automatically embedding Bureaucratic Flow runtime metadata.
 2. Source events are loaded from fixture JSON or provider adapters.
 3. Planner expands every source event into per-target operations.
 4. Policy engine computes private or visible mirror payloads per target.
@@ -80,6 +82,7 @@ The engine currently supports:
 
 - `sourcePrefix` on each calendar
 - `connectionStatus` on each calendar
+- adapter-level auth-material readiness per calendar
 - per-target `visibility`
 - per-target `detailMode`
 - optional location and description copying
@@ -108,6 +111,7 @@ The engine currently supports:
 - `scripts/smoke-marvin-live-engine.mjs`
 - `scripts/smoke-marvin-daemon-once.mjs`
 - `scripts/smoke-marvin-onboard-caldav.mjs`
+- `scripts/smoke-marvin-onboard-api.mjs`
 
 ## Hosted deployment
 
@@ -168,6 +172,7 @@ npm run marvin:verify-local
 
 ```powershell
 npm run marvin:smoke-live
+npm run marvin:smoke-live-readiness
 npm run marvin:smoke-daemon
 npm run marvin:smoke-runtime-manager
 npm run marvin:smoke-caldav
@@ -176,9 +181,11 @@ npm run marvin:smoke-caldav-live
 npm run marvin:smoke-delete-cleanup
 npm run marvin:smoke-doctor
 npm run marvin:smoke-onboard-api
+npm run marvin:smoke-auth-gating
 npm run marvin:smoke-operator-journey
 npm run marvin:smoke-account-management
 npm run marvin:smoke-connection-validation
+npm run marvin:smoke-create-operator
 npm run marvin:smoke-runtime-latest
 npm run marvin:smoke-cli-latest
 npm run marvin:smoke-artifacts-latest
@@ -190,6 +197,7 @@ The current engine and runtime were verified with:
 
 ```powershell
 npm run marvin:smoke-live
+npm run marvin:smoke-live-readiness
 npm run marvin:smoke-daemon
 npm run marvin:smoke-onboard-caldav
 npm run marvin:smoke-caldav-live
@@ -199,11 +207,14 @@ The `marvin:smoke-live` output now also surfaces: bidirectional source-target pa
 
 That verification now proves:
 
-- the Marvin browser surface exposes the Setup Assistant, Management Console, Account Connections area, and automation controls instead of the older Keeper login copy
-- Marvin can refresh saved setup state back into the UI, validate per-calendar live access from the same Account Connections area, and compute operator-facing readiness steps for unfinished accounts
+- the Marvin browser surface exposes the Setup Assistant, Management Console, one Calendars management list, and automation controls instead of the older Keeper login copy
+- Marvin can refresh saved setup state back into the UI, validate per-calendar live access from the same Calendars management list, and compute operator-facing readiness steps for unfinished accounts
+- Marvin now proves that protected config access is blocked after logout and restored only after a valid Marvin workspace login
 - Marvin now has a fuller local operator-journey smoke covering Marvin account creation, multi-provider account save, Microsoft callback auth, Google pending validation, Apple / CalDAV direct validation, and runtime start/stop
+- Marvin now proves that a non-interactive workspace-account record can be created ahead of browser setup and that doctor guidance exposes that path for fresh-clone onboarding
 
 - bidirectional provider pairs are exercised across Microsoft, Google, and Apple / CalDAV targets in the mocked runtime path
+- calendars that are disconnected or missing validated provider auth material are skipped during live source loading, live writes, and stale-mirror cleanup, so Marvin no longer calls provider adapters for calendars that are not actually ready
 - per-source prefixes are emitted into payloads and persisted mappings
 - private-by-default target policy is represented with four private mirrored targets in the current live-engine smoke
 - family and custom per-calendar target overrides are represented with two default-visibility mirrored targets in the current live-engine smoke

@@ -61,12 +61,20 @@ function startCalDavStub() {
   });
 }
 
+let sessionCookie = "";
+
 async function postJson(url, body) {
+  const headers = { "Content-Type": "application/json" };
+  if (sessionCookie) headers.Cookie = sessionCookie;
   const response = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body)
   });
+  const setCookie = response.headers.get("set-cookie");
+  if (setCookie) {
+    sessionCookie = setCookie.split(";")[0];
+  }
   return response.json();
 }
 

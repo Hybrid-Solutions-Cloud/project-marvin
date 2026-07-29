@@ -13,12 +13,20 @@ Project Marvin is the repo's primary product path: one Marvin-managed setup flow
 - gives the operator one setup and management surface
 ## Start here
 Fresh clone path:
-`powershell
+
+```powershell
 npm run marvin:install
-`
+```
+
+Optional pre-create step for the Marvin workspace account:
+
+```powershell
+npm run marvin:create-operator -- --email you@example.com --display-name "Project Marvin" --password "use-a-real-password"
+```
 If you are cloning the repo and want the real Marvin path, begin with:
 - [Getting Started](/getting-started)
 - [Requirements](/requirements)
+- [Status](/status)
 - [Architecture](/architecture)
 - [Marvin Engine](/solutions/marvin-engine)
 - [Marvin on Azure](/solutions/marvin-azure)
@@ -34,7 +42,6 @@ Implemented now:
 Still not proven complete:
 - real tenant-to-tenant production sync against customer-owned providers
 - production-grade encryption and secret-management hardening for local state
-- first-party Azure Container Apps deployment path now scripted in-repo, including a dry-run plan command
 - long-term hosted deployment and operations proof for the final Marvin runtime
 - fully verified zero-touch provider app creation for every Microsoft and Google tenant
 ## Repo structure

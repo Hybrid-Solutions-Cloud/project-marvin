@@ -11,7 +11,7 @@ param projectName string = 'project-marvin'
 param costCenter string = 'hcs-internal'
 
 @description('Owner tag value.')
-param owner string = 'kris@hybridsolutions.cloud'
+param owner string = 'project-marvin'
 
 @description('Managed by tag value.')
 param managedBy string = 'bicep'
@@ -112,9 +112,6 @@ param trustedOrigins string = 'https://placeholder.invalid'
 
 @description('Base URL used by Keeper auth callbacks.')
 param betterAuthUrl string = 'https://placeholder.invalid'
-
-@description('External Keeper URL used by Marvin for provider-link navigation.')
-param marvinKeeperLinkUrl string = 'https://placeholder.invalid'
 
 var tags = {
   Owner: owner
@@ -243,10 +240,6 @@ resource marvinApp 'Microsoft.App/containerApps@2024-03-01' = {
             {
               name: 'MARVIN_HOSTED'
               value: 'true'
-            }
-            {
-              name: 'MARVIN_KEEPER_LINK_URL'
-              value: marvinKeeperLinkUrl
             }
           ]
           resources: {

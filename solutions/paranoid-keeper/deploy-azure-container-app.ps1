@@ -11,7 +11,7 @@ param(
   [string]$Location = 'eastus',
   [string]$ProjectName = 'project-marvin',
   [string]$CostCenter = 'hcs-internal',
-  [string]$Owner = 'kris@hybridsolutions.cloud',
+  [string]$Owner = 'project-marvin',
   [string]$EnvFilePath = '.env',
   [string]$Image = 'ghcr.io/ridafkih/keeper-services:2.9',
   [string]$AdditionalTrustedOrigins = '',
@@ -153,7 +153,6 @@ $deploymentJson = az deployment group create `
     googleClientSecret=$($envMap['GOOGLE_CLIENT_SECRET']) `
     trustedOrigins=$trustedOriginsValue `
     betterAuthUrl='https://placeholder.invalid' `
-    marvinKeeperLinkUrl='https://placeholder.invalid' `
   --query properties.outputs `
   --output json
 Assert-Success 'Bicep deployment'
@@ -163,8 +162,6 @@ $marvinUrl = $outputs.marvinUrl.value
 $keeperUrl = $outputs.keeperUrl.value
 $finalTrustedOrigins = (($trustedOrigins + $marvinUrl + $keeperUrl) | Select-Object -Unique) -join ','
 
-az containerapp update --name $marvinAppName --resource-group $resourceGroupName --container-name marvin-ui --set-env-vars MARVIN_KEEPER_LINK_URL=$keeperUrl --output none
-Assert-Success 'Updating Marvin keeper link URL'
 az containerapp update --name $keeperAppName --resource-group $resourceGroupName --container-name keeper --set-env-vars BETTER_AUTH_URL=$keeperUrl TRUSTED_ORIGINS=$finalTrustedOrigins --output none
 Assert-Success 'Updating Keeper auth URL and trusted origins'
 

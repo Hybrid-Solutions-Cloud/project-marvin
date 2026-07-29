@@ -6,6 +6,7 @@ import { execFileSync } from "node:child_process";
 const root = process.cwd();
 const profileName = "marvin-install-smoke";
 const profileSlug = profileName.replace(/[^a-z0-9._-]+/gi, "-").toLowerCase();
+const operatorFileName = "marvin-install-smoke-example.com.account.json";
 
 const latestPath = path.join(root, ".marvin", "latest.json");
 const installScriptPath = path.join(root, "scripts", "install-marvin.ps1");
@@ -18,6 +19,7 @@ const targets = [
   path.join(root, ".marvin", `${profileSlug}.setup.json`),
   path.join(root, ".marvin", "provider-secrets", `${profileSlug}.secrets.json`),
   path.join(root, ".marvin", "connections", `${profileSlug}.connections.json`),
+  path.join(root, ".marvin", "operators", operatorFileName),
   path.join(root, "artifacts", "solutions", profileSlug)
 ];
 
@@ -43,6 +45,8 @@ try {
     "-File", ".\\scripts\\install-marvin.ps1",
     "-WorkspaceId", profileName,
     "-WorkspaceEmail", "marvin-install-smoke@example.com",
+    "-MarvinOperatorDisplayName", "Install Smoke Operator",
+    "-WorkspacePassword", "smoke-password",
     "-NoPrompt",
     "-SkipNpmInstall",
     "-SkipSmokeSetup",
@@ -69,23 +73,30 @@ try {
   const profilePath = path.join(root, "profiles", `${profileSlug}.json`);
   const setupPath = path.join(root, ".marvin", `${profileSlug}.setup.json`);
   const summaryPath = path.join(root, "artifacts", "solutions", profileSlug, "summary.json");
+  const operatorPath = path.join(root, ".marvin", "operators", operatorFileName);
 
-  for (const filePath of [profilePath, setupPath, summaryPath]) {
+  for (const filePath of [profilePath, setupPath, summaryPath, operatorPath]) {
     assert.equal(fs.existsSync(filePath), true, `Expected generated file: ${filePath}`);
   }
 
   const profile = readJson(profilePath);
   const setup = readJson(setupPath);
   const summary = readJson(summaryPath);
+  const operator = readJson(operatorPath);
 
   assert.equal(profile.name, profileSlug);
   assert.equal(setup.profileName, profileSlug);
   assert.equal(setup.accounts.length, 5);
   assert.equal(setup.providerRequirements.microsoft.redirectUri, "http://127.0.0.1:4177/marvin-api/oauth/microsoft/callback");
   assert.equal(summary.profile, profileSlug);
+  assert.equal(operator.displayName, "Install Smoke Operator");
+  assert.equal(operator.email, "marvin-install-smoke@example.com");
+  assert.equal(typeof operator.password?.salt, "string");
+  assert.equal(typeof operator.password?.hash, "string");
   assert.match(output, /Installing and bootstrapping Project Marvin/);
+  assert.match(output, /Creating local Marvin workspace sign-in/);
   assert.match(output, /Marvin install completed\./);
-  assert.match(output, /Complete the Marvin admin, calendar, calendar-access, and calendar-auth setup flow/);
+  assert.match(output, /Sign in with the Marvin workspace account created by this install run\./);
   assert.match(output, /npm run marvin:doctor/);
   assert.match(output, /npm run marvin:smoke-operator-journey/);
   assert.match(output, /npm run marvin:runtime:start/);
@@ -95,12 +106,14 @@ try {
   assert.doesNotMatch(bootstrapScript, /KeeperUrl/);
   assert.match(installScript, /\[Alias\('WorkspaceId'\)\]/);
   assert.match(installScript, /\[Alias\('WorkspaceEmail'\)\]/);
+  assert.match(installScript, /\[Alias\('WorkspacePassword'\)\]/);
 
   console.log(JSON.stringify({
     ok: true,
     profile: profile.name,
     calendars: profile.calendars.length,
     routes: profile.routes.length,
+    operator: operator.email,
     generatedSolutions: summary.solutions.map((item) => item.name)
   }, null, 2));
 } finally {
@@ -111,6 +124,3 @@ try {
     fs.writeFileSync(latestPath, previousLatest, "utf8");
   }
 }
-
-
-

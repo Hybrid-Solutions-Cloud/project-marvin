@@ -12,6 +12,23 @@ function buildSourceEventKey(calendarId, eventId) {
   return `${calendarId}::${eventId}`;
 }
 
+function isCalendarConnected(calendar) {
+  return String(calendar?.connectionStatus || "").trim().toLowerCase() === "connected";
+}
+
+function getCalendarReadiness(adapter, calendar) {
+  if (!calendar || !adapter) {
+    return { ready: false, reason: "No live adapter is available." };
+  }
+  if (!isCalendarConnected(calendar)) {
+    return { ready: false, reason: `Calendar ${calendar.label} is not connected.` };
+  }
+  if (typeof adapter.hasCalendarAuthMaterial === "function" && !adapter.hasCalendarAuthMaterial(calendar)) {
+    return { ready: false, reason: `Calendar ${calendar.label} is missing validated auth material.` };
+  }
+  return { ready: true, reason: "" };
+}
+
 export class SyncEngine {
   constructor({ profile, store, adapters, sourceEvents = [] }) {
     this.profile = profile;
@@ -41,8 +58,7 @@ export class SyncEngine {
 
   isSourceCleanupReady(calendar) {
     const adapter = this.adapters[this.targetAdapterKey(calendar.provider)];
-    const status = adapter?.describe?.().status || "";
-    return status === "token-ready" || status === "credential-ready";
+    return getCalendarReadiness(adapter, calendar).ready;
   }
 
   async loadSourceEventsFromProviders(options = {}) {
@@ -58,7 +74,8 @@ export class SyncEngine {
 
     for (const calendar of this.profile.calendars) {
       const adapter = this.adapters[this.targetAdapterKey(calendar.provider)];
-      if (!adapter?.listSourceEvents) {
+      const readiness = getCalendarReadiness(adapter, calendar);
+      if (!readiness.ready || !adapter?.listSourceEvents) {
         continue;
       }
       try {
@@ -177,6 +194,18 @@ export class SyncEngine {
     for (const entry of staleMappings) {
       const targetCalendar = this.getCalendarById(entry.mapping.targetCalendarId);
       const adapter = targetCalendar ? this.adapters[this.targetAdapterKey(targetCalendar.provider)] : null;
+      const readiness = getCalendarReadiness(adapter, targetCalendar);
+      if (targetCalendar && !readiness.ready) {
+        results.push({
+          sourceCalendarId: entry.mapping.sourceCalendarId,
+          sourceEventId: entry.mapping.sourceEventId,
+          targetCalendarId: entry.mapping.targetCalendarId,
+          targetEventId: entry.mapping.targetEventId,
+          status: "skipped",
+          message: `${readiness.reason} Stale mirror cleanup was skipped.`
+        });
+        continue;
+      }
       if (!targetCalendar || !adapter?.deleteEvent) {
         results.push({
           sourceCalendarId: entry.mapping.sourceCalendarId,
@@ -232,7 +261,30 @@ export class SyncEngine {
     const results = [];
 
     for (const operation of operations) {
+      const sourceAdapter = this.adapters[this.targetAdapterKey(operation.source.provider)];
+      const sourceReadiness = getCalendarReadiness(sourceAdapter, operation.source);
+      if (!sourceReadiness.ready) {
+        results.push({
+          sourceCalendarId: operation.source.id,
+          sourceEventId: operation.event.id,
+          targetCalendarId: operation.target.id,
+          status: "skipped",
+          message: sourceReadiness.reason.replace(`Calendar ${operation.source.label}`, `Source calendar ${operation.source.label}`)
+        });
+        continue;
+      }
       const adapter = this.adapters[this.targetAdapterKey(operation.target.provider)];
+      const targetReadiness = getCalendarReadiness(adapter, operation.target);
+      if (!targetReadiness.ready) {
+        results.push({
+          sourceCalendarId: operation.source.id,
+          sourceEventId: operation.event.id,
+          targetCalendarId: operation.target.id,
+          status: "skipped",
+          message: targetReadiness.reason.replace(`Calendar ${operation.target.label}`, `Target calendar ${operation.target.label}`)
+        });
+        continue;
+      }
       if (!adapter?.upsertEvent) {
         results.push({
           sourceCalendarId: operation.source.id,

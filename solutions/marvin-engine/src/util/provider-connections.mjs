@@ -47,32 +47,28 @@ function normalizeSecretMap(value) {
 }
 
 export function buildProviderRuntime(input = {}) {
-  const keeperUrl = normalizeUrl(input?.deployment?.keeperUrl || input?.keeperUrl);
   const marvinUrl = normalizeUrl(input?.deployment?.marvinUrl || input?.marvinUrl);
   const caldavPasswords = normalizeSecretMap(input?.providerConnections?.caldav?.passwords || input?.providerSecretStatus?.caldavPasswords || input?.providerSecrets?.caldavPasswords);
 
   return {
     microsoft: {
       provider: "m365",
-      authMode: input?.providerConnections?.microsoft?.authMode || "marvin-engine",
+      authMode: "marvin-engine",
       clientId: normalizeString(input?.providerConnections?.microsoft?.clientId || input?.microsoftClientId || process.env.MICROSOFT_CLIENT_ID || process.env.MARVIN_MICROSOFT_CLIENT_ID),
       tenantMode: input?.providerConnections?.microsoft?.tenantMode || "multi-tenant",
-      bridgeBaseUrl: normalizeUrl(input?.providerConnections?.microsoft?.bridgeBaseUrl || keeperUrl),
       marvinBaseUrl: normalizeUrl(input?.providerConnections?.microsoft?.marvinBaseUrl || marvinUrl),
       authorizePath: input?.providerConnections?.microsoft?.authorizePath || "/marvin-api/oauth/microsoft/start"
     },
     google: {
       provider: "google",
-      authMode: input?.providerConnections?.google?.authMode || "marvin-engine",
+      authMode: "marvin-engine",
       clientId: normalizeString(input?.providerConnections?.google?.clientId || input?.googleClientId || process.env.GOOGLE_CLIENT_ID || process.env.MARVIN_GOOGLE_CLIENT_ID),
-      bridgeBaseUrl: normalizeUrl(input?.providerConnections?.google?.bridgeBaseUrl || keeperUrl),
       marvinBaseUrl: normalizeUrl(input?.providerConnections?.google?.marvinBaseUrl || marvinUrl),
       authorizePath: input?.providerConnections?.google?.authorizePath || "/marvin-api/oauth/google/start"
     },
     caldav: {
       provider: "apple-caldav",
-      authMode: input?.providerConnections?.caldav?.authMode || "manual-caldav",
-      bridgeBaseUrl: normalizeUrl(input?.providerConnections?.caldav?.bridgeBaseUrl || keeperUrl),
+      authMode: "manual-caldav",
       marvinBaseUrl: normalizeUrl(input?.providerConnections?.caldav?.marvinBaseUrl || marvinUrl),
       authorizePath: input?.providerConnections?.caldav?.authorizePath || "",
       serverUrl: normalizeString(input?.providerConnections?.caldav?.serverUrl),
@@ -127,10 +123,6 @@ export function getProviderAuthUrl(providerRuntime) {
   const authMode = normalizeString(providerRuntime.authMode);
   const authorizePath = normalizeString(providerRuntime.authorizePath);
 
-  if (authMode === "paranoid-keeper-bridge" && providerRuntime.bridgeBaseUrl && authorizePath) {
-    return `${providerRuntime.bridgeBaseUrl}${authorizePath}`;
-  }
-
   if (authMode === "marvin-engine" && providerRuntime.marvinBaseUrl && authorizePath) {
     return `${providerRuntime.marvinBaseUrl}${authorizePath}`;
   }
@@ -173,7 +165,7 @@ function buildReason(status, provider, providerRuntime, hasAuthUrl, missingRequi
   if (missingRecommended.length > 0) {
     return `Provider auth path exists, but recommended fields are still missing: ${missingRecommended.join(", ")}`;
   }
-  return `Provider auth can be started through ${providerRuntime.authMode}.`;
+  return "Provider auth can be started directly through Marvin.";
 }
 
 export function assessCalendarConnection(profile, calendar) {
@@ -196,7 +188,6 @@ export function assessCalendarConnection(profile, calendar) {
     connectorReady: hasAuthUrl,
     supportsRealtime: provider.supportsRealtime,
     authUrl,
-    bridgeBaseUrl: providerRuntime?.bridgeBaseUrl ?? "",
     marvinBaseUrl: providerRuntime?.marvinBaseUrl ?? "",
     missingRequired,
     missingRecommended,

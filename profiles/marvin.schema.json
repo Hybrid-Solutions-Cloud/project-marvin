@@ -98,9 +98,6 @@
         "deployment": {
           "type": "object",
           "properties": {
-            "keeperUrl": {
-              "type": "string"
-            },
             "marvinUrl": {
               "type": "string"
             }
@@ -118,18 +115,13 @@
                 "authMode": {
                   "type": "string",
                   "enum": [
-                    "marvin-engine",
-                    "paranoid-keeper-bridge",
-                    "manual-caldav"
+                    "marvin-engine"
                   ]
                 },
                 "clientId": {
                   "type": "string"
                 },
                 "tenantMode": {
-                  "type": "string"
-                },
-                "bridgeBaseUrl": {
                   "type": "string"
                 },
                 "marvinBaseUrl": {
@@ -149,15 +141,10 @@
                 "authMode": {
                   "type": "string",
                   "enum": [
-                    "marvin-engine",
-                    "paranoid-keeper-bridge",
-                    "manual-caldav"
+                    "marvin-engine"
                   ]
                 },
                 "clientId": {
-                  "type": "string"
-                },
-                "bridgeBaseUrl": {
                   "type": "string"
                 },
                 "marvinBaseUrl": {
@@ -177,13 +164,8 @@
                 "authMode": {
                   "type": "string",
                   "enum": [
-                    "manual-caldav",
-                    "marvin-engine",
-                    "paranoid-keeper-bridge"
+                    "manual-caldav"
                   ]
-                },
-                "bridgeBaseUrl": {
-                  "type": "string"
                 },
                 "marvinBaseUrl": {
                   "type": "string"

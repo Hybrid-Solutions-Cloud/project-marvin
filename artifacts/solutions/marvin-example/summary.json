@@ -1,6 +1,6 @@
 {
   "profile": "marvin-example",
-  "generatedAt": "2026-07-29T16:22:20.304Z",
+  "generatedAt": "2026-07-29T21:10:31.069Z",
   "routes": 4,
   "providerRuntime": {
     "microsoft": {
@@ -8,22 +8,19 @@
       "authMode": "marvin-engine",
       "clientId": "",
       "tenantMode": "multi-tenant",
-      "bridgeBaseUrl": "",
       "marvinBaseUrl": "",
-      "authorizePath": "/auth/outlook"
+      "authorizePath": "/marvin-api/oauth/microsoft/start"
     },
     "google": {
       "provider": "google",
       "authMode": "marvin-engine",
       "clientId": "",
-      "bridgeBaseUrl": "",
       "marvinBaseUrl": "",
-      "authorizePath": "/auth/google"
+      "authorizePath": "/marvin-api/oauth/google/start"
     },
     "caldav": {
       "provider": "apple-caldav",
       "authMode": "manual-caldav",
-      "bridgeBaseUrl": "",
       "marvinBaseUrl": "",
       "authorizePath": "",
       "serverUrl": "",

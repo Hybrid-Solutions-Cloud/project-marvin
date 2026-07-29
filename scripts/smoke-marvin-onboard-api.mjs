@@ -72,8 +72,18 @@ async function waitFor(predicate, timeoutMs, label) {
   throw new Error(`Timed out waiting for ${label}`);
 }
 
+let cookieHeader = "";
+
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, options);
+  const headers = { ...(options.headers || {}) };
+  if (cookieHeader) {
+    headers.Cookie = cookieHeader;
+  }
+  const response = await fetch(url, { ...options, headers });
+  const setCookie = response.headers.get("set-cookie") || "";
+  if (setCookie) {
+    cookieHeader = setCookie.split(";")[0];
+  }
   return response.json();
 }
 
@@ -344,9 +354,13 @@ try {
   assert.equal(connectedConfig.config.timezone, "America/New_York");
   assert.equal(connectedConfig.config.syncWindowDays, 7);
 
+  const blockedRuntimeHeaders = { "Content-Type": "application/json" };
+  if (cookieHeader) {
+    blockedRuntimeHeaders.Cookie = cookieHeader;
+  }
   const blockedRuntimeResponse = await fetch(`http://127.0.0.1:${port}/marvin-api/runtime-start`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: blockedRuntimeHeaders,
     body: JSON.stringify({ profileName, intervalSeconds: 1, windowDays: 7 })
   });
   const blockedRuntime = await blockedRuntimeResponse.json();
@@ -374,5 +388,7 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
+
+
 
 

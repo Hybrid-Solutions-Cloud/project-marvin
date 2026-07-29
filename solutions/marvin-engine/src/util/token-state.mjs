@@ -8,6 +8,13 @@ export function getTokenRecord(tokenState, calendarId) {
   return (Array.isArray(tokenState?.records) ? tokenState.records : []).find((record) => record.calendarId === calendarId) || null;
 }
 
+export function hasTokenRecordMaterial(record) {
+  if (!record) {
+    return false;
+  }
+  return Boolean(normalizeString(record.accessToken) || normalizeString(record.refreshToken));
+}
+
 export function isTokenRecordUsable(record, now = Date.now()) {
   if (!record || !normalizeString(record.accessToken)) {
     return false;

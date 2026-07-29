@@ -111,7 +111,7 @@ writeFile(
 
 writeFile(
   path.join(paRoot, "import-checklist.md"),
-  `# Bureaucratic Flow Import Checklist\n\nProfile: ${profile.name}\n\nThis is the pragmatic Microsoft-only route.\n\n## Eligible Calendars\n\n${paCalendars.map((item) => `- ${item.label} (${item.email})`).join("\n")}\n\n## Eligible Routes\n\n${paRoutes.length ? paRoutes.map(formatRoute).join("\n") : "- None in this profile."}\n\n## Runtime Mode\n\n- auth mode: ${providerRuntime.microsoft.authMode}\n- bridge URL: ${providerRuntime.microsoft.bridgeBaseUrl || "not configured"}\n`
+  `# Bureaucratic Flow Import Checklist\n\nProfile: ${profile.name}\n\nThis is the pragmatic Microsoft-only route.\n\n## Eligible Calendars\n\n${paCalendars.map((item) => `- ${item.label} (${item.email})`).join("\n")}\n\n## Eligible Routes\n\n${paRoutes.length ? paRoutes.map(formatRoute).join("\n") : "- None in this profile."}\n\n## Runtime Mode\n\n- auth mode: ${providerRuntime.microsoft.authMode}\n- auth path: Marvin-native provider linking\n`
 );
 
 const ogcsRoot = path.join(outRoot, "google-hub");

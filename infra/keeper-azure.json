@@ -39,7 +39,7 @@
     },
     "owner": {
       "type": "string",
-      "defaultValue": "kris@hybridsolutions.cloud",
+      "defaultValue": "project-marvin",
       "metadata": {
         "description": "Owner tag value."
       }
@@ -246,13 +246,6 @@
       "metadata": {
         "description": "Base URL used by Keeper auth callbacks."
       }
-    },
-    "marvinKeeperLinkUrl": {
-      "type": "string",
-      "defaultValue": "https://placeholder.invalid",
-      "metadata": {
-        "description": "External Keeper URL used by Marvin for provider-link navigation."
-      }
     }
   },
   "variables": {
@@ -394,10 +387,6 @@
                 {
                   "name": "MARVIN_HOSTED",
                   "value": "true"
-                },
-                {
-                  "name": "MARVIN_KEEPER_LINK_URL",
-                  "value": "[parameters('marvinKeeperLinkUrl')]"
                 }
               ],
               "resources": {
