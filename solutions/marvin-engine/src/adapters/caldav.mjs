@@ -46,6 +46,22 @@ function readIcsProperty(lines, propertyName) {
   return separator >= 0 ? line.slice(separator + 1).trim() : "";
 }
 
+function unescapeIcsText(value = "") {
+  return normalizeString(value)
+    .replace(/\\n/gi, "\n")
+    .replace(/\\,/g, ",")
+    .replace(/\\;/g, ";")
+    .replace(/\\\\/g, "\\");
+}
+
+function escapeIcsText(value = "") {
+  return String(value ?? "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll("\n", "\\n")
+    .replaceAll(";", "\\;")
+    .replaceAll(",", "\\,");
+}
+
 function isSupportedTimeZone(timeZone) {
   try {
     Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
@@ -113,9 +129,9 @@ function parseVevent(icsContent = "", calendarId = "", href = "") {
   const unfolded = unfoldIcsLines(icsContent);
   const lines = unfolded.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const uid = readIcsProperty(lines, "UID");
-  const summary = readIcsProperty(lines, "SUMMARY") || "Busy";
-  const description = readIcsProperty(lines, "DESCRIPTION");
-  const location = readIcsProperty(lines, "LOCATION");
+  const summary = unescapeIcsText(readIcsProperty(lines, "SUMMARY")) || "Busy";
+  const description = unescapeIcsText(readIcsProperty(lines, "DESCRIPTION"));
+  const location = unescapeIcsText(readIcsProperty(lines, "LOCATION"));
   const startLine = findIcsPropertyLine(lines, "DTSTART");
   const endLine = findIcsPropertyLine(lines, "DTEND");
   const timezone = normalizeString(readIcsProperty(lines, "X-WR-TIMEZONE") || readIcsPropertyParameters(startLine).TZID || readIcsPropertyParameters(endLine).TZID || "UTC");
@@ -175,8 +191,8 @@ function buildIcsEvent(operation) {
   const mirror = payload.marvinMirror || {};
   const uid = `${sanitizeName(operation.source.id)}-${sanitizeName(operation.event.id)}@project-marvin`;
   const summary = normalizeString(payload.subject || "Busy");
-  const description = normalizeString(payload.description || summary).replaceAll("\n", "\\n");
-  const location = normalizeString(payload.location).replaceAll("\n", "\\n");
+  const description = normalizeString(payload.description || summary);
+  const location = normalizeString(payload.location);
   const timezone = normalizeString(payload.sourceEventTimezone || operation.event.timezone || "UTC");
   const allDay = Boolean(payload.allDay);
   const start = allDay ? { value: normalizeString(payload.start).slice(0, 10).replaceAll("-", ""), zone: "DATE" } : formatIcsDateTime(payload.start, timezone);
@@ -189,9 +205,9 @@ function buildIcsEvent(operation) {
     `X-WR-TIMEZONE:${timezone}`,
     "BEGIN:VEVENT",
     `UID:${uid}`,
-    `SUMMARY:${summary}`,
-    `DESCRIPTION:${description}\\n\\n[Project Marvin Mirror]\\nSource Calendar: ${normalizeString(mirror.sourceCalendarLabel || operation.source.label)}\\nSource Event: ${normalizeString(mirror.sourceEventId || operation.event.id)}`,
-    location ? `LOCATION:${location}` : "",
+    `SUMMARY:${escapeIcsText(summary)}`,
+    `DESCRIPTION:${escapeIcsText(`${description}\n\n[Project Marvin Mirror]\nSource Calendar: ${normalizeString(mirror.sourceCalendarLabel || operation.source.label)}\nSource Event: ${normalizeString(mirror.sourceEventId || operation.event.id)}`)}`,
+    location ? `LOCATION:${escapeIcsText(location)}` : "",
     dateProperty("DTSTART", start),
     dateProperty("DTEND", end),
     "STATUS:CONFIRMED",

@@ -37,6 +37,7 @@
     "marvin:smoke-caldav": "node scripts/smoke-marvin-caldav-validation.mjs",
     "marvin:smoke-onboard-caldav": "node scripts/smoke-marvin-onboard-caldav.mjs",
     "marvin:smoke-caldav-live": "node scripts/smoke-marvin-caldav-live-adapter.mjs",
+    "marvin:smoke-caldav-text": "node scripts/smoke-marvin-caldav-text.mjs",
     "marvin:smoke-setup": "node scripts/smoke-marvin-setup.mjs",
     "marvin:smoke-outlook": "node scripts/smoke-marvin-outlook-alias.mjs",
     "marvin:smoke-delete-cleanup": "node scripts/smoke-marvin-delete-cleanup.mjs",
