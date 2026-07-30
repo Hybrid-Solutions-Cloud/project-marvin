@@ -321,7 +321,7 @@ export class MicrosoftGraphAdapter {
 
     const startDateTime = encodeURIComponent(toIsoUtc(options.windowStart));
     const endDateTime = encodeURIComponent(toIsoUtc(options.windowEnd));
-    let url = `https://graph.microsoft.com/v1.0/users/${normalizeEmail(calendar.email)}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`;
+    let url = `https://graph.microsoft.com/v1.0/users/${normalizeEmail(calendar.email)}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}&$select=id,subject,start,end,originalStartTimeZone,originalEndTimeZone,location,body,bodyPreview,showAs,categories,isAllDay`;
     const events = [];
     const seenPages = new Set();
 
@@ -347,7 +347,7 @@ export class MicrosoftGraphAdapter {
       end: normalizeGraphEventDateTime(event?.end?.dateTime, event?.end?.timeZone || event?.originalEndTimeZone || event?.originalStartTimeZone || options.timezone || "UTC"),
       timezone: normalizeString(event?.originalStartTimeZone || event?.start?.timeZone || options.timezone || "UTC"),
       location: normalizeString(event?.location?.displayName || ""),
-      description: normalizeString(event?.bodyPreview || readBodyContent(event?.body)),
+      description: normalizeString(readBodyContent(event?.body) || event?.bodyPreview),
       status: normalizeString(event?.showAs || "busy"),
       mirroredByMarvin: hasMarvinMarker(event),
       allDay: Boolean(event.isAllDay),

@@ -48,7 +48,8 @@ const fetchImpl = async (url, options = {}) => {
             originalStartTimeZone: "Eastern Standard Time",
             originalEndTimeZone: "Eastern Standard Time",
             location: { displayName: "Conference Room A" },
-            bodyPreview: "Discuss arrival plans",
+            bodyPreview: "Discuss arrival plans...",
+            body: { contentType: "text", content: "Discuss arrival plans in detail, including travel dates, hotel details, and follow-up actions." },
             showAs: "busy"
           }
         ]
@@ -70,8 +71,8 @@ assert.equal(event.timezone, "Eastern Standard Time");
 assert.equal(event.start, "2026-07-29T13:30:00.000Z");
 assert.equal(event.end, "2026-07-29T14:15:00.000Z");
 assert.equal(event.location, "Conference Room A");
-assert.equal(event.description, "Discuss arrival plans");
-assert.ok(requests.some((item) => item.url.includes("graph.microsoft.com") && item.method === "GET"));
+assert.equal(event.description, "Discuss arrival plans in detail, including travel dates, hotel details, and follow-up actions.");
+assert.ok(requests.some((item) => item.url.includes("graph.microsoft.com") && item.url.includes("$select=") && item.method === "GET"));
 
 console.log(JSON.stringify({
   ok: true,
