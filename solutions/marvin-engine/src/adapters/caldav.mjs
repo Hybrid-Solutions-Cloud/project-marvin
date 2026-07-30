@@ -134,6 +134,7 @@ function parseVevent(icsContent = "", calendarId = "", href = "") {
     location,
     description,
     status: normalizeString(readIcsProperty(lines, "STATUS") || "confirmed").toLowerCase(),
+    allDay: /^\d{8}$/.test(readIcsProperty(lines, "DTSTART")) || normalizeString(readIcsPropertyParameters(startLine).VALUE).toUpperCase() === "DATE",
     mirroredByMarvin: managed,
     sourceProvider: "apple-caldav"
   };
@@ -177,9 +178,10 @@ function buildIcsEvent(operation) {
   const description = normalizeString(payload.description || summary).replaceAll("\n", "\\n");
   const location = normalizeString(payload.location).replaceAll("\n", "\\n");
   const timezone = normalizeString(payload.sourceEventTimezone || operation.event.timezone || "UTC");
-  const start = formatIcsDateTime(payload.start, timezone);
-  const end = formatIcsDateTime(payload.end, timezone);
-  const dateProperty = (name, value) => value.zone === "UTC" ? `${name}:${value.value}` : `${name};TZID=${value.zone}:${value.value}`;
+  const allDay = Boolean(payload.allDay);
+  const start = allDay ? { value: normalizeString(payload.start).slice(0, 10).replaceAll("-", ""), zone: "DATE" } : formatIcsDateTime(payload.start, timezone);
+  const end = allDay ? { value: normalizeString(payload.end).slice(0, 10).replaceAll("-", ""), zone: "DATE" } : formatIcsDateTime(payload.end, timezone);
+  const dateProperty = (name, value) => value.zone === "DATE" ? `${name};VALUE=DATE:${value.value}` : (value.zone === "UTC" ? `${name}:${value.value}` : `${name};TZID=${value.zone}:${value.value}`);
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",

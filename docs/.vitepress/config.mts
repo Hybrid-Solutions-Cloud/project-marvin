@@ -36,8 +36,8 @@ export default defineConfig({
       {
         text: "Primary Marvin Guides",
         items: [
-          { text: "Marvin Engine", link: "/solutions/marvin-engine" },
-          { text: "Marvin on Azure", link: "/solutions/marvin-azure" },
+          { text: "Paranoid Keeper", link: "/solutions/paranoid-keeper" },
+          { text: "Azure deployment", link: "/solutions/marvin-azure" },
           { text: "Solutions Index", link: "/solutions" }
         ]
       },

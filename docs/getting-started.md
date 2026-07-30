@@ -13,10 +13,10 @@ Open `http://127.0.0.1:4177`.
 
 ## First-run flow
 
-1. Create one Workspace Account for the deployment.
+1. Create one Paranoid Keeper workspace account for the deployment.
 2. Add each Microsoft 365, Outlook, Google, or Apple / CalDAV calendar.
 3. Give each calendar a source prefix, such as `WORK: ` or `FAMILY: `.
-4. Add Microsoft or Google OAuth app credentials only for providers you use. Add an Apple CalDAV URL and app password per Apple calendar.
+4. Add Microsoft or Google OAuth application credentials only for providers you use. Add an Apple CalDAV URL and app password per Apple calendar.
 5. Link every provider account and run **Check All Calendars**.
 6. When every calendar validates, Paranoid Keeper starts its background runtime automatically.
 

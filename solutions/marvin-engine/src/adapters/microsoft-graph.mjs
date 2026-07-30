@@ -350,16 +350,20 @@ export class MicrosoftGraphAdapter {
       description: normalizeString(event?.bodyPreview || readBodyContent(event?.body)),
       status: normalizeString(event?.showAs || "busy"),
       mirroredByMarvin: hasMarvinMarker(event),
+      allDay: Boolean(event.isAllDay),
       sourceProvider: "m365"
     })).filter((event) => event.id && event.start && event.end);
   }
   buildGraphPayload(operation) {
     const payload = operation.payload;
     const graphTimeZone = payload.preserveOriginalTimezone ? (payload.sourceEventTimezone || "UTC") : "UTC";
+    const allDay = Boolean(payload.allDay);
+    const dateOnly = (value) => normalizeString(value).slice(0, 10);
     return {
       subject: payload.subject,
       sensitivity: payload.visibility === "private" ? "private" : "normal",
       showAs: "busy",
+      isAllDay: allDay,
       categories: [MARVIN_MIRROR_MARKER],
       body: {
         contentType: "text",
@@ -367,11 +371,11 @@ export class MicrosoftGraphAdapter {
       },
       location: payload.location ? { displayName: payload.location } : undefined,
       start: {
-        dateTime: formatDateTimeInZone(payload.start, graphTimeZone),
+        dateTime: allDay ? `${dateOnly(payload.start)}T00:00:00` : formatDateTimeInZone(payload.start, graphTimeZone),
         timeZone: graphTimeZone
       },
       end: {
-        dateTime: formatDateTimeInZone(payload.end, graphTimeZone),
+        dateTime: allDay ? `${dateOnly(payload.end)}T00:00:00` : formatDateTimeInZone(payload.end, graphTimeZone),
         timeZone: graphTimeZone
       }
     };

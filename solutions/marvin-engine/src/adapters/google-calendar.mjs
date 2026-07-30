@@ -277,11 +277,14 @@ export class GoogleCalendarAdapter {
       description: normalizeString(event.description || ""),
       status: normalizeString(event.status || "confirmed"),
       mirroredByMarvin: hasMarvinMarker(event),
+      allDay: Boolean(event?.start?.date && !event?.start?.dateTime),
       sourceProvider: "google"
     })).filter((event) => event.id && event.start && event.end);
   }
   buildGooglePayload(operation) {
     const payload = operation.payload;
+    const allDay = Boolean(payload.allDay);
+    const dateOnly = (value) => normalizeString(value).slice(0, 10);
     return {
       summary: payload.subject,
       visibility: payload.visibility === "private" ? "private" : "default",
@@ -290,14 +293,12 @@ export class GoogleCalendarAdapter {
       extendedProperties: {
         private: buildMarvinPrivateProperties(payload)
       },
-      start: {
-        dateTime: payload.start,
-        timeZone: payload.sourceEventTimezone || "UTC"
-      },
-      end: {
-        dateTime: payload.end,
-        timeZone: payload.sourceEventTimezone || "UTC"
-      }
+      start: allDay
+        ? { date: dateOnly(payload.start) }
+        : { dateTime: payload.start, timeZone: payload.sourceEventTimezone || "UTC" },
+      end: allDay
+        ? { date: dateOnly(payload.end) }
+        : { dateTime: payload.end, timeZone: payload.sourceEventTimezone || "UTC" }
     };
   }
 

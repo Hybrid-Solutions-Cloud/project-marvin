@@ -1,43 +1,27 @@
-# Solutions
-## Read this first
-The setup wizard is not a solution picker.
-It is Marvin's onboarding and sign-in flow.
-If you are cloning this repo to get a working product path, start with Marvin:
+# Product Guide
 
-1. Read [Getting Started](/getting-started).
-2. Run `npm run marvin:install`.
-3. Run `npm run marvin:ui` if the console is not already open.
-4. Create the Marvin workspace account, or sign in if it already exists, then add calendars, link accounts, review sync policy, and start Marvin automation.
-## Product path vs reference paths
-| Path | Purpose | Automation status |
-| --- | --- | --- |
-| Marvin | Primary product path | Automated after Marvin setup and runtime start |
-| Paranoid Keeper | Bridge-hosting reference | Automated only after separate hosted bridge deployment |
-| Bureaucratic Flow | Microsoft-focused Power Automate reference | Automated only after Power Automate deployment |
-| Google Hub Of Last Resort | Legacy desktop fallback reference | Not fully unattended |
-## Important clarification
-Marvin Engine is not a solution picker or installer for the other tracks.
-It is the sync engine behind the repo's main product path.
-The other documented tracks remain in the repo for comparison, credits, migration context, and bridge-hosting ideas.
-They are not the recommended first-run path, and they should not appear as choices in Marvin's product onboarding.
-## Recommended reading
-### Start here for the actual Marvin product path
+There is one supported product path: **Paranoid Keeper**.
+
+Project Marvin is the repository name and the name of internal scripts and the sync engine. It is not a solution picker and it is not a second application to install.
+
+## Use This Path
+
+1. Install and open Paranoid Keeper with `npm run marvin:install` and `npm run marvin:ui`.
+2. Create the workspace account.
+3. Add and authenticate each calendar account.
+4. Review privacy rules and validate access.
+5. Let the always-on runtime start automatically.
+
+## Guides
+
 - [Getting Started](/getting-started)
-- [Marvin Engine](/solutions/marvin-engine)
-- [Marvin on Azure](/solutions/marvin-azure)
-- [Onboarding UI](/operator/onboarding-ui)
-- [Architecture](/architecture)
-### Reference and comparison material
 - [Paranoid Keeper](/solutions/paranoid-keeper)
-- [Keeper Hosting Matrix](/solutions/paranoid-keeper-hosting)
-- [Deploy Keeper to Azure Container Apps](/solutions/paranoid-keeper-azure)
-- [Bureaucratic Flow](/solutions/bureaucratic-flow)
-- [Google Hub Of Last Resort](/solutions/google-hub)
+- [Azure Container Apps](/solutions/marvin-azure)
+- [Onboarding and management UI](/operator/onboarding-ui)
+
+## Historical References
+
+The research spikes and older solution folders are retained for credit and design history. They are not alternative setup choices, installers, or supported deployment paths.
+
+- [Research](/research/)
 - [Credits](/credits)
-## Shared repo artifacts
-The repo still generates shared planning artifacts that reference the historical tracks:
-- profiles/marvin.example.json
-- profiles/marvin.example.events.json
-- generated local Marvin account configurations from Marvin onboarding or marvin:setup
-- generated artifacts from scripts/build-calendar-options.mjs
-That shared artifact generation does not change the preferred product path: Marvin comes first.

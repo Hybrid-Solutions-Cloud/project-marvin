@@ -37,6 +37,7 @@ export function buildMirrorPayload(profile, route, sourceCalendar, targetCalenda
     preserveOriginalTimezone,
     start: sourceEvent.start,
     end: sourceEvent.end,
+    allDay: Boolean(sourceEvent.allDay),
     location: copyLocation && detailMode !== "busy" ? (sourceEvent.location ?? "") : "",
     description: copyDescription && detailMode === "full" ? (sourceEvent.description ?? "") : "",
     descriptionPolicy: copyDescription && detailMode === "full" ? "copy" : "empty",

@@ -1,24 +1,23 @@
 # Paranoid Keeper
 
-Paranoid Keeper is the always-on calendar synchronization runtime. It is not a Keeper.sh login wrapper.
+Paranoid Keeper is the always-on calendar synchronization application in the Project Marvin repository.
 
-## What it does
+## Guarantees
 
-- Reads connected Microsoft 365, Outlook, Google, and Apple / CalDAV calendars.
-- Treats every connected calendar as a source.
-- Mirrors each event to every other calendar with a source prefix.
-- Defaults every copy to private while preserving full details.
-- Applies per-target overrides for family or trusted calendars.
-- Preserves source timezone behavior.
-- Stores mappings and embeds provider markers to prevent loops.
-- Updates existing copies and deletes stale copies.
+- Every connected calendar is both a source and a target for every other connected calendar.
+- A mirror keeps the source prefix, subject, location, description, event duration, and source timezone behavior.
+- Mirrors are private by default.
+- Trusted targets, such as family calendars, can opt into normal visibility and alternate detail policies.
+- Managed event markers and persistent mappings prevent sync loops.
+- Updates change existing mirrors and source deletions remove stale mirrors.
+- All-day events remain all-day across Microsoft, Google, and CalDAV targets.
 
-## Where it runs
+## Supported Providers
 
-- Azure Container Apps is the first supported hosted path.
-- Docker Compose on an always-on host is viable for self-hosting.
-- Docker Desktop is useful for local setup only, not a reliable always-on host.
+- Microsoft 365 and Outlook.com through Microsoft Graph OAuth, subscriptions, and webhooks.
+- Google Calendar through Google OAuth, event watches, and webhooks.
+- Apple Calendar through CalDAV server credentials and periodic polling.
 
-After the UI validates all accounts, the runtime starts automatically. Microsoft and Google webhooks wake it early; Apple / CalDAV uses the configured poll interval.
+## Runtime
 
-See [Getting Started](/getting-started) and [Azure deployment](/solutions/marvin-azure).
+After every connected account validates, Paranoid Keeper starts automatically and remains active in the hosted Container App. The local installer starts the same application for local testing. See [Getting Started](/getting-started) and [Azure deployment](/solutions/marvin-azure).

@@ -1,65 +1,37 @@
 # Project Marvin
-<div class="marvin-hero-logo">
-  <img src="/logo-large.svg" alt="Project Marvin logo">
-</div>
-Project Marvin is the repo's primary product path: one Marvin-managed setup flow, one account-management surface, and one automated sync runtime for multi-calendar mirroring.
-## What Marvin does
-- syncs meetings bidirectionally across connected Microsoft 365, Outlook, Google, and optional Apple / CalDAV calendars
-- mirrors events automatically after setup when the Marvin runtime is running
-- keeps mirrored events private by default on other calendars
-- allows per-target visibility overrides, especially for family calendars
-- stamps mirrored events with source prefixes like WORK: or CONTRACT:
-- preserves source timezone behavior in mirrored events
-- gives the operator one setup and management surface
-## Start here
-Fresh clone path:
+
+Project Marvin is the repository and documentation home for **Paranoid Keeper**: an always-on calendar mirroring application.
+
+## What Paranoid Keeper does
+
+- Connects Microsoft 365, Outlook.com, Google Calendar, and optional Apple / CalDAV calendars.
+- Treats every connected calendar as a source and mirrors each event to every other calendar.
+- Copies subject, location, description, and the source event timezone.
+- Prefixes every mirrored subject with its source account prefix, such as `WORK: ` or `FAMILY: `.
+- Makes copied events private by default. Trusted family targets can override visibility and detail rules.
+- Marks its own copies and stores mappings, so copied events never loop back into the mesh.
+- Runs continuously after setup. Microsoft and Google webhooks wake it early; Apple / CalDAV polls on the configured interval.
+
+## Start Here
 
 ```powershell
 npm run marvin:install
+npm run marvin:ui
 ```
 
-Optional pre-create step for the Marvin workspace account:
+Open `http://127.0.0.1:4177`, create the Paranoid Keeper workspace account, add calendars, link them, and check access. The runtime starts automatically after every account validates.
 
-```powershell
-npm run marvin:create-operator -- --email you@example.com --display-name "Project Marvin" --password "use-a-real-password"
-```
-If you are cloning the repo and want the real Marvin path, begin with:
+For Azure Container Apps, use the same application through the [Azure deployment guide](/solutions/marvin-azure).
+
+## Current Evidence
+
+The repository contains the working sync engine, provider adapters, OAuth and CalDAV validation paths, first-run and management UI, installer, and Azure Container Apps Bicep deployment. Local smoke coverage verifies the product flows. A real production test still requires the operator's actual provider accounts and consent, which cannot be represented in this public repository.
+
+## Read Next
+
 - [Getting Started](/getting-started)
-- [Requirements](/requirements)
-- [Status](/status)
 - [Architecture](/architecture)
-- [Marvin Engine](/solutions/marvin-engine)
-- [Marvin on Azure](/solutions/marvin-azure)
-## Current truth on July 29, 2026
-Implemented now:
-- Marvin-branded onboarding and management UI
-- per-calendar account inventory, prefixes, privacy defaults, and family overrides
-- Marvin-owned Microsoft and Google OAuth start/callback flow
-- Marvin-owned Apple / CalDAV validation flow with per-account app passwords
-- live Microsoft, Google, and Apple / CalDAV adapter smoke coverage
-- local recurring sync daemon with runtime status and start/stop controls
-- local setup state, token state, provider-secret state, and mapping state under .marvin/
-Still not proven complete:
-- real tenant-to-tenant production sync against customer-owned providers
-- production-grade encryption and secret-management hardening for local state
-- long-term hosted deployment and operations proof for the final Marvin runtime
-- fully verified zero-touch provider app creation for every Microsoft and Google tenant
-## Repo structure
-### Marvin
-This is the product boundary the repo is converging on.
-- [Marvin Engine](/solutions/marvin-engine)
-- [Marvin on Azure](/solutions/marvin-azure)
-- [Onboarding UI](/operator/onboarding-ui)
-### Reference tracks
-These remain documented for comparison, credits, and bridge-hosting context. They are intentionally secondary to Marvin in both the docs and the runtime UX.
-- [Paranoid Keeper Bridge Reference](/solutions/paranoid-keeper)
-- [Bureaucratic Flow Reference](/solutions/bureaucratic-flow)
-- [Google Hub Legacy Reference](/solutions/google-hub)
+- [Paranoid Keeper](/solutions/paranoid-keeper)
+- [Azure deployment](/solutions/marvin-azure)
+- [Requirements](/requirements)
 - [Credits](/credits)
-## Product direction
-The repo should continue converging on:
-1. Marvin-owned onboarding and account management.
-2. Marvin-owned provider auth and token lifecycle.
-3. Marvin-owned live sync runtime across Microsoft, Google, and Apple / CalDAV.
-4. Marvin-owned always-on deployment automation.
-5. Honest docs that match the code and tests.
