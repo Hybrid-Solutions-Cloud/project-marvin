@@ -2,7 +2,7 @@ export function buildRequirementCoverage() {
   const requirements = [
     {
       id: 1,
-      requirement: "Any connected calendar can originate a meeting or accepted invite.",
+      requirement: "An event created or accepted in any connected calendar mirrors to every other connected calendar.",
       status: "partial",
       evidence: [
         "npm run marvin:smoke-live",
