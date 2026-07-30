@@ -111,46 +111,46 @@ try {
     $bootstrapArgs.Add('-SkipSmokeSetup')
   }
 
-  Write-Host 'Installing and bootstrapping Project Marvin...' -ForegroundColor Cyan
+  Write-Host 'Installing and bootstrapping Paranoid Keeper...' -ForegroundColor Cyan
   & pwsh @bootstrapArgs
   if ($LASTEXITCODE -ne 0) {
-    throw 'bootstrap-marvin.ps1 failed during Marvin install.'
+    throw 'bootstrap-marvin.ps1 failed during Paranoid Keeper install.'
   }
 
   if (-not $SkipVerify) {
-    Write-Host 'Running Marvin doctor...' -ForegroundColor Cyan
+    Write-Host 'Running Paranoid Keeper doctor...' -ForegroundColor Cyan
     node .\scripts\marvin-doctor.mjs
     if ($LASTEXITCODE -ne 0) {
-      throw 'marvin-doctor.mjs failed during Marvin install.'
+      throw 'marvin-doctor.mjs failed during Paranoid Keeper install.'
     }
   }
 
   Write-Host ''
-  Write-Host 'Marvin install completed.' -ForegroundColor Green
+  Write-Host 'Paranoid Keeper install completed.' -ForegroundColor Green
   Write-Host 'Next steps:' -ForegroundColor Cyan
   if (-not [string]::IsNullOrWhiteSpace($MarvinOperatorPassword)) {
     Write-Host '1. Run npm run marvin:ui'
-    Write-Host '2. Sign in with the Marvin workspace account created by this install run.'
-    Write-Host '3. Use the staged Marvin flow: open Calendars, save Marvin setup, continue to Link Accounts, link each calendar, and run Check Access until Link status shows ready.'
-    Write-Host '4. Review the Marvin Workspace card and each calendar card before Paranoid Keeper starts automatically after validation.'
+    Write-Host '2. Sign in with the Paranoid Keeper account created by this install run.'
+    Write-Host '3. Use the Paranoid Keeper flow: add calendars, link accounts, and run Check Access until every calendar is ready.'
+    Write-Host '4. Review the Paranoid Keeper account card and each calendar card before Paranoid Keeper starts automatically after validation.'
     Write-Host '5. Run npm run marvin:doctor whenever you want a repo-level health check and next verification guidance.'
-    Write-Host '6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
+    Write-Host '6. Run npm run marvin:smoke-operator-journey for one Paranoid Keeper setup/auth/validation/runtime check.'
     Write-Host '7. Paranoid Keeper starts automatically after all calendar links validate.'
     Write-Host '8. Run npm run marvin:verify-local for the broader local verification pass.'
   } else {
     Write-Host '1. Run npm run marvin:ui'
-    Write-Host '2. Create the Marvin workspace account, finish the Marvin Account and Calendars stages, and save Marvin setup.'
+    Write-Host '2. Create the Paranoid Keeper workspace account, add calendars, and save setup.'
     Write-Host '3. Continue to Link Accounts, link each calendar, and run Check Access until Link status shows ready.'
-    Write-Host '4. Review the Marvin Workspace card and each calendar card before Paranoid Keeper starts automatically after validation.'
+    Write-Host '4. Review the Paranoid Keeper account card and each calendar card before Paranoid Keeper starts automatically after validation.'
     Write-Host '5. Run npm run marvin:doctor whenever you want a repo-level health check and next verification guidance.'
-    Write-Host '6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
+    Write-Host '6. Run npm run marvin:smoke-operator-journey for one Paranoid Keeper setup/auth/validation/runtime check.'
     Write-Host '7. Paranoid Keeper starts automatically after all calendar links validate.'
     Write-Host '8. Run npm run marvin:verify-local for the broader local verification pass.'
   }
 
   if (-not $SkipUiReminder) {
     Write-Host ''
-    Write-Host 'Marvin UI reminder: npm run marvin:ui' -ForegroundColor Yellow
+    Write-Host 'Paranoid Keeper UI: npm run marvin:ui' -ForegroundColor Yellow
   }
 } finally {
   Pop-Location

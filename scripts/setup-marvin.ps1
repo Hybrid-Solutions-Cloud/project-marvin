@@ -511,12 +511,12 @@ if ($RunGenerators) {
 }
 
 Write-Host "Next steps:" -ForegroundColor Cyan
-Write-Host "1. Run npm run marvin:ui if the Marvin local console is not already running."
-Write-Host "2. If you need Marvin to generate provider-app setup first, run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName $ProfileSlug -EmitOnly and/or pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-google-app.ps1 -ProfileName $ProfileSlug -MarvinBaseUrl $MarvinUrl -EmitOnly."
-Write-Host "3. If you need the Bureaucratic Flow / Power Platform reference path, rerun setup with -IncludeBureaucraticFlow."
-Write-Host "4. Use the staged Marvin flow: open Calendars, save Marvin setup, continue to Link Accounts, link each calendar, and run Check Access until Link status shows ready."
-Write-Host "5. Review the Marvin Workspace card and each calendar card before Paranoid Keeper starts automatically after validation."
+Write-Host "1. Run npm run marvin:ui if Paranoid Keeper is not already open."
+Write-Host "2. If you need provider-app setup details first, run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName $ProfileSlug -EmitOnly and/or pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-google-app.ps1 -ProfileName $ProfileSlug -MarvinBaseUrl $MarvinUrl -EmitOnly."
+Write-Host "3. Historical reference generation is opt-in and is not part of the Paranoid Keeper install path."
+Write-Host "4. Use Paranoid Keeper: add calendars, link accounts, and run Check Access until every calendar is ready."
+Write-Host "5. Review the Paranoid Keeper account card and each calendar card before Paranoid Keeper starts automatically after validation."
 Write-Host "6. Run npm run marvin:doctor for a repo-level health check and next verification guidance."
-Write-Host "7. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check."
-Write-Host "8. Run npm run marvin:dry-run to inspect mirror planning from the saved Marvin profile."
-Write-Host "9. Run npm run marvin:verify-local for the current broader local verification flow."
+Write-Host "7. Run npm run marvin:smoke-operator-journey for one Paranoid Keeper setup/auth/validation/runtime check."
+Write-Host "8. Run npm run marvin:dry-run to inspect mirror planning from the saved profile."
+Write-Host "9. Run npm run marvin:verify-local for the current broader local Paranoid Keeper verification flow."

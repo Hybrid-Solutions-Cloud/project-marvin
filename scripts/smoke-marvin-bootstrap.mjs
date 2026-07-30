@@ -68,29 +68,26 @@ try {
 
   const profilePath = path.join(root, "profiles", `${profileSlug}.json`);
   const setupPath = path.join(root, ".marvin", `${profileSlug}.setup.json`);
-  const summaryPath = path.join(root, "artifacts", "solutions", profileSlug, "summary.json");
   const operatorPath = path.join(root, ".marvin", "operators", operatorFileName);
 
-  for (const filePath of [profilePath, setupPath, summaryPath, operatorPath]) {
+  for (const filePath of [profilePath, setupPath, operatorPath]) {
     assert.equal(fs.existsSync(filePath), true, `Expected generated file: ${filePath}`);
   }
 
   const profile = readJson(profilePath);
   const setup = readJson(setupPath);
-  const summary = readJson(summaryPath);
   const operator = readJson(operatorPath);
 
   assert.equal(profile.name, profileSlug);
   assert.equal(setup.profileName, profileSlug);
   assert.equal(setup.providerRequirements.microsoft.redirectUri, "http://127.0.0.1:4177/marvin-api/oauth/microsoft/callback");
-  assert.equal(summary.profile, profileSlug);
   assert.equal(operator.displayName, "Bootstrap Smoke Operator");
   assert.equal(operator.email, "marvin-bootstrap-smoke@example.com");
   assert.equal(typeof operator.password?.salt, "string");
-  assert.equal(typeof operator.password?.hash, "string");
-  assert.match(output, /Creating local Marvin workspace sign-in/);
+  assert.equal(typeof operator.password?.hash, "string");  assert.equal(fs.existsSync(path.join(root, "artifacts", "solutions", profileSlug)), false, "Default install must not generate historical solution artifacts.");
+  assert.match(output, /Creating Paranoid Keeper workspace account/);
   assert.match(output, /Bootstrap complete\./);
-  assert.match(output, /Sign in with the Marvin workspace account created by this bootstrap run\./);
+  assert.match(output, /Sign in with the Paranoid Keeper account created by this bootstrap run\./);
   assert.match(output, /npm run marvin:ui/);
   assert.match(output, /npm run marvin:doctor/);
   assert.match(output, /npm run marvin:smoke-operator-journey/);
@@ -107,7 +104,7 @@ try {
     calendars: profile.calendars.length,
     routes: profile.routes.length,
     operator: operator.email,
-    generatedSolutions: summary.solutions.map((item) => item.name)
+    installedProduct: "paranoid-keeper"
   }, null, 2));
 } finally {
   cleanup();
