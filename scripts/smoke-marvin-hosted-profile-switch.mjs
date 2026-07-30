@@ -78,7 +78,14 @@ function statusPath(profileName) {
 }
 
 function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (error) {
+    if (error instanceof SyntaxError || error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
 }
 
 try {
@@ -92,7 +99,7 @@ try {
   }, 10000, "hosted bootstrap API");
 
   await waitFor(() => fs.existsSync(processPath(profileA)) ? readJson(processPath(profileA)) : null, 10000, "profile A runtime process");
-  await waitFor(() => fs.existsSync(statusPath(profileA)) ? readJson(statusPath(profileA)).runCount >= 1 : false, 10000, "profile A runtime status");
+  await waitFor(() => fs.existsSync(statusPath(profileA)) ? readJson(statusPath(profileA))?.runCount >= 1 : false, 10000, "profile A runtime status");
 
   fs.writeFileSync(path.join(tempRoot, ".marvin", "latest.json"), JSON.stringify({ operatorEmail: "marvin@example.com", profileName: profileB }, null, 2));
 
@@ -102,10 +109,10 @@ try {
     }
     const oldProcess = readJson(processPath(profileA));
     const newProcess = readJson(processPath(profileB));
-    return oldProcess.stoppedAt && newProcess.pid ? { oldProcess, newProcess } : null;
+    return oldProcess?.stoppedAt && newProcess?.pid ? { oldProcess, newProcess } : null;
   }, 10000, "runtime switch from profile A to profile B");
 
-  await waitFor(() => fs.existsSync(statusPath(profileB)) ? readJson(statusPath(profileB)).runCount >= 1 : false, 10000, "profile B runtime status");
+  await waitFor(() => fs.existsSync(statusPath(profileB)) ? readJson(statusPath(profileB))?.runCount >= 1 : false, 10000, "profile B runtime status");
 
   fs.rmSync(path.join(tempRoot, "profiles", profileB + ".json"), { force: true });
   fs.writeFileSync(path.join(tempRoot, ".marvin", "latest.json"), JSON.stringify({ operatorEmail: "marvin@example.com", profileName: profileB }, null, 2));
@@ -116,7 +123,7 @@ try {
     }
     const processJson = readJson(processPath(profileB));
     const statusJson = readJson(statusPath(profileB));
-    return processJson.stoppedAt && statusJson.running === false ? { processJson, statusJson } : null;
+    return processJson?.stoppedAt && statusJson?.running === false ? { processJson, statusJson } : null;
   }, 10000, "runtime stop after latest profile disappears");
 
   console.log(JSON.stringify({

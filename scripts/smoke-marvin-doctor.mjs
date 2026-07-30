@@ -111,7 +111,7 @@ try {
   assert.ok(emptyReport.nextSteps.some((step) => /marvin:create-operator/i.test(step)));
   assert.ok(emptyReport.nextSteps.some((step) => /marvin:ui/i.test(step)));
   assert.ok(emptyReport.nextSteps.some((step) => /marvin:azure:plan/i.test(step)));
-  assert.ok(emptyReport.requirementCoverage.requirements.some((item) => /connected calendar can originate/i.test(item.requirement)));
+  assert.ok(emptyReport.requirementCoverage.requirements.some((item) => /event created or accepted in any connected calendar mirrors/i.test(item.requirement)));
 
   console.log(JSON.stringify({
     ok: true,
