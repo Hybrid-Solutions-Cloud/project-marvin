@@ -8,7 +8,7 @@ const app = fs.readFileSync(path.join(root, "operator-ui", "public", "app.js"), 
 
 assert.match(html, /Paranoid Keeper/);
 assert.match(app, /workspaceAccountExists:false,signedIn:false,requiresLogin:false,setupPersisted:false/);
-assert.match(app, /if\(!state\.setupPersisted\)\{alert\("Save Marvin setup first/);
+assert.match(app, /if\(!state\.setupPersisted\)\{alert\("Save Paranoid Keeper setup first/);
 assert.match(app, /const automationReady=\(\)=>Boolean\(state\.readinessSummary\?\.readyToStartAutomation\)/);
 assert.match(app, /id="startAutomation" \$\{automationReady\(\)\?"":"disabled"\}/);
 assert.match(app, /Check All Calendars/);

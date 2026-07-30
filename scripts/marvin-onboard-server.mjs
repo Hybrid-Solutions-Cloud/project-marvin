@@ -191,7 +191,7 @@ function getAuthContext(req) {
   return { authenticated: true, operator, sessionToken: token };
 }
 
-function createAuthError(message = "Sign in to the Marvin workspace account to continue.") {
+function createAuthError(message = "Sign in to the Paranoid Keeper workspace account to continue.") {
   const error = new Error(message);
   error.statusCode = 401;
   error.payload = { ok: false, error: message, requiresLogin: true };
@@ -617,7 +617,7 @@ function buildProfile(input) {
           automationTenantId: input.automationTenantId || "",
           environmentUrl: input.automationEnvironmentUrl || "",
           deploymentModel: "graph-http-entra-id",
-          graphAppDisplayName: "Project Marvin Flow Runtime",
+          graphAppDisplayName: "Project Paranoid Keeper Flow Runtime",
           supportedAccountTypes: "AzureADMultipleOrgs"
         };
       }
@@ -660,7 +660,7 @@ function buildProviderRequirements(profile, providerCredentials = {}) {
       required: microsoftNeeded,
       clientIdConfigured: Boolean(normalizeString(providerCredentials.microsoftClientId)),
       signInAudience: "AzureADMultipleOrgs",
-      suggestedDisplayName: "Project Marvin " + sanitizeName(profile?.name || "marvin") + " Microsoft",
+      suggestedDisplayName: "Project Paranoid Keeper " + sanitizeName(profile?.name || "marvin") + " Microsoft",
       startUrl: marvinBaseUrl + "/marvin-api/oauth/microsoft/start",
       redirectUri: marvinBaseUrl + "/marvin-api/oauth/microsoft/callback",
       graphResourceAppId: "00000003-0000-0000-c000-000000000000",
@@ -673,7 +673,7 @@ function buildProviderRequirements(profile, providerCredentials = {}) {
     google: {
       required: googleNeeded,
       clientIdConfigured: Boolean(normalizeString(providerCredentials.googleClientId)),
-      suggestedDisplayName: "Project Marvin " + sanitizeName(profile?.name || "marvin") + " Google",
+      suggestedDisplayName: "Project Paranoid Keeper " + sanitizeName(profile?.name || "marvin") + " Google",
       startUrl: marvinBaseUrl + "/marvin-api/oauth/google/start",
       redirectUri: marvinBaseUrl + "/marvin-api/oauth/google/callback",
       scopes: ["openid", "email", "profile", "https://www.googleapis.com/auth/calendar"]
@@ -691,7 +691,7 @@ function buildProviderAuthorizeRequest(profile, account, authState) {
         provider: "microsoft",
         redirectUri,
         authorizeUrl: "",
-        reason: "Set MICROSOFT_CLIENT_ID for Marvin before starting Microsoft sign-in."
+        reason: "Set MICROSOFT_CLIENT_ID for Paranoid Keeper before starting Microsoft sign-in."
       };
     }
     const tenantSegment = providerRuntime?.tenantMode === "single-tenant" && normalizeString(account?.tenantId)
@@ -720,7 +720,7 @@ function buildProviderAuthorizeRequest(profile, account, authState) {
         provider: "google",
         redirectUri,
         authorizeUrl: "",
-        reason: "Set GOOGLE_CLIENT_ID for Marvin before starting Google sign-in."
+        reason: "Set GOOGLE_CLIENT_ID for Paranoid Keeper before starting Google sign-in."
       };
     }
     const params = new URLSearchParams({
@@ -744,7 +744,7 @@ function buildProviderAuthorizeRequest(profile, account, authState) {
     provider: account?.provider || "unknown",
     redirectUri: "",
     authorizeUrl: "",
-    reason: "This provider does not have a live Marvin-owned sign-in flow yet."
+    reason: "This provider does not have a live Paranoid Keeper-owned sign-in flow yet."
   };
 }
 
@@ -788,7 +788,7 @@ function findConnectionStateByAuthState(authState) {
 }
 
 function renderAuthCompletionHtml(title, message, ok = true) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><style>body{font-family:Verdana,Geneva,sans-serif;background:#0b1117;color:#eef3f8;margin:0;padding:32px}main{max-width:720px;margin:0 auto;border:1px solid #2f4355;border-radius:20px;padding:24px;background:#101922}h1{margin:0 0 12px;font-family:Georgia,'Times New Roman',serif}p{line-height:1.6;color:#c5d5e3}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:${ok ? 'rgba(121,217,167,.12)' : 'rgba(255,140,140,.12)'};color:${ok ? '#79d9a7' : '#ff8c8c'};border:1px solid ${ok ? 'rgba(121,217,167,.25)' : 'rgba(255,140,140,.25)'};margin-bottom:12px}</style></head><body><main><div class="badge">${ok ? 'Auth Captured' : 'Auth Error'}</div><h1>${title}</h1><p>${message}</p><p>You can return to Marvin now and continue the connection flow from the management console.</p></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><style>body{font-family:Verdana,Geneva,sans-serif;background:#0b1117;color:#eef3f8;margin:0;padding:32px}main{max-width:720px;margin:0 auto;border:1px solid #2f4355;border-radius:20px;padding:24px;background:#101922}h1{margin:0 0 12px;font-family:Georgia,'Times New Roman',serif}p{line-height:1.6;color:#c5d5e3}.badge{display:inline-block;padding:6px 10px;border-radius:999px;background:${ok ? 'rgba(121,217,167,.12)' : 'rgba(255,140,140,.12)'};color:${ok ? '#79d9a7' : '#ff8c8c'};border:1px solid ${ok ? 'rgba(121,217,167,.25)' : 'rgba(255,140,140,.25)'};margin-bottom:12px}</style></head><body><main><div class="badge">${ok ? 'Auth Captured' : 'Auth Error'}</div><h1>${title}</h1><p>${message}</p><p>You can return to Paranoid Keeper now and continue the connection flow from the management console.</p></main></body></html>`;
 }
 
 function sendHtml(res, statusCode, html) {
@@ -870,7 +870,7 @@ async function validateCalendarLiveAccess(profile, calendar, tokenState, provide
       ok: Boolean(validation.ok),
       status: validation.ok ? "connected" : "invalid",
       validatedAt,
-      message: validation.message || (validation.ok ? "Marvin validated the Apple / CalDAV credentials for this calendar." : "Marvin could not validate the Apple / CalDAV credentials for this calendar.")
+      message: validation.message || (validation.ok ? "Paranoid Keeper validated the Apple / CalDAV credentials for this calendar." : "Paranoid Keeper could not validate the Apple / CalDAV credentials for this calendar.")
     };
   }
 
@@ -885,7 +885,7 @@ async function validateCalendarLiveAccess(profile, calendar, tokenState, provide
         ok: false,
         status: "pending",
         validatedAt,
-        message: "Marvin does not have a usable " + providerName + " token for this calendar yet. Finish provider sign-in first."
+        message: "Paranoid Keeper does not have a usable " + providerName + " token for this calendar yet. Finish provider sign-in first."
       };
     }
 
@@ -896,7 +896,7 @@ async function validateCalendarLiveAccess(profile, calendar, tokenState, provide
         ok: false,
         status: normalizeString(latestRecord?.lastError) ? "invalid" : "pending",
         validatedAt,
-        message: normalizeString(latestRecord?.lastError) || ("Marvin does not have a usable " + providerName + " token for this calendar yet. Finish provider sign-in first.")
+        message: normalizeString(latestRecord?.lastError) || ("Paranoid Keeper does not have a usable " + providerName + " token for this calendar yet. Finish provider sign-in first.")
       };
     }
 
@@ -910,7 +910,7 @@ async function validateCalendarLiveAccess(profile, calendar, tokenState, provide
       ok: true,
       status: "connected",
       validatedAt,
-      message: "Marvin verified live " + providerName + " access for this calendar."
+      message: "Paranoid Keeper verified live " + providerName + " access for this calendar."
     };
   } catch (error) {
     return {
@@ -933,10 +933,10 @@ async function exchangeAuthorizationCode(profile, calendar, authSession) {
     return { exchanged: false, reason: "missing-authorization-code", message: "Authorization code was not present in the callback." };
   }
   if (!clientId) {
-    return { exchanged: false, reason: "missing-client-id", message: "Client ID is missing from Marvin provider runtime." };
+    return { exchanged: false, reason: "missing-client-id", message: "Client ID is missing from Paranoid Keeper provider runtime." };
   }
   if (!clientSecret) {
-    return { exchanged: false, reason: "missing-client-secret", message: `Set the corresponding provider client secret in Marvin before token exchange can complete.` };
+    return { exchanged: false, reason: "missing-client-secret", message: `Set the corresponding provider client secret in Paranoid Keeper before token exchange can complete.` };
   }
   if (!redirectUri) {
     return { exchanged: false, reason: "missing-redirect-uri", message: "Redirect URI was not recorded for this authorization request." };
@@ -1153,15 +1153,15 @@ function describeAccountReadiness(account) {
         readinessState: "ready",
         readinessLabel: "Ready",
         readinessDetail: linkedIdentity
-          ? `${providerLabel} sign-in completed and Marvin has a usable token for ${linkedIdentity}.`
-          : `${providerLabel} sign-in completed and Marvin has a usable token.`,
+          ? `${providerLabel} sign-in completed and Paranoid Keeper has a usable token for ${linkedIdentity}.`
+          : `${providerLabel} sign-in completed and Paranoid Keeper has a usable token.`,
         nextActionLabel: "None"
       };
     }
     return {
       readinessState: "pending",
       readinessLabel: "Action Required",
-      readinessDetail: `${providerLabel} returned to Marvin, but the provider token is not usable yet.`,
+      readinessDetail: `${providerLabel} returned to Paranoid Keeper, but the provider token is not usable yet.`,
       nextActionLabel: "Check Access"
     };
   }
@@ -1177,7 +1177,7 @@ function describeAccountReadiness(account) {
     return {
       readinessState: "pending",
       readinessLabel: "Action Required",
-      readinessDetail: account.connectionReason || `${providerLabel} still needs setup before Marvin can link it.`,
+      readinessDetail: account.connectionReason || `${providerLabel} still needs setup before Paranoid Keeper can link it.`,
       nextActionLabel: "Finish Setup"
     };
   }
@@ -1185,7 +1185,7 @@ function describeAccountReadiness(account) {
     return {
       readinessState: "pending",
       readinessLabel: "Action Required",
-      readinessDetail: `${providerLabel} returned to Marvin at ${account.authCallbackReceivedAt}, but final token validation is still pending.`,
+      readinessDetail: `${providerLabel} returned to Paranoid Keeper at ${account.authCallbackReceivedAt}, but final token validation is still pending.`,
       nextActionLabel: "Check Access"
     };
   }
@@ -1193,7 +1193,7 @@ function describeAccountReadiness(account) {
     return {
       readinessState: "pending",
       readinessLabel: "Action Required",
-      readinessDetail: `${providerLabel} sign-in was started, but Marvin is still waiting for the provider callback.`,
+      readinessDetail: `${providerLabel} sign-in was started, but Paranoid Keeper is still waiting for the provider callback.`,
       nextActionLabel: "Finish Sign-In"
     };
   }
@@ -1223,10 +1223,10 @@ function buildReadinessSummary(accounts, runtimeStatus, runtimeProcess) {
     }
     summary.actionRequired += 1;
     const action = account.nextActionLabel || "Review Account";
-    nextSteps.push(`${account.label}: ${action}. ${account.readinessDetail || account.connectionReason || "Finish the remaining setup in Marvin."}`);
+    nextSteps.push(`${account.label}: ${action}. ${account.readinessDetail || account.connectionReason || "Finish the remaining setup in Paranoid Keeper."}`);
   }
   if (accounts.length < 2) {
-    nextSteps.unshift("Add at least two calendars before expecting Marvin to mirror events between accounts.");
+    nextSteps.unshift("Add at least two calendars before expecting Paranoid Keeper to mirror events between accounts.");
   }
   summary.readyToStartAutomation = accounts.length > 1 && summary.actionRequired === 0;
   if (summary.automationRunning) {
@@ -1272,16 +1272,16 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
     const linkedAccountName = token.linkedAccountName || "";
     const authEvidence = calendar.provider === "apple-caldav"
       ? ((assessment?.status || calendar.connectionStatus) === "connected"
-        ? "Marvin validated the saved Apple / CalDAV credentials against the configured server."
+        ? "Paranoid Keeper validated the saved Apple / CalDAV credentials against the configured server."
         : "Apple / CalDAV credentials have not been validated yet.")
       : (token.tokenStatus === "usable"
-        ? "OAuth callback completed and Marvin stored a usable provider token locally."
+        ? "OAuth callback completed and Paranoid Keeper stored a usable provider token locally."
         : token.tokenStatus === "pending"
-          ? "Provider callback reached Marvin, but token completion still depends on provider settings or validation."
+          ? "Provider callback reached Paranoid Keeper, but token completion still depends on provider settings or validation."
           : token.tokenStatus === "error"
             ? `Provider token exchange failed: ${token.tokenReason}`
             : normalizeString(record?.authSession?.callbackReceivedAt)
-              ? "Provider callback reached Marvin, but a usable token is not present yet."
+              ? "Provider callback reached Paranoid Keeper, but a usable token is not present yet."
               : "Provider sign-in has not been proven yet.");
     const readiness = describeAccountReadiness({
       provider: calendar.provider,
@@ -1392,7 +1392,7 @@ async function persistProfileAndConfig(profile, payload, existingConfig = null, 
 async function handleCreateAccount(payload, auth = null) {
   requireFields(payload, ["marvinDisplayName", "marvinEmail"]);
   const primaryOperator = getPrimaryOperator();
-  if (primaryOperator && !auth?.authenticated) throw createAuthError("Sign in to edit the Marvin workspace account.");
+  if (primaryOperator && !auth?.authenticated) throw createAuthError("Sign in to edit the Paranoid Keeper workspace account.");
   const email = payload.marvinEmail.trim();
   const existing = readJson(getOperatorPath(email), null);
   const password = normalizeString(payload.marvinPassword);
@@ -1406,7 +1406,7 @@ async function handleCreateAccount(payload, auth = null) {
     updatedAt: now,
     password: password ? hashPassword(password) : existing?.password
   };
-  if (!operator.password) throw new Error("Marvin account password is missing.");
+  if (!operator.password) throw new Error("Paranoid Keeper account password is missing.");
   writeJson(getOperatorPath(operator.email), operator);
   setLatestState({ ...getLatestState(), operatorEmail: operator.email });
   const session = createSession(operator);
@@ -1423,7 +1423,7 @@ async function handleLogin(payload) {
   requireFields(payload, ["marvinEmail", "marvinPassword"]);
   const email = payload.marvinEmail.trim();
   const operator = readJson(getOperatorPath(email), null);
-  if (!operator || !verifyPassword(payload.marvinPassword, operator.password)) throw createAuthError("Invalid Marvin workspace email or password.");
+  if (!operator || !verifyPassword(payload.marvinPassword, operator.password)) throw createAuthError("Invalid Paranoid Keeper workspace email or password.");
   setLatestState({ ...getLatestState(), operatorEmail: operator.email });
   const session = createSession(operator);
   let config = null;
@@ -1818,7 +1818,7 @@ async function handleRuntimeStop(payload) {
 }
 
 async function handleDeploy(payload) {
-  if (!deployEnabled) throw new Error("Hosted Marvin runtime cannot redeploy itself. Use the local repo deployment flow.");
+  if (!deployEnabled) throw new Error("Hosted Paranoid Keeper runtime cannot redeploy itself. Use the local repo deployment flow.");
   requireFields(payload, ["subscriptionId", "workloadName", "environment", "regionShort", "instance", "location"]);
   const args = ["-File", path.join("solutions", "marvin-engine", "deploy-azure-container-app.ps1"), "-SubscriptionId", payload.subscriptionId, "-WorkloadName", payload.workloadName, "-Environment", payload.environment, "-RegionShort", payload.regionShort, "-Instance", payload.instance, "-Location", payload.location];
   const { stdout, stderr } = await execFileAsync("pwsh", args, { cwd: appRoot, windowsHide: true, maxBuffer: 1024 * 1024 * 20, env: { ...process.env, AZURE_EXTENSION_DIR: "C:\tmp\azext" } });
@@ -1832,17 +1832,17 @@ async function handleOAuthStart(provider, url) {
   const authState = normalizeString(url.searchParams.get("state"));
   const match = findConnectionStateByAuthState(authState);
   if (!match) {
-    return { statusCode: 404, html: renderAuthCompletionHtml("Marvin could not match this authorization request", "The auth state was not found in Marvin's local connection store.", false) };
+    return { statusCode: 404, html: renderAuthCompletionHtml("Paranoid Keeper could not match this authorization request", "The auth state was not found in Paranoid Keeper's local connection store.", false) };
   }
   const bundle = loadConfigBundle(match.profileName);
   if (!bundle.config || !bundle.profile) {
-    return { statusCode: 404, html: renderAuthCompletionHtml("Marvin profile not found", "The matching profile for this authorization request could not be loaded.", false) };
+    return { statusCode: 404, html: renderAuthCompletionHtml("Paranoid Keeper profile not found", "The matching profile for this authorization request could not be loaded.", false) };
   }
   const nextState = synchronizeConnectionState(bundle.profile, bundle.connectionState);
   const target = nextState.records.find((item) => item.calendarId === match.record.calendarId);
   const calendar = bundle.profile.calendars.find((item) => item.id === match.record.calendarId);
   if (!target || !calendar) {
-    return { statusCode: 404, html: renderAuthCompletionHtml("Calendar record not found", "Marvin found the auth state but could not locate the target calendar record.", false) };
+    return { statusCode: 404, html: renderAuthCompletionHtml("Calendar record not found", "Paranoid Keeper found the auth state but could not locate the target calendar record.", false) };
   }
   const launch = buildProviderAuthorizeRequest(bundle.profile, calendar, authState);
   target.lastValidatedAt = new Date().toISOString();
@@ -1858,7 +1858,7 @@ async function handleOAuthStart(provider, url) {
   writeJson(bundle.profilePath, bundle.profile);
   writeJson(bundle.configPath, materializeConfigFromProfile(bundle.profile, bundle.config, bundle.config, nextState, loadTokenState(bundle.profile.name), loadProviderSecrets(bundle.profile.name)));
   if (!launch.authorizeUrl) {
-    return { statusCode: 409, html: renderAuthCompletionHtml(`Marvin cannot start ${provider} sign-in yet`, launch.reason || "Provider runtime is missing required configuration.", false) };
+    return { statusCode: 409, html: renderAuthCompletionHtml(`Paranoid Keeper cannot start ${provider} sign-in yet`, launch.reason || "Provider runtime is missing required configuration.", false) };
   }
   return { statusCode: 302, redirectUrl: launch.authorizeUrl };
 }
@@ -1870,17 +1870,17 @@ async function handleOAuthCallback(provider, url) {
   const error = normalizeString(url.searchParams.get("error"));
   const match = findConnectionStateByAuthState(authState);
   if (!match) {
-    return { statusCode: 404, html: renderAuthCompletionHtml("Marvin could not match this authorization request", "The auth state was not found in Marvin's local connection store.", false) };
+    return { statusCode: 404, html: renderAuthCompletionHtml("Paranoid Keeper could not match this authorization request", "The auth state was not found in Paranoid Keeper's local connection store.", false) };
   }
   const bundle = loadConfigBundle(match.profileName);
   if (!bundle.config || !bundle.profile) {
-    return { statusCode: 404, html: renderAuthCompletionHtml("Marvin profile not found", "The matching profile for this authorization request could not be loaded.", false) };
+    return { statusCode: 404, html: renderAuthCompletionHtml("Paranoid Keeper profile not found", "The matching profile for this authorization request could not be loaded.", false) };
   }
   const nextState = synchronizeConnectionState(bundle.profile, bundle.connectionState);
   const target = nextState.records.find((item) => item.calendarId === match.record.calendarId);
   const calendar = bundle.profile.calendars.find((item) => item.id === match.record.calendarId);
   if (!target || !calendar) {
-    return { statusCode: 404, html: renderAuthCompletionHtml("Calendar record not found", "Marvin found the auth state but could not locate the target calendar record.", false) };
+    return { statusCode: 404, html: renderAuthCompletionHtml("Calendar record not found", "Paranoid Keeper found the auth state but could not locate the target calendar record.", false) };
   }
   target.lastValidatedAt = new Date().toISOString();
   target.status = error ? "invalid" : "pending";
@@ -1902,7 +1902,7 @@ async function handleOAuthCallback(provider, url) {
       target.connectedAt = new Date().toISOString();
       target.accountRef = normalizeString(exchange.tokenRecord?.accountRef || target.accountRef);
       upsertTokenStateRecord(bundle.profile.name, calendar, exchange.tokenRecord);
-      tokenMessage = `Marvin exchanged the ${provider} authorization code for tokens and marked this calendar connected.`;
+      tokenMessage = `Paranoid Keeper exchanged the ${provider} authorization code for tokens and marked this calendar connected.`;
     } else {
       upsertTokenStateRecord(bundle.profile.name, calendar, {
         status: exchange.reason === "token-exchange-failed" ? "error" : "pending",
@@ -1912,7 +1912,7 @@ async function handleOAuthCallback(provider, url) {
         redirectUri: target.authSession?.redirectUri || "",
         lastError: exchange.message || ""
       });
-      tokenMessage = exchange.message || `Marvin captured the ${provider} authorization code, but token exchange is not complete yet.`;
+      tokenMessage = exchange.message || `Paranoid Keeper captured the ${provider} authorization code, but token exchange is not complete yet.`;
       tokenOk = exchange.reason !== "token-exchange-failed";
     }
   }
@@ -1931,9 +1931,9 @@ async function handleOAuthCallback(provider, url) {
       redirectUri: target.authSession?.redirectUri || "",
       lastError: `Provider returned error: ${error}`
     });
-    return { statusCode: 400, html: renderAuthCompletionHtml(`Marvin ${provider} authorization failed`, `Provider returned error: ${error}.`, false) };
+    return { statusCode: 400, html: renderAuthCompletionHtml(`Paranoid Keeper ${provider} authorization failed`, `Provider returned error: ${error}.`, false) };
   }
-  return { statusCode: tokenOk ? 200 : 502, html: renderAuthCompletionHtml(`Marvin processed the ${provider} authorization callback`, tokenMessage, tokenOk) };
+  return { statusCode: tokenOk ? 200 : 502, html: renderAuthCompletionHtml(`Paranoid Keeper processed the ${provider} authorization callback`, tokenMessage, tokenOk) };
 }
 
 async function bootstrapPayload(req) {
@@ -2016,7 +2016,7 @@ export function startMarvinOnboardServer() {
     }
   });
   server.listen(port, () => {
-    console.log(`Marvin onboard UI running at http://localhost:${port}`);
+    console.log(`Paranoid Keeper onboard UI running at http://localhost:${port}`);
   });
   return server;
 }

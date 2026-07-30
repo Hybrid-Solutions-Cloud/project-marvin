@@ -79,7 +79,7 @@ try {
       "Paranoid Keeper branding",
       "Workspace-account-first setup and sign-in flow",
       "Management Console",
-      "Marvin workspace summary",
+      "Paranoid Keeper workspace summary",
       "Calendars management surface",
       "Automation controls",
       "Readiness-oriented stats",
