@@ -69,7 +69,7 @@ try {
   assert.equal(setup.profileName, profileSlug);
   assert.equal(setup.accounts.length >= 2, true);
   assert.equal(summary.profile, profileSlug);
-  assert.match(output, /Bureaucratic Flow \/ Power Platform reference path/i);
+  assert.match(output, /Historical reference generation is opt-in/i);
   assert.match(output, /marvin:verify-local/);
 
   console.log(JSON.stringify({
