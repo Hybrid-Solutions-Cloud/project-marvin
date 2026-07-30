@@ -1,66 +1,39 @@
 # Getting Started
 
-Paranoid Keeper is the calendar-sync product in the Project Marvin repository. It mirrors every connected calendar to every other connected calendar after one setup flow.
+Paranoid Keeper mirrors every connected calendar to every other connected calendar after authorization.
 
-## Start locally
+## Start Locally
 
-```powershell
+~~~powershell
 npm run marvin:install
 npm run marvin:ui
-```
+~~~
 
-Open `http://127.0.0.1:4177`.
+Open http://127.0.0.1:4177.
 
-## First-run flow
+## First Run
 
-1. Create one Paranoid Keeper workspace account for the deployment.
-2. Add each Microsoft 365, Outlook, Google, or Apple / CalDAV calendar.
-3. Give each calendar a source prefix, such as `WORK: ` or `FAMILY: `.
-4. Add Microsoft or Google OAuth application credentials only for providers you use. Add an Apple CalDAV URL and app password per Apple calendar.
-5. Link every provider account and run **Check All Calendars**.
-6. When every calendar validates, Paranoid Keeper starts its background runtime automatically.
+1. Create the security account. Its email is retained as the recovery identity for this deployment.
+2. The management console opens. There is no setup assistant or solution picker.
+3. Choose a calendar provider and enter the calendar account email.
+4. Select **Add calendar**. Paranoid Keeper immediately starts Microsoft, Outlook, or Google authorization.
+5. Repeat for the remaining calendars. When every calendar validates, the background runtime starts automatically.
 
-No solution picker and no manual sync command are needed after setup.
+Prefixes and private-by-default copies are created automatically. Use **Share details** only for a family or other trusted target calendar after it has been added.
 
-## Default behavior
+Apple Calendar is optional. Apple does not offer the same browser OAuth flow; its one exception is an Apple app-specific password, which Paranoid Keeper uses to connect to Apple Calendar.
 
-- Every connected calendar is a source and mirrors to every other connected calendar.
-- Copies retain subject, location, description, and source timezone.
-- Copies are `private` by default.
-- The source prefix is prepended to the copied subject.
-- A family target can be changed to normal visibility and different detail rules in **Privacy Rules** or on that target calendar.
-- Managed mirrors are marked so they are never re-ingested and looped back.
+## Hosted Azure Path
 
-## Hosted Azure path
-
-```powershell
+~~~powershell
 npm run marvin:azure:plan
-npm run marvin:azure:deploy -- `
-  -SubscriptionId <subscription-guid> `
-  -WorkloadName marvin `
-  -Environment dev `
-  -RegionShort wus3 `
-  -Instance 01 `
-  -Location westus3
-```
+npm run marvin:azure:deploy
+~~~
 
-The deployment creates one always-on Container App, Azure Files state, Log Analytics, and a build registry. Open the resulting HTTPS URL and complete the same first-run flow. The browser URL is persisted as the OAuth callback base URL.
+Open the resulting HTTPS URL and complete the same first-run flow.
 
-## Provider notes
+## Provider Notes
 
 - Microsoft 365 and Outlook use Microsoft Graph OAuth, subscriptions, and webhook wake-ups.
 - Google uses Google OAuth, event watches, and webhook wake-ups.
-- Apple / CalDAV uses its server URL and app password. It is synchronized by the always-on poll interval because generic CalDAV has no universal webhook protocol.
-
-## Verification
-
-```powershell
-npm run marvin:smoke-live
-npm run marvin:smoke-onboard-api
-npm run marvin:smoke-ui-surface
-npm run marvin:smoke-subscriptions
-npm run marvin:smoke-runtime-webhook-wake
-npm run docs:build
-```
-
-See [Architecture](/architecture), [Paranoid Keeper](/solutions/paranoid-keeper), and [Azure deployment](/solutions/marvin-azure).
+- Apple Calendar uses an Apple app-specific password and periodic polling.

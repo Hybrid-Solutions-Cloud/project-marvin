@@ -140,6 +140,7 @@ function toPublicOperator(operator) {
   return operator ? {
     displayName: operator.displayName,
     email: operator.email,
+    recoveryEmail: operator.recoveryEmail || operator.email,
     createdAt: operator.createdAt,
     updatedAt: operator.updatedAt
   } : null;
@@ -1402,6 +1403,7 @@ async function handleCreateAccount(payload, auth = null) {
     accountId: sanitizeName(email),
     displayName: payload.marvinDisplayName.trim(),
     email,
+    recoveryEmail: normalizeString(payload.recoveryEmail || existing?.recoveryEmail || email).toLowerCase(),
     createdAt: existing?.createdAt || now,
     updatedAt: now,
     password: password ? hashPassword(password) : existing?.password

@@ -207,7 +207,7 @@ The `marvin:smoke-live` output now also surfaces: bidirectional source-target pa
 
 That verification now proves:
 
-- the Marvin browser surface exposes the Setup Assistant, Management Console, one Calendars management list, and automation controls instead of the older Keeper login copy
+- the Paranoid Keeper browser surface starts with a security account, opens directly into calendar management, and begins provider authorization immediately after a calendar email is added
 - Marvin can refresh saved setup state back into the UI, validate per-calendar live access from the same Calendars management list, and compute operator-facing readiness steps for unfinished accounts
 - Marvin now proves that protected config access is blocked after logout and restored only after a valid Marvin workspace login
 - Marvin now has a fuller local operator-journey smoke covering Marvin account creation, multi-provider account save, Microsoft callback auth, Google pending validation, Apple / CalDAV direct validation, and runtime start/stop
