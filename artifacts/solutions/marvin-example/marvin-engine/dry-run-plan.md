@@ -4,14 +4,14 @@ Profile: marvin-example
 Timezone: America/New_York
 Sync window: 45 days
 
-This is the in-repo first-party service path.
+This is the Paranoid Keeper sync-engine artifact.
 
 ## Planned Routes
 
-- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
-- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
-- Personal Google -> Work Microsoft 365, Contract Microsoft 365, Family Google, Personal Apple (subject)
-- Family Google -> Work Microsoft 365, Contract Microsoft 365, Personal Google, Personal Apple (subject)
+- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Family Google, Personal Apple (full)
+- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Family Google, Personal Apple (full)
+- Personal Google -> Work Microsoft 365, Contract Microsoft 365, Family Google, Personal Apple (full)
+- Family Google -> Work Microsoft 365, Contract Microsoft 365, Personal Google, Personal Apple (full)
 
 ## Provider Runtime
 

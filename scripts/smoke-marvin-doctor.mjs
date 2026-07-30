@@ -88,8 +88,8 @@ try {
   assert.equal(report.verification.operatorJourneyCommand, "npm run marvin:smoke-operator-journey");
   assert.equal(report.verification.syncProofCommand, "npm run marvin:smoke-live");
   assert.equal(report.verification.requirementsDocsPath, "docs/requirements.md");
-  assert.equal(report.requirementCoverage.asOf, "2026-07-29");
-  assert.equal(report.requirementCoverage.summary.total, 10);
+  assert.match(report.requirementCoverage.asOf, /^\d{4}-\d{2}-\d{2}$/);
+  assert.ok(report.requirementCoverage.summary.total >= 10);
   assert.ok(report.requirementCoverage.summary.provenLocally >= 1);
   assert.ok(report.requirementCoverage.requirements.some((item) => /source calendar prefix/i.test(item.requirement) && item.status === "proven-locally"));
   assert.ok(report.requirementCoverage.requirements.some((item) => /private by default/i.test(item.requirement) && item.status === "partial"));

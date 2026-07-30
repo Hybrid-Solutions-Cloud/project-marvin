@@ -56,15 +56,15 @@ const keeperRoutes = profile.routes
       `## ${source.label}`,
       "",
       `Source provider: ${source.provider}`,
-      `Source prefix: ${source.sourcePrefix}`,
-      ...targets.map((item) => `- ${item.calendar.label}: visibility=${item.config.visibility ?? profile.privacyDefaults.visibility}, detailMode=${item.config.detailMode ?? route.mirrorMode ?? profile.privacyDefaults.mirrorMode}, prefix=${item.config.subjectPrefix ?? source.sourcePrefix}`)
+      `Source prefix: ${JSON.stringify(source.sourcePrefix)}`,
+      ...targets.map((item) => `- ${item.calendar.label}: visibility=${item.config.visibility ?? profile.privacyDefaults.visibility}, detailMode=${item.config.detailMode ?? route.mirrorMode ?? profile.privacyDefaults.mirrorMode}, prefix=${JSON.stringify(item.config.subjectPrefix ?? source.sourcePrefix)}`)
     ].join("\n");
   })
   .join("\n\n");
 
 writeFile(
   path.join(keeperRoot, "sync-plan.md"),
-  `# Paranoid Keeper Sync Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis remains the external runtime reference while Marvin Engine becomes the product-owned path.\n\n## Route Summary\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Coverage\n\n- Microsoft 365 and Outlook: ${providerRuntime.microsoft.authMode}\n- Google: ${providerRuntime.google.authMode}\n- Apple Calendar: ${providerRuntime.caldav.authMode}\n\n## Policy Coverage\n\n- private-by-default mirrored events\n- per-target visibility overrides\n- automatic per-source prefixes\n- preserve original event timezone\n\n## Detailed Route Notes\n\n${keeperRoutes}\n`
+  `# Paranoid Keeper Sync Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nHistorical reference artifact only. Paranoid Keeper is the product path.\n\n## Route Summary\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Coverage\n\n- Microsoft 365 and Outlook: ${providerRuntime.microsoft.authMode}\n- Google: ${providerRuntime.google.authMode}\n- Apple Calendar: ${providerRuntime.caldav.authMode}\n\n## Policy Coverage\n\n- private-by-default mirrored events\n- per-target visibility overrides\n- automatic per-source prefixes\n- preserve original event timezone\n\n## Detailed Route Notes\n\n${keeperRoutes}\n`
 );
 
 writeFile(
@@ -140,7 +140,7 @@ writeFile(
 const marvinRoot = path.join(outRoot, "marvin-engine");
 writeFile(
   path.join(marvinRoot, "dry-run-plan.md"),
-  `# Marvin Engine Dry Run Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis is the in-repo first-party service path.\n\n## Planned Routes\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Runtime\n\n- Microsoft: ${providerRuntime.microsoft.authMode}\n- Google: ${providerRuntime.google.authMode}\n- CalDAV: ${providerRuntime.caldav.authMode}\n\n## Policy Guarantees Under Design\n\n- private-by-default mirrored events\n- family-calendar visibility overrides\n- per-source prefixes\n- preserved source timezone behavior\n- account connection status tracked per calendar\n`
+  `# Marvin Engine Dry Run Plan\n\nProfile: ${profile.name}\nTimezone: ${profile.timezone}\nSync window: ${profile.syncWindowDays} days\n\nThis is the Paranoid Keeper sync-engine artifact.\n\n## Planned Routes\n\n${profile.routes.map(formatRoute).join("\n")}\n\n## Provider Runtime\n\n- Microsoft: ${providerRuntime.microsoft.authMode}\n- Google: ${providerRuntime.google.authMode}\n- CalDAV: ${providerRuntime.caldav.authMode}\n\n## Policy Guarantees Under Design\n\n- private-by-default mirrored events\n- family-calendar visibility overrides\n- per-source prefixes\n- preserved source timezone behavior\n- account connection status tracked per calendar\n`
 );
 
 const summary = {

@@ -4,14 +4,14 @@ Profile: marvin-example
 Timezone: America/New_York
 Sync window: 45 days
 
-This remains the external runtime reference while Marvin Engine becomes the product-owned path.
+Historical reference artifact only. Paranoid Keeper is the product path.
 
 ## Route Summary
 
-- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
-- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Family Google, Personal Apple (subject)
-- Personal Google -> Work Microsoft 365, Contract Microsoft 365, Family Google, Personal Apple (subject)
-- Family Google -> Work Microsoft 365, Contract Microsoft 365, Personal Google, Personal Apple (subject)
+- Work Microsoft 365 -> Contract Microsoft 365, Personal Google, Family Google, Personal Apple (full)
+- Contract Microsoft 365 -> Work Microsoft 365, Personal Google, Family Google, Personal Apple (full)
+- Personal Google -> Work Microsoft 365, Contract Microsoft 365, Family Google, Personal Apple (full)
+- Family Google -> Work Microsoft 365, Contract Microsoft 365, Personal Google, Personal Apple (full)
 
 ## Provider Coverage
 
@@ -31,35 +31,35 @@ This remains the external runtime reference while Marvin Engine becomes the prod
 ## Work Microsoft 365
 
 Source provider: m365
-Source prefix: WORK: 
-- Contract Microsoft 365: visibility=private, detailMode=subject, prefix=WORK: 
-- Personal Google: visibility=private, detailMode=subject, prefix=WORK: 
-- Family Google: visibility=default, detailMode=full, prefix=WORK: 
-- Personal Apple: visibility=private, detailMode=subject, prefix=WORK: 
+Source prefix: "WORK: "
+- Contract Microsoft 365: visibility=private, detailMode=full, prefix="WORK: "
+- Personal Google: visibility=private, detailMode=full, prefix="WORK: "
+- Family Google: visibility=default, detailMode=full, prefix="WORK: "
+- Personal Apple: visibility=private, detailMode=full, prefix="WORK: "
 
 ## Contract Microsoft 365
 
 Source provider: m365
-Source prefix: CONTRACT: 
-- Work Microsoft 365: visibility=private, detailMode=subject, prefix=CONTRACT: 
-- Personal Google: visibility=private, detailMode=subject, prefix=CONTRACT: 
-- Family Google: visibility=default, detailMode=full, prefix=CONTRACT: 
-- Personal Apple: visibility=private, detailMode=subject, prefix=CONTRACT: 
+Source prefix: "CONTRACT: "
+- Work Microsoft 365: visibility=private, detailMode=full, prefix="CONTRACT: "
+- Personal Google: visibility=private, detailMode=full, prefix="CONTRACT: "
+- Family Google: visibility=default, detailMode=full, prefix="CONTRACT: "
+- Personal Apple: visibility=private, detailMode=full, prefix="CONTRACT: "
 
 ## Personal Google
 
 Source provider: google
-Source prefix: GOOGLE: 
-- Work Microsoft 365: visibility=private, detailMode=subject, prefix=GOOGLE: 
-- Contract Microsoft 365: visibility=private, detailMode=subject, prefix=GOOGLE: 
-- Family Google: visibility=default, detailMode=full, prefix=GOOGLE: 
-- Personal Apple: visibility=private, detailMode=subject, prefix=GOOGLE: 
+Source prefix: "GOOGLE: "
+- Work Microsoft 365: visibility=private, detailMode=full, prefix="GOOGLE: "
+- Contract Microsoft 365: visibility=private, detailMode=full, prefix="GOOGLE: "
+- Family Google: visibility=default, detailMode=full, prefix="GOOGLE: "
+- Personal Apple: visibility=private, detailMode=full, prefix="GOOGLE: "
 
 ## Family Google
 
 Source provider: google
-Source prefix: FAMILY: 
-- Work Microsoft 365: visibility=private, detailMode=subject, prefix=FAMILY: 
-- Contract Microsoft 365: visibility=private, detailMode=subject, prefix=FAMILY: 
-- Personal Google: visibility=private, detailMode=subject, prefix=FAMILY: 
-- Personal Apple: visibility=private, detailMode=subject, prefix=FAMILY: 
+Source prefix: "FAMILY: "
+- Work Microsoft 365: visibility=private, detailMode=full, prefix="FAMILY: "
+- Contract Microsoft 365: visibility=private, detailMode=full, prefix="FAMILY: "
+- Personal Google: visibility=private, detailMode=full, prefix="FAMILY: "
+- Personal Apple: visibility=private, detailMode=full, prefix="FAMILY: "

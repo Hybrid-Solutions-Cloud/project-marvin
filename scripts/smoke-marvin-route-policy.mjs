@@ -185,8 +185,8 @@ try {
     visibility: "private",
     detailMode: "subject",
     subjectPrefix: "FAM: ",
-    copyLocation: false,
-    copyDescription: false
+    copyLocation: true,
+    copyDescription: true
   });
 
   assert.deepEqual(routeTo(profile, "family_google", "contract_outlook"), {
@@ -203,8 +203,8 @@ try {
     visibility: "private",
     detailMode: "subject",
     subjectPrefix: "SIDEGIG: ",
-    copyLocation: false,
-    copyDescription: false
+    copyLocation: true,
+    copyDescription: true
   });
 
   assert.deepEqual(routeTo(profile, "contract_outlook", "family_google"), {

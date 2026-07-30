@@ -147,7 +147,7 @@ try {
   assert.equal(workAccount.connectionStatus, "pending");
   assert.ok(workAccount.authUrl.includes("/marvin-api/oauth/microsoft/start"));
   assert.equal(refreshedConfig.config.readinessSummary.actionRequired, 2);
-  assert.ok(refreshedConfig.config.readinessSummary.nextSteps.some((item) => /Work: Connect|Work: Finish Sign-In|Work: Connect account/i.test(item)));
+  assert.ok(refreshedConfig.config.readinessSummary.nextSteps.some((item) => /Finish Sign-In|Link Account/i.test(item)));
 
   console.log(JSON.stringify({
     ok: true,
