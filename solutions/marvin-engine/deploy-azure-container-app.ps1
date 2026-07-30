@@ -188,6 +188,55 @@ Assert-Success 'Bicep deployment'
 $outputs = $deploymentJson | ConvertFrom-Json
 $marvinUrl = $outputs.marvinUrl.value
 
+$entraTenantId = az account show --query tenantId --output tsv
+Assert-Success 'Reading Microsoft Entra tenant context'
+$entraAppDisplayName = "app-$WorkloadName-$Environment-$RegionShort-$Instance"
+$entraRedirectUri = "$marvinUrl/marvin-api/auth/entra/callback"
+$entraClientId = az ad app list --display-name $entraAppDisplayName --query "[0].appId" --output tsv
+Assert-Success 'Looking up Microsoft Entra application registration'
+if ([string]::IsNullOrWhiteSpace($entraClientId)) {
+  $entraClientId = az ad app create --display-name $entraAppDisplayName --sign-in-audience AzureADMyOrg --web-redirect-uris $entraRedirectUri --query appId --output tsv
+  Assert-Success 'Creating Microsoft Entra application registration'
+} else {
+  az ad app update --id $entraClientId --web-redirect-uris $entraRedirectUri --output none
+  Assert-Success 'Updating Microsoft Entra application redirect URI'
+}
+$entraClientSecret = az ad app credential reset --id $entraClientId --append --display-name 'paranoid-keeper-container-app' --years 1 --query password --output tsv
+Assert-Success 'Creating Microsoft Entra application credential'
+
+$deploymentName = 'marvin-entra-' + ([guid]::NewGuid().Guid.Substring(0, 8))
+$deploymentJson = az deployment group create `
+  --name $deploymentName `
+  --resource-group $resourceGroupName `
+  --template-file $templatePath `
+  --parameters `
+    location=$Location `
+    workloadName=$WorkloadName `
+    environment=$Environment `
+    regionShort=$RegionShort `
+    instance=$Instance `
+    logAnalyticsWorkspaceName=$logAnalyticsWorkspaceName `
+    storageAccountName=$storageAccountName `
+    fileShareName=$fileShareName `
+    storageLinkName=$storageLinkName `
+    containerAppEnvironmentName=$containerAppEnvironmentName `
+    marvinAppName=$marvinAppName `
+    containerImage=$containerImage `
+    registryServer=$registryLoginServer `
+    registryUsername=$registryUsername `
+    registryPassword=$registryPassword `
+    runtimeIntervalSeconds=$RuntimeIntervalSeconds `
+    runtimeWindowDays=$RuntimeWindowDays `
+    entraTenantId=$entraTenantId `
+    entraClientId=$entraClientId `
+    entraClientSecret=$entraClientSecret `
+    entraRedirectUri=$entraRedirectUri `
+  --query properties.outputs `
+  --output json
+Assert-Success 'Entra-enabled Bicep deployment'
+$outputs = $deploymentJson | ConvertFrom-Json
+$marvinUrl = $outputs.marvinUrl.value
+
 Write-Host 'Hosted Marvin runtime deployed successfully'
 Write-Host "URL: $marvinUrl"
 Write-Host "Resource group: $resourceGroupName"

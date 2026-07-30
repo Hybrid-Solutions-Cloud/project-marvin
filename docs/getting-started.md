@@ -13,11 +13,14 @@ Open http://127.0.0.1:4177.
 
 ## First Run
 
-1. Create the security account. Its email is retained as the recovery identity for this deployment.
-2. The management console opens. There is no setup assistant or solution picker.
-3. Choose a calendar provider and enter the calendar account email.
-4. Select **Add calendar**. Paranoid Keeper immediately starts Microsoft, Outlook, or Google authorization.
-5. Repeat for the remaining calendars. When every calendar validates, the background runtime starts automatically.
+1. Select **Continue with Microsoft**.
+2. Sign in with the Microsoft Entra identity that will own this Paranoid Keeper workspace. The first verified identity binds the workspace; later sign-ins must use that same identity.
+3. The management console opens. There is no setup assistant, password account, or solution picker.
+4. Choose a calendar provider and enter the calendar account email.
+5. Select **Add calendar**. Paranoid Keeper immediately starts Microsoft, Outlook, or Google authorization.
+6. Repeat for the remaining calendars. When every calendar validates, the background runtime starts automatically.
+
+The management sign-in and calendar authorizations are separate. Entra controls access to the Paranoid Keeper console; each calendar owner separately approves access to that calendar.
 
 Prefixes and private-by-default copies are created automatically. Use **Share details** only for a family or other trusted target calendar after it has been added.
 
@@ -30,7 +33,7 @@ npm run marvin:azure:plan
 npm run marvin:azure:deploy
 ~~~
 
-Open the resulting HTTPS URL and complete the same first-run flow.
+The Azure deployment script creates or reuses a single-tenant Entra application registration, configures its callback URL, and stores its credential as a Container App secret. Open the resulting HTTPS URL and select **Continue with Microsoft**.
 
 ## Provider Notes
 

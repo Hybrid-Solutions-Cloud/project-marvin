@@ -20,6 +20,11 @@ param stateMountPath string = '/data'
 param marvinUiPort int = 4177
 param runtimeIntervalSeconds int = 300
 param runtimeWindowDays int = 45
+param entraTenantId string = ''
+param entraClientId string = ''
+@secure()
+param entraClientSecret string = ''
+param entraRedirectUri string = ''
 param containerCpu string = '0.5'
 param containerMemory string = '1Gi'
 
@@ -112,12 +117,17 @@ resource marvinApp 'Microsoft.App/containerApps@2024-03-01' = {
           passwordSecretRef: 'registry-password'
         }
       ]
-      secrets: [
+      secrets: concat([
         {
           name: 'registry-password'
           value: registryPassword
         }
-      ]
+      ], empty(entraClientSecret) ? [] : [
+        {
+          name: 'entra-client-secret'
+          value: entraClientSecret
+        }
+      ])
     }
     template: {
       volumes: [
@@ -135,7 +145,8 @@ resource marvinApp 'Microsoft.App/containerApps@2024-03-01' = {
             cpu: json(containerCpu)
             memory: containerMemory
           }
-          env: [
+          env: concat([
+
             {
               name: 'MARVIN_ROOT_DIR'
               value: stateMountPath
@@ -168,7 +179,24 @@ resource marvinApp 'Microsoft.App/containerApps@2024-03-01' = {
               name: 'MARVIN_WINDOW_DAYS'
               value: string(runtimeWindowDays)
             }
-          ]
+          ], empty(entraClientSecret) ? [] : [
+            {
+              name: 'MARVIN_ENTRA_TENANT_ID'
+              value: entraTenantId
+            }
+            {
+              name: 'MARVIN_ENTRA_CLIENT_ID'
+              value: entraClientId
+            }
+            {
+              name: 'MARVIN_ENTRA_REDIRECT_URI'
+              value: entraRedirectUri
+            }
+            {
+              name: 'MARVIN_ENTRA_CLIENT_SECRET'
+              secretRef: 'entra-client-secret'
+            }
+          ])
           volumeMounts: [
             {
               mountPath: stateMountPath

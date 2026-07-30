@@ -15,6 +15,7 @@ import { MicrosoftGraphAdapter } from "../solutions/marvin-engine/src/adapters/m
 import { GoogleCalendarAdapter } from "../solutions/marvin-engine/src/adapters/google-calendar.mjs";
 import { CalDavAdapter } from "../solutions/marvin-engine/src/adapters/caldav.mjs";
 import { markWebhookSyncRequest, normalizeSubscriptionState } from "../solutions/marvin-engine/src/util/subscription-state.mjs";
+import { createEntraAuthenticator } from "./entra-auth.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(process.env.MARVIN_ROOT_DIR || process.cwd());
@@ -32,6 +33,12 @@ const mockGoogleTokenUrl = normalizeString(process.env.MARVIN_MOCK_GOOGLE_TOKEN_
 const sessionCookieName = "marvin_session";
 const sessionTtlSeconds = 60 * 60 * 12;
 const sessionStore = new Map();
+const entraAuthenticator = createEntraAuthenticator({
+  tenantId: normalizeString(process.env.MARVIN_ENTRA_TENANT_ID),
+  clientId: normalizeString(process.env.MARVIN_ENTRA_CLIENT_ID),
+  clientSecret: normalizeString(process.env.MARVIN_ENTRA_CLIENT_SECRET),
+  redirectUri: normalizeString(process.env.MARVIN_ENTRA_REDIRECT_URI)
+});
 
 const mimeMap = {
   ".html": "text/html; charset=utf-8",
@@ -116,9 +123,7 @@ function verifyPassword(password, storedPassword) {
 }
 
 function listOperators() {
-  if (!fs.existsSync(operatorsRoot)) {
-    return [];
-  }
+  if (!fs.existsSync(operatorsRoot)) return [];
   return fs.readdirSync(operatorsRoot)
     .filter((name) => name.endsWith(".account.json"))
     .map((name) => readJson(path.join(operatorsRoot, name), null))
@@ -127,11 +132,10 @@ function listOperators() {
 
 function getPrimaryOperator() {
   const latest = getLatestState();
-  if (latest.operatorEmail) {
-    const latestOperator = readJson(getOperatorPath(latest.operatorEmail), null);
-    if (latestOperator) {
-      return latestOperator;
-    }
+  const identity = normalizeString(latest.operatorId || latest.operatorEmail);
+  if (identity) {
+    const operator = readJson(getOperatorPath(identity), null);
+    if (operator) return operator;
   }
   return listOperators()[0] || null;
 }
@@ -140,7 +144,7 @@ function toPublicOperator(operator) {
   return operator ? {
     displayName: operator.displayName,
     email: operator.email,
-    recoveryEmail: operator.recoveryEmail || operator.email,
+    provider: operator.provider || "entra",
     createdAt: operator.createdAt,
     updatedAt: operator.updatedAt
   } : null;
@@ -156,11 +160,13 @@ function parseCookies(req) {
 }
 
 function buildSessionCookie(token) {
-  return `${sessionCookieName}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${sessionTtlSeconds}`;
+  const secure = hostedMode ? "; Secure" : "";
+  return `${sessionCookieName}=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${sessionTtlSeconds}${secure}`;
 }
 
 function buildClearedSessionCookie() {
-  return `${sessionCookieName}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`;
+  const secure = hostedMode ? "; Secure" : "";
+  return `${sessionCookieName}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${secure}`;
 }
 
 function pruneExpiredSessions() {
@@ -174,7 +180,7 @@ function createSession(operator) {
   pruneExpiredSessions();
   const token = crypto.randomBytes(32).toString("hex");
   const expiresAt = Date.now() + (sessionTtlSeconds * 1000);
-  sessionStore.set(token, { operatorEmail: operator.email, expiresAt });
+  sessionStore.set(token, { operatorId: operator.accountId, expiresAt });
   return { token, expiresAt, operator: toPublicOperator(operator), cookie: buildSessionCookie(token) };
 }
 
@@ -184,19 +190,12 @@ function getAuthContext(req) {
   if (!token) return { authenticated: false, operator: null, sessionToken: "" };
   const session = sessionStore.get(token);
   if (!session) return { authenticated: false, operator: null, sessionToken: token };
-  const operator = readJson(getOperatorPath(session.operatorEmail), null);
+  const operator = readJson(getOperatorPath(session.operatorId), null);
   if (!operator) {
     sessionStore.delete(token);
     return { authenticated: false, operator: null, sessionToken: token };
   }
   return { authenticated: true, operator, sessionToken: token };
-}
-
-function createAuthError(message = "Sign in to the Paranoid Keeper workspace account to continue.") {
-  const error = new Error(message);
-  error.statusCode = 401;
-  error.payload = { ok: false, error: message, requiresLogin: true };
-  return error;
 }
 
 function requireAuth(req) {
@@ -207,13 +206,17 @@ function requireAuth(req) {
 
 function requireFields(payload, fields) {
   const missing = fields.filter((field) => !normalizeString(payload?.[field]));
-  if (missing.length > 0) {
-    throw new Error(`Missing required fields: ${missing.join(", ")}`);
-  }
+  if (missing.length > 0) throw new Error(`Missing required fields: ${missing.join(", ")}`);
+}
+function createAuthError(message = "Sign in to the Paranoid Keeper workspace account to continue.") {
+  const error = new Error(message);
+  error.statusCode = 401;
+  error.payload = { ok: false, error: message, requiresLogin: true };
+  return error;
 }
 
-function getOperatorPath(email) {
-  return path.join(operatorsRoot, `${sanitizeName(email)}.account.json`);
+function getOperatorPath(identity) {
+  return path.join(operatorsRoot, `${sanitizeName(identity)}.account.json`);
 }
 
 function getConfigPath(profileName) {
@@ -800,8 +803,8 @@ function sendHtml(res, statusCode, html) {
   res.end(html);
 }
 
-function sendRedirect(res, location) {
-  res.writeHead(302, { Location: location });
+function sendRedirect(res, location, extraHeaders = {}) {
+  res.writeHead(302, { Location: location, ...extraHeaders });
   res.end();
 }
 
@@ -1390,53 +1393,32 @@ async function persistProfileAndConfig(profile, payload, existingConfig = null, 
   return { profilePath, eventsPath, statePath: getConfigPath(profile.name), config };
 }
 
-async function handleCreateAccount(payload, auth = null) {
-  requireFields(payload, ["marvinDisplayName", "marvinEmail"]);
+async function handleEntraCallback(url) {
+  const identity = await entraAuthenticator.complete(url);
   const primaryOperator = getPrimaryOperator();
-  if (primaryOperator && !auth?.authenticated) throw createAuthError("Sign in to edit the Paranoid Keeper workspace account.");
-  const email = payload.marvinEmail.trim();
-  const existing = readJson(getOperatorPath(email), null);
-  const password = normalizeString(payload.marvinPassword);
-  if (!existing && !password) throw new Error("Missing required fields: marvinPassword");
+  if (primaryOperator && (primaryOperator.provider !== "entra" || primaryOperator.issuer !== identity.issuer || primaryOperator.subject !== identity.subject)) {
+    const error = new Error("This Paranoid Keeper workspace is already bound to another Microsoft identity.");
+    error.statusCode = 403;
+    throw error;
+  }
   const now = new Date().toISOString();
+  const accountId = primaryOperator?.accountId || `entra-${crypto.createHash("sha256").update(`${identity.issuer}|${identity.subject}`).digest("hex").slice(0, 32)}`;
   const operator = {
-    accountId: sanitizeName(email),
-    displayName: payload.marvinDisplayName.trim(),
-    email,
-    recoveryEmail: normalizeString(payload.recoveryEmail || existing?.recoveryEmail || email).toLowerCase(),
-    createdAt: existing?.createdAt || now,
-    updatedAt: now,
-    password: password ? hashPassword(password) : existing?.password
+    accountId,
+    provider: "entra",
+    issuer: identity.issuer,
+    tenantId: identity.tenantId,
+    subject: identity.subject,
+    displayName: identity.displayName || primaryOperator?.displayName || identity.email,
+    email: identity.email || primaryOperator?.email || "",
+    createdAt: primaryOperator?.createdAt || now,
+    updatedAt: now
   };
-  if (!operator.password) throw new Error("Paranoid Keeper account password is missing.");
-  writeJson(getOperatorPath(operator.email), operator);
-  setLatestState({ ...getLatestState(), operatorEmail: operator.email });
+  writeJson(getOperatorPath(accountId), operator);
+  setLatestState({ ...getLatestState(), operatorId: accountId, operatorEmail: operator.email });
   const session = createSession(operator);
-  let config = null;
-  const latest = getLatestState();
-  if (latest.profileName) {
-    try { config = (await handleLoadConfig(latest.profileName)).config; }
-    catch { config = readJson(getConfigPath(latest.profileName), null); }
-  }
-  return { operator: session.operator, authenticated: true, requiresLogin: false, config, nextStep: "accounts", headers: { "Set-Cookie": session.cookie } };
+  return { operator: session.operator, headers: { "Set-Cookie": session.cookie } };
 }
-
-async function handleLogin(payload) {
-  requireFields(payload, ["marvinEmail", "marvinPassword"]);
-  const email = payload.marvinEmail.trim();
-  const operator = readJson(getOperatorPath(email), null);
-  if (!operator || !verifyPassword(payload.marvinPassword, operator.password)) throw createAuthError("Invalid Paranoid Keeper workspace email or password.");
-  setLatestState({ ...getLatestState(), operatorEmail: operator.email });
-  const session = createSession(operator);
-  let config = null;
-  const latest = getLatestState();
-  if (latest.profileName) {
-    try { config = (await handleLoadConfig(latest.profileName)).config; }
-    catch { config = readJson(getConfigPath(latest.profileName), null); }
-  }
-  return { operator: session.operator, authenticated: true, requiresLogin: false, config, headers: { "Set-Cookie": session.cookie } };
-}
-
 async function handleLogout(req) {
   const auth = getAuthContext(req);
   if (auth.sessionToken) sessionStore.delete(auth.sessionToken);
@@ -1951,6 +1933,7 @@ async function bootstrapPayload(req) {
     ok: true,
     port,
     product: "paranoid-keeper",
+    authentication: { entraConfigured: entraAuthenticator.configured(), provider: "entra" },
     deployEnabled,
     hostedMode,
     hasOperator: Boolean(operator),
@@ -1983,7 +1966,8 @@ export function startMarvinOnboardServer() {
       if (req.method === "GET" && (url.pathname === "/marvin-api/status" || url.pathname === "/api/status" || url.pathname === "/marvin-api/bootstrap")) return sendJson(res, 200, await bootstrapPayload(req));
       if ((req.method === "GET" || req.method === "POST") && url.pathname === "/marvin-api/webhooks/microsoft") { const profileName = resolveSubscriptionProfileName(); const validationToken = url.searchParams.get("validationToken") || ""; if (validationToken) { recordMicrosoftWebhookValidation(profileName, validationToken); return sendText(res, 200, validationToken); } const payload = req.method === "POST" ? await parseJson(req).catch(() => ({})) : {}; const recorded = recordMicrosoftWebhookNotifications(profileName, payload); return sendJson(res, 202, { ok: true, provider: "microsoft", profileName, received: recorded.notificationsReceived, queuedSync: recorded.notificationsReceived > 0, calendarIds: recorded.calendarIds }); }
       if ((req.method === "POST" || req.method === "GET") && url.pathname === "/marvin-api/webhooks/google") { const profileName = resolveSubscriptionProfileName(); const payload = req.method === "POST" ? await parseJson(req).catch(() => ({})) : {}; const recorded = recordGoogleWebhookNotification(profileName, req, payload); return sendJson(res, 202, { ok: true, provider: "google", profileName, received: recorded.notificationsReceived, queuedSync: true, calendarIds: recorded.calendarIds }); }
-      if (req.method === "POST" && url.pathname === "/marvin-api/login") { const result = await handleLogin(await parseJson(req)); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/auth/entra/start") { const redirectUrl = await entraAuthenticator.start(); return sendRedirect(res, redirectUrl); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/auth/entra/callback") { const result = await handleEntraCallback(url); return sendRedirect(res, "/", result.headers || {}); }
       if (req.method === "POST" && url.pathname === "/marvin-api/logout") { const result = await handleLogout(req); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/microsoft/start") { const result = await handleOAuthStart("microsoft", url); if (result.redirectUrl) return sendRedirect(res, result.redirectUrl); return sendHtml(res, result.statusCode, result.html); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/google/start") { const result = await handleOAuthStart("google", url); if (result.redirectUrl) return sendRedirect(res, result.redirectUrl); return sendHtml(res, result.statusCode, result.html); }
@@ -1994,7 +1978,6 @@ export function startMarvinOnboardServer() {
       if (req.method === "GET" && url.pathname === "/marvin-api/config") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleLoadConfig(url.searchParams.get("profileName") || getLatestState().profileName || "")) }); }
       if (req.method === "GET" && url.pathname === "/marvin-api/provider-requirements") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderRequirements(url.searchParams.get("profileName") || getLatestState().profileName || "")) }); }
       if (req.method === "GET" && url.pathname === "/marvin-api/provider-plan") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderPlan(url.searchParams.get("profileName") || getLatestState().profileName || "", url.searchParams.get("provider") || "")) }); }
-      if (req.method === "POST" && url.pathname === "/marvin-api/create-account") { const result = await handleCreateAccount(await parseJson(req), getAuthContext(req)); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "POST" && url.pathname === "/marvin-api/save-config") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleSaveConfig(await parseJson(req))) }); }
       if (req.method === "POST" && url.pathname === "/marvin-api/account-upsert") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleAccountUpsert(await parseJson(req))) }); }
       if (req.method === "POST" && url.pathname === "/marvin-api/account-remove") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleAccountRemove(await parseJson(req))) }); }
