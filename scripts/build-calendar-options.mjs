@@ -144,9 +144,7 @@ writeFile(
 );
 
 const summary = {
-  profile: profile.name,
-  generatedAt: new Date().toISOString(),
-  routes: profile.routes.length,
+  profile: profile.name,  routes: profile.routes.length,
   providerRuntime,
   solutions: [
     { name: "paranoid-keeper", path: path.relative(root, keeperRoot) },
