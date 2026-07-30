@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "7699648528718144659"
+      "templateHash": "4619130780517625319"
     }
   },
   "parameters": {
@@ -252,6 +252,30 @@
                 {
                   "mountPath": "[parameters('stateMountPath')]",
                   "volumeName": "marvin-state"
+                }
+              ],
+              "probes": [
+                {
+                  "type": "Readiness",
+                  "httpGet": {
+                    "path": "/marvin-api/status",
+                    "port": "[parameters('marvinUiPort')]"
+                  },
+                  "initialDelaySeconds": 10,
+                  "periodSeconds": 15,
+                  "timeoutSeconds": 5,
+                  "failureThreshold": 6
+                },
+                {
+                  "type": "Liveness",
+                  "httpGet": {
+                    "path": "/marvin-api/status",
+                    "port": "[parameters('marvinUiPort')]"
+                  },
+                  "initialDelaySeconds": 30,
+                  "periodSeconds": 30,
+                  "timeoutSeconds": 5,
+                  "failureThreshold": 3
                 }
               ]
             }

@@ -9,6 +9,17 @@ function renderStatusLabel(status) {
   return "Missing";
 }
 
+function formatAsOfDate(value) {
+  const parsed = new Date(`${value}T12:00:00Z`);
+  return parsed.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC"
+  });
+}
+
 function buildStatusDoc() {
   const coverage = buildRequirementCoverage();
   const rows = coverage.requirements.map((item) => {
@@ -20,7 +31,7 @@ function buildStatusDoc() {
 
 _This page is generated from Marvin's shared status model. Run \`npm run marvin:render-status-doc\` to refresh it manually._
 
-As of **Wednesday, July 29, 2026**, Project Marvin is a serious local proof-of-product, not a fully proven production-finished product.
+As of **${formatAsOfDate(coverage.asOf)}**, Project Marvin is a serious local proof-of-product, not a fully proven production-finished product.
 
 ## Current coverage
 
@@ -33,12 +44,13 @@ The repo currently supports all of the following **locally**:
 - source-timezone preservation in mirror payloads
 - Marvin-owned Microsoft and Google OAuth start/callback flow
 - Marvin-owned Apple / CalDAV credential validation
-- Marvin account creation, sign-in gating, and ongoing calendar management UI
+- Marvin account creation, staged onboarding, sign-in gating, and ongoing calendar management UI
 - scriptable local install, bootstrap, verification, and Azure deployment-plan generation
+- generated doctor/status reporting tied to the shared requirement model
 
 ## Requirement matrix
 
-| Requirement | Repo truth on July 29, 2026 | Strongest local evidence | Remaining gap |
+| Requirement | Repo truth on ${coverage.asOf} | Strongest local evidence | Remaining gap |
 | --- | --- | --- | --- |
 ${rows}
 
@@ -57,6 +69,7 @@ Marvin still does **not** have strong proof of all of the following:
 - production-grade hosted secret handling and operational hardening
 - fully proven always-on hosted runtime lifecycle
 - fully zero-touch provider-app creation across every Microsoft and Google tenant
+- a final documentation set that proves completed production deployment rather than a strong local proof
 
 ## Use the repo to verify status
 

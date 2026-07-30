@@ -23,7 +23,7 @@ param(
   [string]$ContractTenantId = '22222222-2222-2222-2222-222222222222',
   [string]$AutomationTenantId = '',
   [string]$AutomationEnvironmentUrl = '',
-  [string]$MirrorMode = 'subject',
+  [string]$MirrorMode = 'full',
   [string]$MarvinUrl = '',
   [string]$MicrosoftClientId = '',
   [string]$MicrosoftClientSecret = '',
@@ -176,26 +176,22 @@ try {
   if (-not [string]::IsNullOrWhiteSpace($MarvinOperatorPassword)) {
     Write-Host '1. Run npm run marvin:ui'
     Write-Host '2. Sign in with the Marvin workspace account created by this bootstrap run.'
-    Write-Host '3. Open the Calendars list, finish Access setup, link each calendar, and run Check Access until Link status shows ready.'
-    Write-Host '4. Review the Marvin Workspace card and each calendar card before starting automation.'
+    Write-Host '3. Use the staged Marvin flow: open Calendars, save Marvin setup, continue to Link Accounts, link each calendar, and run Check Access until Link status shows ready.'
+    Write-Host '4. Review the Marvin Workspace card and each calendar card before Paranoid Keeper starts automatically after validation.'
     Write-Host '5. Run npm run marvin:doctor for a repo-level health check and next verification guidance.'
     Write-Host '6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
-    Write-Host '7. Use npm run marvin:runtime:start after the account setup is complete.'
+    Write-Host '7. Paranoid Keeper starts automatically after all calendar links validate.'
     Write-Host '8. Use npm run marvin:verify-local when you want to validate the broader local Marvin workflow.'
   } else {
     Write-Host '1. Run npm run marvin:ui'
-    Write-Host '2. Open the Marvin console, create the Marvin workspace account, add calendars, and save Marvin setup.'
-    Write-Host '3. Finish Access setup, link each calendar, and run Check Access until Link status shows ready.'
-    Write-Host '4. Review the Marvin Workspace card and each calendar card before starting automation.'
+    Write-Host '2. Open the Marvin console, create the Marvin workspace account, finish the Marvin Account and Calendars stages, and save Marvin setup.'
+    Write-Host '3. Continue to Link Accounts, link each calendar, and run Check Access until Link status shows ready.'
+    Write-Host '4. Review the Marvin Workspace card and each calendar card before Paranoid Keeper starts automatically after validation.'
     Write-Host '5. Run npm run marvin:doctor for a repo-level health check and next verification guidance.'
     Write-Host '6. Run npm run marvin:smoke-operator-journey for one Marvin-owned setup/auth/validation/runtime check.'
-    Write-Host '7. Use npm run marvin:runtime:start after the account setup is complete.'
+    Write-Host '7. Paranoid Keeper starts automatically after all calendar links validate.'
     Write-Host '8. Use npm run marvin:verify-local when you want to validate the broader local Marvin workflow.'
   }
 } finally {
   Pop-Location
 }
-
-
-
-

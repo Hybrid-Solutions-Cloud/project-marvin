@@ -10,6 +10,7 @@ import { MARVIN_MIRROR_MARKER } from "../solutions/marvin-engine/src/core/policy
 import { FileMapStore } from "../solutions/marvin-engine/src/storage/file-map-store.mjs";
 import { FileTokenStore, buildTokenStorePath } from "../solutions/marvin-engine/src/storage/file-token-store.mjs";
 import { createRuntimeStatusStore, buildRuntimeStatusPath } from "../solutions/marvin-engine/src/util/runtime-status.mjs";
+import { createSubscriptionStateStore, markWebhookSyncRequest } from "../solutions/marvin-engine/src/util/subscription-state.mjs";
 
 const tempRoot = path.resolve("C:/tmp/marvin-daemon-smoke");
 rmSync(tempRoot, { recursive: true, force: true });
@@ -211,10 +212,16 @@ const runtime = {
   engine
 };
 const statusStore = createRuntimeStatusStore(tempRoot, profile.name);
+const subscriptionStore = createSubscriptionStateStore(tempRoot, profile.name);
+subscriptionStore.save(markWebhookSyncRequest(subscriptionStore.load(), { provider: "google", calendarIds: ["family"] }));
 
 const result = await startMarvinDaemon({ rootDir: tempRoot, runtime, statusStore, once: true, intervalSeconds: 1, windowDays: 2, profilePath: "profiles/marvin.example.json" });
 const runtimeStatus = JSON.parse(readFileSync(buildRuntimeStatusPath(tempRoot, profile.name), "utf8"));
+const subscriptionState = subscriptionStore.load();
 assert.equal(result.success, true);
+assert.equal(result.wakeReason, "webhook");
+assert.equal(result.webhookTrigger?.provider, "google");
+assert.deepEqual(result.webhookTrigger?.calendarIds, ["family"]);
 assert.equal(runtimeStatus.running, false);
 assert.equal(runtimeStatus.runCount, 1);
 assert.equal(runtimeStatus.lastResult?.sourceLoad?.loaded, 3);
@@ -223,6 +230,10 @@ assert.equal(runtimeStatus.lastResult?.applyResult?.succeeded, 6);
 assert.equal(runtimeStatus.lastResult?.applyResult?.failed, 0);
 assert.equal(runtimeStatus.lastResult?.adapterStatus?.caldav?.status, "credential-ready");
 assert.ok(Array.isArray(runtimeStatus.recentRuns) && runtimeStatus.recentRuns.length === 1);
+assert.equal(subscriptionState.automation.pendingSyncRequested, false);
+assert.equal(subscriptionState.automation.lastRequestedByProvider, "google");
+assert.deepEqual(subscriptionState.automation.lastRequestedByCalendarIds, ["family"]);
+assert.ok(subscriptionState.automation.lastConsumedAt);
 assert.ok(requests.some((item) => item.url.includes("graph.microsoft.com") && item.method === "POST"));
 assert.ok(requests.some((item) => item.url.includes("googleapis.com") && item.method === "POST"));
 assert.ok(requests.some((item) => item.url.includes("127.0.0.1:9998") && item.method === "REPORT"));
@@ -236,7 +247,9 @@ console.log(JSON.stringify({
     loaded: runtimeStatus.lastResult?.sourceLoad?.loaded,
     skippedMirrors: runtimeStatus.lastResult?.sourceLoad?.skippedMirrors,
     succeeded: runtimeStatus.lastResult?.applyResult?.succeeded,
-    failed: runtimeStatus.lastResult?.applyResult?.failed
+    failed: runtimeStatus.lastResult?.applyResult?.failed,
+    wakeReason: runtimeStatus.lastResult?.wakeReason,
+    webhookTrigger: runtimeStatus.lastResult?.webhookTrigger
   },
   statusPath: buildRuntimeStatusPath(tempRoot, profile.name)
 }, null, 2));

@@ -58,7 +58,7 @@ Not implemented or not yet proven:
 - fully verified live tenant-to-tenant sync against real customer-owned calendars
 - production-safe encryption for stored local tokens and provider secrets
 - production-grade long-term token lifecycle controls beyond on-demand refresh
-- full provider webhook/subscription renewal parity beyond the initial local Microsoft lifecycle
+- full provider webhook/subscription renewal parity beyond the initial local Microsoft and Google lifecycle
 - a production management API boundary
 - full production deployment and operations proof for Marvin's final runtime lifecycle
 
@@ -74,7 +74,7 @@ Not implemented or not yet proven:
 6. Mapping state is written to disk after mock or live apply.
 7. When a source event disappears and the source calendar was loaded from a ready provider connection, Marvin removes the stale mirrored targets and deletes their mappings.
 8. Refreshed token state is written back into `.marvin/tokens/*.tokens.json`.
-9. The optional daemon runner repeats that cycle on an interval, records runtime status in `.marvin/runtime/*.runtime.json`, and now maintains the initial local Microsoft subscription lifecycle in `.marvin/subscriptions/*.subscriptions.json` when a hosted Marvin URL is configured.
+9. The optional daemon runner repeats that cycle on an interval, records runtime status in `.marvin/runtime/*.runtime.json`, maintains Microsoft and Google subscription/watch state in `.marvin/subscriptions/*.subscriptions.json` when a hosted Marvin URL is configured, and can wake early from queued webhook-triggered automation state instead of waiting only for the next blind interval.
 
 ### Current policy model
 
@@ -224,8 +224,10 @@ That verification now proves:
 - Apple / CalDAV can validate credentials through Marvin's shared validation helpers
 - Apple / CalDAV can perform REPORT-based source loading and PUT-based mirror writes in the mocked runtime path
 - Marvin can remove stale mirrored target events through Google, Microsoft, and CalDAV delete calls when a source event disappears from a successfully loaded source calendar
-- the daemon-style local runtime can execute a three-provider sync cycle, persist runtime status, and record the last result for later inspection
+- the daemon-style local runtime can execute a three-provider sync cycle, persist runtime status, record the last result for later inspection, and now persist webhook-trigger wake reasons for runs that started from queued Microsoft or Google notifications
+- a long-running Marvin daemon can wake early from queued webhook state instead of waiting for the full configured interval
 - Marvin can start, stop, and inspect the local daemon process through shared runtime-manager helpers
+- Marvin can queue local automation work from hosted Microsoft and Google webhook callbacks and consume that queued wake-up state during a daemon run
 - Marvin skips previously mirrored target events during provider source loading
 - Marvin also skips mirrored target events when the provider-side Marvin marker exists even without a local mapping file
 
@@ -235,8 +237,3 @@ It does **not** prove real customer-owned provider sync yet.
 
 If the goal is the actual Marvin product, this is the path to keep building.
 Keeper and the other repo tracks should be treated as references or interim bridges, not as Marvin's finished product boundary.
-
-
-
-
-

@@ -58,7 +58,7 @@ function buildHostedGuidance(profileName = "marvin") {
     planCommand: "npm run marvin:azure:plan -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3",
     deployCommand: "npm run marvin:azure:deploy -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3",
     entraPlanCommand: `pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-entra-app.ps1 -ProfileName ${safeProfile} -EmitOnly`,
-    googlePlanCommand: `pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-google-app.ps1 -ProfileName ${safeProfile} -MarvinBaseUrl <marvin-url> -EmitOnly`,
+    googlePlanCommand: `pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-google-app.ps1 -ProfileName ${safeProfile} -MarvinBaseUrl <marvin-url> -EmitOnly`,
     docsPath: "docs/solutions/marvin-azure.md"
   };
 }
@@ -77,7 +77,7 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
   }
 
   if (hasProfile && !hasConfig) {
-    steps.push("Run npm run marvin:ui or npm run marvin:setup so Marvin saves local setup state under .marvin/.");
+    steps.push("Run npm run marvin:ui or npm run marvin:setup so Marvin saves local setup state under .marvin/ and exposes the staged Marvin setup flow.");
   }
 
   if (!Array.isArray(profile?.calendars) || profile.calendars.length === 0) {
@@ -90,10 +90,10 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
   const needsCalDav = calendars.some((calendar) => calendar.provider === "apple-caldav");
 
   if (needsMicrosoft && !config?.providerCredentials?.microsoftClientId) {
-    steps.push(`Run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-entra-app.ps1 -ProfileName ${sanitizeName(profile?.name || config?.profileName || "marvin.local")} -EmitOnly so Marvin can show the exact Microsoft app-registration plan before you save the client ID and secret.`);
+    steps.push(`Run pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-entra-app.ps1 -ProfileName ${sanitizeName(profile?.name || config?.profileName || "marvin.local")} -EmitOnly so Marvin can show the exact Microsoft app-registration plan before you save the client ID and secret.`);
   }
   if (needsGoogle && !config?.providerCredentials?.googleClientId) {
-    steps.push(`Run pwsh -ExecutionPolicy Bypass -File .\scripts\register-marvin-google-app.ps1 -ProfileName ${sanitizeName(profile?.name || config?.profileName || "marvin.local")} -MarvinBaseUrl <marvin-url> -EmitOnly so Marvin can show the exact Google OAuth plan before you save the client ID and secret.`);
+    steps.push(`Run pwsh -ExecutionPolicy Bypass -File .\\scripts\\register-marvin-google-app.ps1 -ProfileName ${sanitizeName(profile?.name || config?.profileName || "marvin.local")} -MarvinBaseUrl <marvin-url> -EmitOnly so Marvin can show the exact Google OAuth plan before you save the client ID and secret.`);
   }
   if (needsCalDav) {
     const missingApple = (config?.accounts || []).filter((account) => account.provider === "apple-caldav" && !account.caldavPasswordConfigured);
@@ -102,7 +102,7 @@ function buildNextSteps(profile, config, connectionSummary, runtimeStatus, runti
     }
   }
   if ((connectionSummary?.summary?.connected || 0) < (connectionSummary?.summary?.total || 0)) {
-    steps.push("Use Marvin's Calendars management list to authenticate or validate every calendar you expect to sync.");
+    steps.push("Use Marvin's Link Accounts stage or Calendars management list to authenticate or validate every calendar you expect to sync.");
   }
   steps.push("Use npm run marvin:smoke-operator-journey when you want one Marvin-owned verification path for Marvin account setup, provider auth state, validation state, and runtime control.");
   if (!runtimeProcess?.running || runtimeStatus?.running === false || !runtimeStatus) {
@@ -169,6 +169,3 @@ function buildDoctorReport(args) {
 const args = parseArgs();
 const report = buildDoctorReport(args);
 console.log(JSON.stringify(report, null, 2));
-
-
-

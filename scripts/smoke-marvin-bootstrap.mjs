@@ -94,8 +94,8 @@ try {
   assert.match(output, /npm run marvin:ui/);
   assert.match(output, /npm run marvin:doctor/);
   assert.match(output, /npm run marvin:smoke-operator-journey/);
-  assert.match(output, /npm run marvin:runtime:start/);
-  assert.doesNotMatch(output, /Keeper/i);
+  assert.match(output, /Paranoid Keeper starts automatically after all calendar links validate/);
+  assert.doesNotMatch(output, /Keeper\.sh/i);
   assert.doesNotMatch(bootstrapScript, /KeeperUrl/);
   assert.match(bootstrapScript, /\[Alias\('WorkspaceId'\)\]/);
   assert.match(bootstrapScript, /\[Alias\('WorkspaceEmail'\)\]/);

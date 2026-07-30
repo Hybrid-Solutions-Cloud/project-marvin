@@ -48,6 +48,11 @@ assert.match(statusDoc, new RegExp(`Proven locally: ${coverage.summary.provenLoc
 assert.match(statusDoc, new RegExp(`Partially proven locally: ${coverage.summary.partial}`));
 assert.match(statusDoc, new RegExp(`Missing: ${coverage.summary.missing}`));
 assert.equal(doctor.verification.statusReportingProofCommand, "npm run marvin:smoke-status-reporting");
+assert.match(JSON.stringify(doctor.nextSteps), /staged Marvin setup flow/i);
+assert.match(JSON.stringify(doctor.nextSteps), /register-marvin-entra-app\.ps1/i);
+assert.match(JSON.stringify(doctor.nextSteps), /register-marvin-google-app\.ps1/i);
+assert.match(doctor.hosted.entraPlanCommand, /register-marvin-entra-app\.ps1/i);
+assert.match(doctor.hosted.googlePlanCommand, /register-marvin-google-app\.ps1/i);
 
 console.log(JSON.stringify({
   ok: true,

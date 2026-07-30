@@ -32,6 +32,7 @@
     "marvin:runtime:status": "node scripts/marvin-runtime.mjs status",
     "marvin:runtime:stop": "node scripts/marvin-runtime.mjs stop",
     "marvin:smoke-runtime-manager": "node scripts/smoke-marvin-runtime-manager.mjs",
+    "marvin:smoke-runtime-webhook-wake": "node scripts/smoke-marvin-runtime-webhook-wake.mjs",
     "marvin:smoke-caldav": "node scripts/smoke-marvin-caldav-validation.mjs",
     "marvin:smoke-onboard-caldav": "node scripts/smoke-marvin-onboard-caldav.mjs",
     "marvin:smoke-caldav-live": "node scripts/smoke-marvin-caldav-live-adapter.mjs",

@@ -23,7 +23,7 @@ const PROVIDER_CATALOG = {
   "apple-caldav": {
     label: "Apple / CalDAV",
     runtimeKey: "caldav",
-    supportsRealtime: true,
+    supportsRealtime: false,
     requiredFields: ["email"],
     recommendedFields: ["sourcePrefix"]
   }

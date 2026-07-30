@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { MicrosoftGraphAdapter } from "../solutions/marvin-engine/src/adapters/microsoft-graph.mjs";
+import { GoogleCalendarAdapter } from "../solutions/marvin-engine/src/adapters/google-calendar.mjs";
 import { ensureRuntimeSubscriptions } from "../solutions/marvin-engine/src/util/subscription-manager.mjs";
 import { buildSubscriptionStatePath } from "../solutions/marvin-engine/src/util/subscription-state.mjs";
 
@@ -28,6 +29,11 @@ const profile = {
         clientId: "ms-client",
         marvinBaseUrl: `http://127.0.0.1:${port}`,
         authorizePath: "/marvin-api/oauth/microsoft/start"
+      },
+      google: {
+        clientId: "google-client",
+        marvinBaseUrl: `http://127.0.0.1:${port}`,
+        authorizePath: "/marvin-api/oauth/google/start"
       }
     }
   },
@@ -39,6 +45,15 @@ const profile = {
       email: "work@example.com",
       scope: "work",
       sourcePrefix: "WORK: ",
+      connectionStatus: "connected"
+    },
+    {
+      id: "family",
+      label: "Family",
+      provider: "google",
+      email: "family@example.com",
+      scope: "family",
+      sourcePrefix: "FAM: ",
       connectionStatus: "connected"
     }
   ]
@@ -54,23 +69,35 @@ const tokenState = {
       tokenType: "Bearer",
       expiresAt: "2099-01-01T00:00:00.000Z",
       status: "connected"
+    },
+    {
+      calendarId: "family",
+      provider: "google",
+      email: "family@example.com",
+      accessToken: "google-token",
+      tokenType: "Bearer",
+      expiresAt: "2099-01-01T00:00:00.000Z",
+      status: "connected"
     }
   ]
 };
-const providerSecrets = { microsoftClientSecret: "ms-secret" };
+const providerSecrets = { microsoftClientSecret: "ms-secret", googleClientSecret: "google-secret" };
 const requests = [];
-let subscriptionCounter = 0;
+let microsoftCounter = 0;
+let googleCounter = 0;
 const fetchImpl = async (url, options = {}) => {
-  requests.push({ url: String(url), method: options.method || "GET", body: options.body || "" });
-  if (String(url).includes("graph.microsoft.com/v1.0/subscriptions") && (options.method === "POST" || options.method === "PATCH")) {
+  const method = options.method || "GET";
+  requests.push({ url: String(url), method, body: options.body || "" });
+
+  if (String(url).includes("graph.microsoft.com/v1.0/subscriptions") && (method === "POST" || method === "PATCH")) {
     const payload = JSON.parse(options.body || "{}");
-    if (options.method === "POST") {
-      subscriptionCounter += 1;
+    if (method === "POST") {
+      microsoftCounter += 1;
     }
     return {
       ok: true,
       json: async () => ({
-        id: options.method === "POST" ? `sub-${subscriptionCounter}` : "sub-1",
+        id: method === "POST" ? `sub-${microsoftCounter}` : "sub-1",
         resource: payload.resource,
         notificationUrl: payload.notificationUrl,
         clientState: payload.clientState,
@@ -79,27 +106,59 @@ const fetchImpl = async (url, options = {}) => {
       })
     };
   }
-  throw new Error(`Unexpected request: ${options.method || "GET"} ${url}`);
+
+  if (String(url).includes("googleapis.com/calendar/v3/channels/stop") && method === "POST") {
+    return {
+      ok: true,
+      status: 204,
+      json: async () => ({})
+    };
+  }
+
+  if (String(url).includes("googleapis.com/calendar/v3/calendars/") && String(url).includes("/events/watch") && method === "POST") {
+    const payload = JSON.parse(options.body || "{}");
+    googleCounter += 1;
+    return {
+      ok: true,
+      json: async () => ({
+        kind: "api#channel",
+        id: payload.id,
+        resourceId: `google-resource-${googleCounter}`,
+        resourceUri: `https://www.googleapis.com/calendar/v3/calendars/family@example.com/events?channel=${googleCounter}`,
+        token: payload.token,
+        expiration: String(Date.now() + 6 * 24 * 60 * 60 * 1000)
+      })
+    };
+  }
+
+  throw new Error(`Unexpected request: ${method} ${url}`);
 };
 
-const adapter = new MicrosoftGraphAdapter({ profile, tokenState, providerSecrets, fetchImpl, onTokenStateChange: async () => {} });
+const microsoftAdapter = new MicrosoftGraphAdapter({ profile, tokenState, providerSecrets, fetchImpl, onTokenStateChange: async () => {} });
+const googleAdapter = new GoogleCalendarAdapter({ profile, tokenState, providerSecrets, fetchImpl, onTokenStateChange: async () => {} });
 const runtime = {
   rootDir: tempRoot,
   profile,
-  adapters: { microsoft: adapter }
+  adapters: { microsoft: microsoftAdapter, google: googleAdapter }
 };
 
 const first = await ensureRuntimeSubscriptions(runtime);
-assert.equal(first.summary.created, 1);
+assert.equal(first.summary.created, 2);
 assert.equal(first.summary.renewed, 0);
-assert.equal(first.state.subscriptions.length, 1);
-assert.equal(first.state.subscriptions[0].subscriptionId, "sub-1");
+assert.equal(first.summary.providers.microsoft.created, 1);
+assert.equal(first.summary.providers.google.created, 1);
+assert.equal(first.state.subscriptions.length, 2);
+assert.equal(first.state.subscriptions.find((item) => item.provider === "microsoft")?.subscriptionId, "sub-1");
+assert.ok(first.state.subscriptions.find((item) => item.provider === "google")?.channelId);
 
 const second = await ensureRuntimeSubscriptions(runtime, { forceRenew: true, nowMs: Date.now() + 60000 });
-assert.equal(second.summary.renewed, 1);
-assert.equal(second.state.subscriptions[0].subscriptionId, "sub-1");
-assert.equal(requests.filter((item) => item.method === "POST").length, 1);
-assert.equal(requests.filter((item) => item.method === "PATCH").length, 1);
+assert.equal(second.summary.renewed, 2);
+assert.equal(second.summary.providers.microsoft.renewed, 1);
+assert.equal(second.summary.providers.google.renewed, 1);
+assert.equal(requests.filter((item) => item.method === "POST" && item.url.includes("graph.microsoft.com/v1.0/subscriptions")).length, 1);
+assert.equal(requests.filter((item) => item.method === "PATCH" && item.url.includes("graph.microsoft.com/v1.0/subscriptions")).length, 1);
+assert.equal(requests.filter((item) => item.method === "POST" && item.url.includes("/events/watch")).length, 2);
+assert.equal(requests.filter((item) => item.method === "POST" && item.url.includes("/channels/stop")).length, 1);
 
 const server = spawn(process.execPath, ["scripts/marvin-onboard-ui.mjs"], {
   cwd: repoRoot,
@@ -138,7 +197,7 @@ try {
   assert.equal(validation.status, 200);
   assert.equal(await validation.text(), "marvin-proof-token");
 
-  const notification = await fetch(`http://127.0.0.1:${port}/marvin-api/webhooks/microsoft`, {
+  const microsoftNotification = await fetch(`http://127.0.0.1:${port}/marvin-api/webhooks/microsoft`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -151,23 +210,58 @@ try {
       ]
     })
   });
-  assert.equal(notification.status, 202);
-  const notificationBody = await notification.json();
-  assert.equal(notificationBody.received, 1);
+  assert.equal(microsoftNotification.status, 202);
+  const microsoftNotificationBody = await microsoftNotification.json();
+  assert.equal(microsoftNotificationBody.received, 1);
+  assert.equal(microsoftNotificationBody.queuedSync, true);
+  assert.deepEqual(microsoftNotificationBody.calendarIds, ["work"]);
+
+  const googleNotification = await fetch(`http://127.0.0.1:${port}/marvin-api/webhooks/google`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Channel-ID": "marvin-family-channel",
+      "X-Goog-Channel-Token": "marvin-google-state",
+      "X-Goog-Resource-ID": "google-resource-2",
+      "X-Goog-Resource-URI": "https://www.googleapis.com/calendar/v3/calendars/family@example.com/events",
+      "X-Goog-Resource-State": "exists",
+      "X-Goog-Message-Number": "7"
+    },
+    body: JSON.stringify({ changed: "events" })
+  });
+  assert.equal(googleNotification.status, 202);
+  const googleNotificationBody = await googleNotification.json();
+  assert.equal(googleNotificationBody.received, 1);
+  assert.equal(googleNotificationBody.queuedSync, true);
+  assert.deepEqual(googleNotificationBody.calendarIds, ["family"]);
 
   const persisted = JSON.parse(fs.readFileSync(buildSubscriptionStatePath(tempRoot, profileName), "utf8"));
-  assert.equal(persisted.subscriptions.length, 1);
+  assert.equal(persisted.subscriptions.length, 2);
   assert.equal(persisted.webhooks.microsoft.validationRequests, 1);
   assert.equal(persisted.webhooks.microsoft.notificationsReceived, 1);
   assert.equal(persisted.webhooks.microsoft.lastValidationToken, "marvin-proof-token");
   assert.equal(persisted.webhooks.microsoft.lastNotificationSample.subscriptionId, "sub-1");
+  assert.equal(persisted.webhooks.google.notificationsReceived, 1);
+  assert.equal(persisted.webhooks.google.lastNotificationHeaders.channelId, "marvin-family-channel");
+  assert.equal(persisted.webhooks.google.lastNotificationHeaders.resourceState, "exists");
+  assert.equal(persisted.webhooks.google.lastNotificationBody.changed, "events");
+  assert.equal(persisted.automation.pendingSyncRequested, true);
+  assert.equal(persisted.automation.lastRequestedByProvider, "google");
+  assert.deepEqual(persisted.automation.lastRequestedByCalendarIds.sort(), ["family", "work"]);
+  assert.equal(persisted.automation.requestCount, 2);
 
   console.log(JSON.stringify({
     ok: true,
     created: first.summary.created,
     renewed: second.summary.renewed,
+    microsoftCreated: first.summary.providers.microsoft.created,
+    googleCreated: first.summary.providers.google.created,
     webhookValidationRequests: persisted.webhooks.microsoft.validationRequests,
-    webhookNotificationsReceived: persisted.webhooks.microsoft.notificationsReceived,
+    microsoftWebhookNotificationsReceived: persisted.webhooks.microsoft.notificationsReceived,
+    googleWebhookNotificationsReceived: persisted.webhooks.google.notificationsReceived,
+    pendingWebhookSyncRequested: persisted.automation.pendingSyncRequested,
+    queuedWebhookProvider: persisted.automation.lastRequestedByProvider,
+    queuedWebhookCalendarIds: persisted.automation.lastRequestedByCalendarIds,
     subscriptionStatePath: buildSubscriptionStatePath(tempRoot, profileName)
   }, null, 2));
 } finally {

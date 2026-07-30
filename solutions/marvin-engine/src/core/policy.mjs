@@ -15,11 +15,11 @@ function buildMarvinMirrorMetadata(sourceCalendar, targetCalendar, sourceEvent) 
 
 export function buildMirrorPayload(profile, route, sourceCalendar, targetCalendar, targetPolicy, sourceEvent) {
   const defaults = profile.privacyDefaults ?? {};
-  const detailMode = targetPolicy.detailMode ?? route.mirrorMode ?? defaults.mirrorMode ?? "busy";
+  const detailMode = targetPolicy.detailMode ?? route.mirrorMode ?? defaults.mirrorMode ?? "full";
   const visibility = targetPolicy.visibility ?? defaults.visibility ?? "private";
   const subjectPrefix = targetPolicy.subjectPrefix ?? route.subjectPrefix ?? sourceCalendar.sourcePrefix ?? defaults.subjectPrefix ?? `${sourceCalendar.label}: `;
-  const copyLocation = targetPolicy.copyLocation ?? defaults.copyLocation ?? false;
-  const copyDescription = targetPolicy.copyDescription ?? defaults.copyDescription ?? false;
+  const copyLocation = targetPolicy.copyLocation ?? defaults.copyLocation ?? true;
+  const copyDescription = targetPolicy.copyDescription ?? defaults.copyDescription ?? true;
   const preserveOriginalTimezone = defaults.preserveOriginalTimezone ?? true;
   const normalizedSubject = detailMode === "busy" ? "Busy" : (sourceEvent.subject ?? "Busy");
 

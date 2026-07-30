@@ -60,9 +60,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2023-05-01' = {
 
 resource fileShare 'Microsoft.Storage/storageAccounts/fileServices/shares@2023-05-01' = {
   name: '${storage.name}/default/${fileShareName}'
-  dependsOn: [
-    storage
-  ]
 }
 
 resource managedEnvironment 'Microsoft.App/managedEnvironments@2024-03-01' = {
@@ -175,12 +172,37 @@ resource marvinApp 'Microsoft.App/containerApps@2024-03-01' = {
               volumeName: 'marvin-state'
             }
           ]
+          probes: [
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: '/marvin-api/status'
+                port: marvinUiPort
+              }
+              initialDelaySeconds: 10
+              periodSeconds: 15
+              timeoutSeconds: 5
+              failureThreshold: 6
+            }
+            {
+              type: 'Liveness'
+              httpGet: {
+                path: '/marvin-api/status'
+                port: marvinUiPort
+              }
+              initialDelaySeconds: 30
+              periodSeconds: 30
+              timeoutSeconds: 5
+              failureThreshold: 3
+            }
+          ]
         }
       ]
       scale: {
         minReplicas: 1
         maxReplicas: 1
       }
+
     }
   }
 }

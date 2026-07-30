@@ -13,7 +13,7 @@ const bootstrap = read("scripts/bootstrap-marvin.ps1");
 const setup = read("scripts/setup-marvin.ps1");
 
 const sharedGuidance = [
-  "Open the Calendars list, finish Access setup, link each calendar, and run Check Access until Link status shows ready.",
+  "Use the staged Marvin flow: open Calendars, save Marvin setup, continue to Link Accounts, link each calendar, and run Check Access until Link status shows ready.",
   "Review the Marvin Workspace card and each calendar card before starting automation.",
   "marvin:smoke-operator-journey",
   "marvin:verify-local"

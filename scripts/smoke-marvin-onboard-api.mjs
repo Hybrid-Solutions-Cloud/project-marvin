@@ -241,8 +241,8 @@ try {
     visibility: "private",
     detailMode: "subject",
     subjectPrefix: "FAM: ",
-    copyLocation: false,
-    copyDescription: false
+    copyLocation: true,
+    copyDescription: true
   });
 
   const beginMicrosoftWithoutClient = await requestJson(`http://127.0.0.1:${port}/marvin-api/connection-begin`, {
@@ -342,17 +342,28 @@ try {
   const connectedWorkAccount = connectedConfig.config.accounts.find((account) => account.id === "work_m365");
   assert.equal(connectedWorkAccount.connectionStatus, "connected");
   assert.equal(connectedWorkAccount.accountRef, "ms-work-user");
+  assert.equal(connectedWorkAccount.linkedAccountRef, "ms-work-user");
+  assert.equal(connectedWorkAccount.linkedAccountEmail, "work@example.com");
   assert.equal(connectedWorkAccount.authProvider, "microsoft");
   assert.ok(connectedWorkAccount.authRequestedAt);
   assert.ok(connectedWorkAccount.authStartVisitedAt);
   assert.ok(connectedWorkAccount.authCallbackReceivedAt);
   assert.equal(connectedWorkAccount.tokenStatus, "usable");
   assert.ok(connectedWorkAccount.tokenExpiresAt);
+  assert.ok(connectedWorkAccount.tokenObtainedAt);
+  assert.match(connectedWorkAccount.authEvidence || "", /usable provider token locally/i);
   assert.equal(connectedConfig.config.tokenSummary.usable, 1);
   assert.equal(connectedConfig.config.marvinDisplayName, "Marvin Smoke");
   assert.equal(connectedConfig.config.marvinOperator, "marvin-smoke@example.com");
   assert.equal(connectedConfig.config.timezone, "America/New_York");
   assert.equal(connectedConfig.config.syncWindowDays, 7);
+  assert.ok(connectedConfig.config.subscriptionState);
+  assert.equal(connectedConfig.config.subscriptionState.automation.pendingSyncRequested, false);
+
+  const runtimeStatus = await requestJson(`http://127.0.0.1:${port}/marvin-api/runtime-status?profileName=${encodeURIComponent(profileName)}`);
+  assert.equal(runtimeStatus.ok, true);
+  assert.ok(runtimeStatus.subscriptionState);
+  assert.equal(runtimeStatus.subscriptionState.automation.pendingSyncRequested, false);
 
   const blockedRuntimeHeaders = { "Content-Type": "application/json" };
   if (cookieHeader) {
@@ -367,7 +378,7 @@ try {
 
   assert.equal(blockedRuntimeResponse.status, 500);
   assert.equal(blockedRuntime.ok, false);
-  assert.match(blockedRuntime.error || "", /cannot start automation yet because not every calendar is connected and validated/i);
+  assert.match(blockedRuntime.error || "", /cannot start synchronization yet because not every calendar is connected and validated/i);
   console.log(JSON.stringify({
     ok: true,
     profileName,
@@ -388,7 +399,3 @@ try {
   await sleep(500);
   fs.rmSync(tempRoot, { recursive: true, force: true });
 }
-
-
-
-

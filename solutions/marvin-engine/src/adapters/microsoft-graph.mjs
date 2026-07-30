@@ -317,23 +317,28 @@ export class MicrosoftGraphAdapter {
 
   async listSourceEvents(calendar, options = {}) {
     const tokenRecord = await this.ensureUsableToken(calendar);
-    if (!isTokenRecordUsable(tokenRecord)) {
-      return [];
-    }
+    if (!isTokenRecordUsable(tokenRecord)) return [];
+
     const startDateTime = encodeURIComponent(toIsoUtc(options.windowStart));
     const endDateTime = encodeURIComponent(toIsoUtc(options.windowEnd));
-    const url = `https://graph.microsoft.com/v1.0/users/${normalizeEmail(calendar.email)}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`;
-    const response = await this.fetchImpl(url, {
-      headers: {
-        Authorization: `${tokenRecord.tokenType || "Bearer"} ${tokenRecord.accessToken}`,
-        Prefer: `outlook.timezone="UTC"`
-      }
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(payload?.error?.message || `Microsoft Graph calendarView failed with HTTP ${response.status}.`);
+    let url = `https://graph.microsoft.com/v1.0/users/${normalizeEmail(calendar.email)}/calendarView?startDateTime=${startDateTime}&endDateTime=${endDateTime}`;
+    const events = [];
+    const seenPages = new Set();
+
+    while (url && !seenPages.has(url)) {
+      seenPages.add(url);
+      const response = await this.fetchImpl(url, {
+        headers: {
+          Authorization: `${tokenRecord.tokenType || "Bearer"} ${tokenRecord.accessToken}`,
+          Prefer: `outlook.timezone="UTC"`
+        }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.error?.message || `Microsoft Graph calendarView failed with HTTP ${response.status}.`);
+      events.push(...(Array.isArray(payload?.value) ? payload.value : []));
+      url = normalizeString(payload?.["@odata.nextLink"]);
     }
-    const events = Array.isArray(payload?.value) ? payload.value : [];
+
     return events.map((event) => ({
       id: normalizeString(event.id),
       calendarId: calendar.id,
@@ -348,7 +353,6 @@ export class MicrosoftGraphAdapter {
       sourceProvider: "m365"
     })).filter((event) => event.id && event.start && event.end);
   }
-
   buildGraphPayload(operation) {
     const payload = operation.payload;
     const graphTimeZone = payload.preserveOriginalTimezone ? (payload.sourceEventTimezone || "UTC") : "UTC";

@@ -23,24 +23,68 @@ function unfoldIcsLines(content = "") {
   return normalizeString(content).replace(/\r?\n[ \t]/g, "");
 }
 
-function parseIcsDate(value) {
+function findIcsPropertyLine(lines, propertyName) {
+  const upper = propertyName.toUpperCase();
+  return lines.find((entry) => {
+    const normalized = entry.toUpperCase();
+    return normalized.startsWith(`${upper}:`) || normalized.startsWith(`${upper};`);
+  }) || "";
+}
+
+function readIcsPropertyParameters(line = "") {
+  const separator = line.indexOf(":");
+  const header = separator >= 0 ? line.slice(0, separator) : line;
+  return Object.fromEntries(header.split(";").slice(1).map((segment) => {
+    const index = segment.indexOf("=");
+    return index >= 0 ? [segment.slice(0, index).toUpperCase(), segment.slice(index + 1)] : [segment.toUpperCase(), ""];
+  }));
+}
+
+function readIcsProperty(lines, propertyName) {
+  const line = findIcsPropertyLine(lines, propertyName);
+  const separator = line.indexOf(":");
+  return separator >= 0 ? line.slice(separator + 1).trim() : "";
+}
+
+function isSupportedTimeZone(timeZone) {
+  try {
+    Intl.DateTimeFormat("en-US", { timeZone }).format(new Date());
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getZoneOffsetMs(instantMs, timeZone) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("sv-SE", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(new Date(instantMs)).map((part) => [part.type, part.value]));
+  const displayedAsUtc = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
+  return displayedAsUtc - Math.floor(instantMs / 1000) * 1000;
+}
+
+function parseIcsDate(value, timeZone = "UTC") {
   const normalized = normalizeString(value);
-  if (!normalized) {
-    return "";
-  }
-  if (/^\d{8}$/.test(normalized)) {
-    return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}T00:00:00.000Z`;
-  }
-  if (/^\d{8}T\d{6}Z$/.test(normalized)) {
-    return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}T${normalized.slice(9, 11)}:${normalized.slice(11, 13)}:${normalized.slice(13, 15)}.000Z`;
-  }
+  if (!normalized) return "";
+  if (/^\d{8}$/.test(normalized)) return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}T00:00:00.000Z`;
+  if (/^\d{8}T\d{6}Z$/.test(normalized)) return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}T${normalized.slice(9, 11)}:${normalized.slice(11, 13)}:${normalized.slice(13, 15)}.000Z`;
   if (/^\d{8}T\d{6}$/.test(normalized)) {
-    return `${normalized.slice(0, 4)}-${normalized.slice(4, 6)}-${normalized.slice(6, 8)}T${normalized.slice(9, 11)}:${normalized.slice(11, 13)}:${normalized.slice(13, 15)}`;
+    const wallClock = Date.UTC(Number(normalized.slice(0, 4)), Number(normalized.slice(4, 6)) - 1, Number(normalized.slice(6, 8)), Number(normalized.slice(9, 11)), Number(normalized.slice(11, 13)), Number(normalized.slice(13, 15)));
+    const zone = isSupportedTimeZone(timeZone) ? timeZone : "UTC";
+    let instant = wallClock - getZoneOffsetMs(wallClock, zone);
+    instant = wallClock - getZoneOffsetMs(instant, zone);
+    return new Date(instant).toISOString();
   }
   const date = new Date(normalized);
   return Number.isNaN(date.getTime()) ? normalized : date.toISOString();
 }
-
 function formatIcsUtc(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -49,17 +93,22 @@ function formatIcsUtc(value) {
   return date.toISOString().replaceAll("-", "").replaceAll(":", "").replace(/\.\d{3}Z$/, "Z");
 }
 
-function readIcsProperty(lines, propertyName) {
-  const upper = `${propertyName.toUpperCase()}:`;
-  const prefixed = `${propertyName.toUpperCase()};`;
-  const line = lines.find((entry) => entry.toUpperCase().startsWith(upper) || entry.toUpperCase().startsWith(prefixed));
-  if (!line) {
-    return "";
-  }
-  const separator = line.indexOf(":");
-  return separator >= 0 ? line.slice(separator + 1).trim() : "";
+function formatIcsDateTime(value, timeZone) {
+  const date = new Date(value);
+  const zone = isSupportedTimeZone(timeZone) ? timeZone : "UTC";
+  if (Number.isNaN(date.getTime()) || zone === "UTC") return { value: formatIcsUtc(value), zone: "UTC" };
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("sv-SE", {
+    timeZone: zone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  }).formatToParts(date).map((part) => [part.type, part.value]));
+  return { value: `${parts.year}${parts.month}${parts.day}T${parts.hour}${parts.minute}${parts.second}`, zone };
 }
-
 function parseVevent(icsContent = "", calendarId = "", href = "") {
   const unfolded = unfoldIcsLines(icsContent);
   const lines = unfolded.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
@@ -67,9 +116,11 @@ function parseVevent(icsContent = "", calendarId = "", href = "") {
   const summary = readIcsProperty(lines, "SUMMARY") || "Busy";
   const description = readIcsProperty(lines, "DESCRIPTION");
   const location = readIcsProperty(lines, "LOCATION");
-  const start = parseIcsDate(readIcsProperty(lines, "DTSTART"));
-  const end = parseIcsDate(readIcsProperty(lines, "DTEND"));
-  const timezone = normalizeString(readIcsProperty(lines, "X-WR-TIMEZONE") || readIcsProperty(lines, "TZID") || "UTC");
+  const startLine = findIcsPropertyLine(lines, "DTSTART");
+  const endLine = findIcsPropertyLine(lines, "DTEND");
+  const timezone = normalizeString(readIcsProperty(lines, "X-WR-TIMEZONE") || readIcsPropertyParameters(startLine).TZID || readIcsPropertyParameters(endLine).TZID || "UTC");
+  const start = parseIcsDate(readIcsProperty(lines, "DTSTART"), timezone);
+  const end = parseIcsDate(readIcsProperty(lines, "DTEND"), timezone);
   const managed = normalizeString(readIcsProperty(lines, "X-PROJECT-MARVIN-MANAGED")).toUpperCase() === "TRUE" || description.includes("[Project Marvin Mirror]");
   return {
     id: normalizeString(uid || href.split("/").pop().replace(/\.ics$/i, "") || href),
@@ -126,6 +177,9 @@ function buildIcsEvent(operation) {
   const description = normalizeString(payload.description || summary).replaceAll("\n", "\\n");
   const location = normalizeString(payload.location).replaceAll("\n", "\\n");
   const timezone = normalizeString(payload.sourceEventTimezone || operation.event.timezone || "UTC");
+  const start = formatIcsDateTime(payload.start, timezone);
+  const end = formatIcsDateTime(payload.end, timezone);
+  const dateProperty = (name, value) => value.zone === "UTC" ? `${name}:${value.value}` : `${name};TZID=${value.zone}:${value.value}`;
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -136,8 +190,8 @@ function buildIcsEvent(operation) {
     `SUMMARY:${summary}`,
     `DESCRIPTION:${description}\\n\\n[Project Marvin Mirror]\\nSource Calendar: ${normalizeString(mirror.sourceCalendarLabel || operation.source.label)}\\nSource Event: ${normalizeString(mirror.sourceEventId || operation.event.id)}`,
     location ? `LOCATION:${location}` : "",
-    `DTSTART:${formatIcsUtc(payload.start)}`,
-    `DTEND:${formatIcsUtc(payload.end)}`,
+    dateProperty("DTSTART", start),
+    dateProperty("DTEND", end),
     "STATUS:CONFIRMED",
     "TRANSP:OPAQUE",
     `CLASS:${payload.visibility === "private" ? "PRIVATE" : "PUBLIC"}`,

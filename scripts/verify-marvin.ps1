@@ -51,6 +51,7 @@ try {
   Invoke-NpmScript 'marvin:smoke-provider-plan-api'
   Invoke-NpmScript 'marvin:smoke-bureaucratic-flow-opt-in'
   Invoke-NpmScript 'marvin:smoke-runtime-track-split'
+  Invoke-NpmScript 'marvin:smoke-runtime-webhook-wake'
   Invoke-NpmScript 'marvin:smoke-docs-commands'
   Invoke-NpmScript 'marvin:smoke-status-reporting'
   Invoke-NpmScript 'marvin:smoke-onboarding-guidance'

@@ -7,7 +7,8 @@ export function buildRequirementCoverage() {
       evidence: [
         "npm run marvin:smoke-live",
         "npm run marvin:smoke-live-readiness",
-        "npm run marvin:smoke-subscriptions"
+        "npm run marvin:smoke-subscriptions",
+        "npm run marvin:smoke-runtime-webhook-wake"
       ],
       remainingGap: "Not yet proven against real customer-owned live calendars."
     },
@@ -18,7 +19,8 @@ export function buildRequirementCoverage() {
       evidence: [
         "npm run marvin:smoke-live",
         "npm run marvin:smoke-live-readiness",
-        "npm run marvin:smoke-subscriptions"
+        "npm run marvin:smoke-subscriptions",
+        "npm run marvin:smoke-runtime-webhook-wake"
       ],
       remainingGap: "Not yet proven in a real always-on deployed runtime."
     },
@@ -63,18 +65,29 @@ export function buildRequirementCoverage() {
     },
     {
       id: 7,
-      requirement: "Account setup must be simple and should validate whether the provider is actually ready.",
+      requirement: "Real provider authentication and connected-account validation must work before Marvin treats a calendar as ready.",
       status: "partial",
       evidence: [
-        "npm run marvin:smoke-ui-surface",
         "npm run marvin:smoke-onboard-api",
         "npm run marvin:smoke-operator-journey",
-        "npm run marvin:smoke-connection-validation"
+        "npm run marvin:smoke-connection-validation",
+        "npm run marvin:smoke-auth-gating"
       ],
-      remainingGap: "Still not proven as finished production UX across real tenants and hosted runtime."
+      remainingGap: "Still not proven across real hosted runtimes and real customer-owned provider tenants."
     },
     {
       id: 8,
+      requirement: "Simple onboarding and ongoing account-management UI must exist for Marvin operators.",
+      status: "partial",
+      evidence: [
+        "npm run marvin:smoke-ui-surface",
+        "npm run marvin:smoke-operator-journey",
+        "npm run marvin:smoke-onboarding-guidance"
+      ],
+      remainingGap: "Still not proven as a finished production UX across real tenants and hosted runtime."
+    },
+    {
+      id: 9,
       requirement: "Ongoing management must allow adding, removing, and updating calendars and mirror policy.",
       status: "proven-locally",
       evidence: [
@@ -84,17 +97,19 @@ export function buildRequirementCoverage() {
       remainingGap: "Not yet proven in a real deployed multi-user environment."
     },
     {
-      id: 9,
-      requirement: "Deployment must be scriptable.",
+      id: 10,
+      requirement: "Installer, bootstrap, verification, and deployment flows must be scriptable.",
       status: "partial",
       evidence: [
-        "npm run marvin:smoke-deploy-plan",
-        "npm run marvin:azure:plan"
+        "npm run marvin:smoke-install",
+        "npm run marvin:smoke-bootstrap",
+        "npm run marvin:smoke-docs-commands",
+        "npm run marvin:smoke-deploy-plan"
       ],
       remainingGap: "Full production deployment and operations proof is still missing."
     },
     {
-      id: 10,
+      id: 11,
       requirement: "Microsoft 365, Outlook, and Google are in scope. Apple / CalDAV remains optional.",
       status: "partial",
       evidence: [
@@ -104,6 +119,17 @@ export function buildRequirementCoverage() {
         "npm run marvin:smoke-outlook"
       ],
       remainingGap: "Real end-to-end customer proof across all providers is still missing."
+    },
+    {
+      id: 12,
+      requirement: "Repository documentation must reflect the true architecture, implementation status, setup, deployment, and testing process.",
+      status: "partial",
+      evidence: [
+        "npm run marvin:smoke-docs-commands",
+        "npm run marvin:smoke-status-reporting",
+        "npm run docs:build"
+      ],
+      remainingGap: "Docs render and status wiring are proven locally, but they still describe a locally proven product rather than a fully completed production deployment."
     }
   ];
 
@@ -115,7 +141,7 @@ export function buildRequirementCoverage() {
   };
 
   return {
-    asOf: "2026-07-29",
+    asOf: "2026-07-30",
     docsPath: "docs/requirements.md",
     summary,
     requirements

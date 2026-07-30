@@ -14,6 +14,7 @@ import { getTokenRecord, isTokenRecordUsable } from "../solutions/marvin-engine/
 import { MicrosoftGraphAdapter } from "../solutions/marvin-engine/src/adapters/microsoft-graph.mjs";
 import { GoogleCalendarAdapter } from "../solutions/marvin-engine/src/adapters/google-calendar.mjs";
 import { CalDavAdapter } from "../solutions/marvin-engine/src/adapters/caldav.mjs";
+import { markWebhookSyncRequest, normalizeSubscriptionState } from "../solutions/marvin-engine/src/util/subscription-state.mjs";
 
 const execFileAsync = promisify(execFile);
 const root = path.resolve(process.env.MARVIN_ROOT_DIR || process.cwd());
@@ -269,7 +270,7 @@ function sleep(ms) {
 }
 
 async function waitForRuntimeCondition(profileName, predicate, options = {}) {
-  const timeoutMs = Number(options.timeoutMs || 4000);
+  const timeoutas = Number(options.timeoutas || 4000);
   const intervalMs = Number(options.intervalMs || 200);
   const started = Date.now();
   do {
@@ -279,7 +280,7 @@ async function waitForRuntimeCondition(profileName, predicate, options = {}) {
       return { runtimeStatus, runtimeProcess };
     }
     await sleep(intervalMs);
-  } while (Date.now() - started < timeoutMs);
+  } while (Date.now() - started < timeoutas);
   return {
     runtimeStatus: loadRuntimeStatus(profileName),
     runtimeProcess: loadRuntimeProcessStatus(profileName)
@@ -315,19 +316,28 @@ function getSubscriptionStatePath(profileName) {
 }
 
 function getSubscriptionStore(profileName) {
-  return new FileStateStore(getSubscriptionStatePath(profileName), { subscriptions: [], providerSummaries: {}, webhooks: { microsoft: { validationRequests: 0, lastValidationToken: "", lastValidationAt: "", notificationsReceived: 0, lastNotificationAt: "", lastNotificationSample: null } }, updatedAt: "" });
+  return new FileStateStore(getSubscriptionStatePath(profileName), normalizeSubscriptionState({}));
 }
 
 function loadSubscriptionState(profileName) {
-  return getSubscriptionStore(normalizeString(profileName) || "marvin.local").load();
+  return normalizeSubscriptionState(getSubscriptionStore(normalizeString(profileName) || "marvin.local").load());
 }
 
 function saveSubscriptionState(profileName, state) {
-  getSubscriptionStore(normalizeString(profileName) || "marvin.local").save(state);
+  getSubscriptionStore(normalizeString(profileName) || "marvin.local").save(normalizeSubscriptionState(state));
 }
 
 function resolveSubscriptionProfileName() {
   return getLatestState().profileName || "marvin.local";
+}
+
+function findSubscriptionCalendarIds(state, provider, matcher) {
+  const records = Array.isArray(state?.subscriptions) ? state.subscriptions : [];
+  return Array.from(new Set(records
+    .filter((record) => normalizeString(record?.provider) === normalizeString(provider))
+    .filter((record) => matcher(record))
+    .map((record) => normalizeString(record?.calendarId))
+    .filter(Boolean)));
 }
 
 function recordMicrosoftWebhookValidation(profileName, validationToken) {
@@ -351,7 +361,13 @@ function recordMicrosoftWebhookValidation(profileName, validationToken) {
 function recordMicrosoftWebhookNotifications(profileName, payload) {
   const state = loadSubscriptionState(profileName);
   const notifications = Array.isArray(payload?.value) ? payload.value : [];
-  const next = {
+  const calendarIds = Array.from(new Set(notifications.flatMap((notification) => findSubscriptionCalendarIds(state, "microsoft", (record) => {
+    const subscriptionId = normalizeString(notification?.subscriptionId);
+    const resource = normalizeString(notification?.resource);
+    return (subscriptionId && normalizeString(record?.subscriptionId) === subscriptionId)
+      || (resource && normalizeString(record?.resource) === resource);
+  }))));
+  let next = {
     ...state,
     webhooks: {
       ...(state.webhooks || {}),
@@ -364,7 +380,52 @@ function recordMicrosoftWebhookNotifications(profileName, payload) {
     },
     updatedAt: new Date().toISOString()
   };
+  if (notifications.length > 0) {
+    next = markWebhookSyncRequest(next, { provider: "microsoft", calendarIds });
+  }
   saveSubscriptionState(profileName, next);
+  return { notificationsReceived: notifications.length, calendarIds };
+}
+
+function extractGoogleWebhookHeaders(req) {
+  return {
+    channelId: normalizeString(req?.headers?.["x-goog-channel-id"]),
+    channelToken: normalizeString(req?.headers?.["x-goog-channel-token"]),
+    resourceId: normalizeString(req?.headers?.["x-goog-resource-id"]),
+    resourceUri: normalizeString(req?.headers?.["x-goog-resource-uri"]),
+    resourceState: normalizeString(req?.headers?.["x-goog-resource-state"]),
+    messageNumber: normalizeString(req?.headers?.["x-goog-message-number"]),
+    channelExpiration: normalizeString(req?.headers?.["x-goog-channel-expiration"]),
+    changed: normalizeString(req?.headers?.["x-goog-changed"]),
+    contentLength: normalizeString(req?.headers?.["content-length"])
+  };
+}
+
+function recordGoogleWebhookNotification(profileName, req, payload) {
+  const state = loadSubscriptionState(profileName);
+  const headers = extractGoogleWebhookHeaders(req);
+  const calendarIds = findSubscriptionCalendarIds(state, "google", (record) => {
+    return (headers.channelId && normalizeString(record?.channelId) === headers.channelId)
+      || (headers.resourceId && normalizeString(record?.resourceId) === headers.resourceId)
+      || (headers.resourceUri && normalizeString(record?.resourceUri) === headers.resourceUri);
+  });
+  let next = {
+    ...state,
+    webhooks: {
+      ...(state.webhooks || {}),
+      google: {
+        ...((state.webhooks || {}).google || {}),
+        notificationsReceived: Number((state.webhooks || {}).google?.notificationsReceived || 0) + 1,
+        lastNotificationAt: new Date().toISOString(),
+        lastNotificationHeaders: headers,
+        lastNotificationBody: payload || null
+      }
+    },
+    updatedAt: new Date().toISOString()
+  };
+  next = markWebhookSyncRequest(next, { provider: "google", calendarIds });
+  saveSubscriptionState(profileName, next);
+  return { notificationsReceived: 1, calendarIds };
 }
 
 function normalizeSecretMap(input = {}) {
@@ -485,11 +546,11 @@ function buildTargetPolicy(source, target, preferences) {
   const inbound = target.inboundOverrides || {};
   return {
     calendarId: target.id,
-    visibility: inbound.visibility || (isFamily ? (preferences.familyVisibility || "default") : (preferences.defaultVisibility || "private")),
-    detailMode: inbound.detailMode || (isFamily ? (preferences.familyDetailMode || "full") : (preferences.defaultDetailMode || "subject")),
+    visibility: inbound.visibility || (isFamily ? (preferences.familyVisibility || "private") : (preferences.defaultVisibility || "private")),
+    detailMode: inbound.detailMode || (isFamily ? (preferences.familyDetailMode || "full") : (preferences.defaultDetailMode || "full")),
     subjectPrefix: source.sourcePrefix,
-    copyLocation: typeof inbound.copyLocation === "boolean" ? inbound.copyLocation : (isFamily ? Boolean(preferences.copyLocationToFamily ?? true) : false),
-    copyDescription: typeof inbound.copyDescription === "boolean" ? inbound.copyDescription : (isFamily ? Boolean(preferences.copyDescriptionToFamily ?? true) : false)
+    copyLocation: typeof inbound.copyLocation === "boolean" ? inbound.copyLocation : Boolean(preferences.copyLocationToFamily ?? true),
+    copyDescription: typeof inbound.copyDescription === "boolean" ? inbound.copyDescription : Boolean(preferences.copyDescriptionToFamily ?? true)
   };
 }
 
@@ -510,10 +571,10 @@ function buildProfile(input) {
     caldavUsername: account.provider === "apple-caldav" ? (account.caldavUsername || account.email || undefined) : undefined
   }));
   const preferences = {
-    defaultDetailMode: input.preferences?.defaultDetailMode || "subject",
+    defaultDetailMode: input.preferences?.defaultDetailMode || "full",
     defaultVisibility: input.preferences?.defaultVisibility || "private",
     familyDetailMode: input.preferences?.familyDetailMode || "full",
-    familyVisibility: input.preferences?.familyVisibility || "default",
+    familyVisibility: input.preferences?.familyVisibility || "private",
     subjectPrefix: input.preferences?.subjectPrefix || "SRC: ",
     copyLocationToFamily: Boolean(input.preferences?.copyLocationToFamily ?? true),
     copyDescriptionToFamily: Boolean(input.preferences?.copyDescriptionToFamily ?? true),
@@ -536,8 +597,8 @@ function buildProfile(input) {
       mirrorMode: preferences.defaultDetailMode,
       visibility: preferences.defaultVisibility,
       subjectPrefix: preferences.subjectPrefix,
-      copyLocation: false,
-      copyDescription: false,
+      copyLocation: true,
+      copyDescription: true,
       preserveOriginalTimezone: preferences.preserveOriginalTimezone
     },
     runtime: (() => {
@@ -1016,38 +1077,62 @@ function summarizeTokenStateForUi(tokenState, calendars = []) {
 }
 
 function describeTokenRecord(record) {
+  const claims = record?.idTokenClaims || {};
+  const linkedAccountEmail = normalizeString(claims?.email || claims?.preferred_username || claims?.upn);
+  const linkedAccountName = normalizeString(claims?.name);
+  const linkedAccountRef = normalizeString(record?.accountRef || claims?.oid || claims?.sub || linkedAccountEmail);
   if (!record) {
     return {
       tokenStatus: "missing",
       tokenReason: "Provider authentication has not completed yet.",
-      tokenExpiresAt: ""
+      tokenExpiresAt: "",
+      tokenObtainedAt: "",
+      linkedAccountRef: "",
+      linkedAccountEmail: "",
+      linkedAccountName: ""
     };
   }
   if (record.status === "pending") {
     return {
       tokenStatus: "pending",
       tokenReason: record.lastError || "Provider consent completed, but token exchange still needs provider credentials.",
-      tokenExpiresAt: normalizeString(record.expiresAt)
+      tokenExpiresAt: normalizeString(record.expiresAt),
+      tokenObtainedAt: normalizeString(record.obtainedAt),
+      linkedAccountRef,
+      linkedAccountEmail,
+      linkedAccountName
     };
   }
   if (record.status === "error") {
     return {
       tokenStatus: "error",
       tokenReason: record.lastError || "Token exchange failed.",
-      tokenExpiresAt: normalizeString(record.expiresAt)
+      tokenExpiresAt: normalizeString(record.expiresAt),
+      tokenObtainedAt: normalizeString(record.obtainedAt),
+      linkedAccountRef,
+      linkedAccountEmail,
+      linkedAccountName
     };
   }
   if (isTokenRecordUsable(record)) {
     return {
       tokenStatus: "usable",
       tokenReason: "",
-      tokenExpiresAt: normalizeString(record.expiresAt)
+      tokenExpiresAt: normalizeString(record.expiresAt),
+      tokenObtainedAt: normalizeString(record.obtainedAt),
+      linkedAccountRef,
+      linkedAccountEmail,
+      linkedAccountName
     };
   }
   return {
     tokenStatus: "expired",
     tokenReason: record.lastError || "Token exists but is expired or incomplete.",
-    tokenExpiresAt: normalizeString(record.expiresAt)
+    tokenExpiresAt: normalizeString(record.expiresAt),
+    tokenObtainedAt: normalizeString(record.obtainedAt),
+    linkedAccountRef,
+    linkedAccountEmail,
+    linkedAccountName
   };
 }
 
@@ -1058,88 +1143,65 @@ function describeAccountReadiness(account) {
       return {
         readinessState: "ready",
         readinessLabel: "Ready",
-        readinessDetail: "Apple / CalDAV credentials validated and ready for Marvin automation.",
+        readinessDetail: "Apple / CalDAV credentials validated and ready for the Keeper runtime.",
         nextActionLabel: "None"
       };
     }
     if (account.tokenStatus === "usable") {
+      const linkedIdentity = normalizeString(account.linkedAccountEmail || account.linkedAccountName || account.linkedAccountRef);
       return {
         readinessState: "ready",
         readinessLabel: "Ready",
-        readinessDetail: `${providerLabel} sign-in completed and Marvin has a usable token.`,
+        readinessDetail: linkedIdentity
+          ? `${providerLabel} sign-in completed and Marvin has a usable token for ${linkedIdentity}.`
+          : `${providerLabel} sign-in completed and Marvin has a usable token.`,
         nextActionLabel: "None"
       };
     }
-    if (account.tokenStatus === "expired") {
-      return {
-        readinessState: "action-required",
-        readinessLabel: "Reconnect Or Validate",
-        readinessDetail: `${providerLabel} is marked connected, but the stored token is expired or incomplete.`,
-        nextActionLabel: "Validate Access"
-      };
-    }
-    if (account.tokenStatus === "pending") {
-      return {
-        readinessState: "action-required",
-        readinessLabel: "Finish Token Exchange",
-        readinessDetail: `${providerLabel} sign-in returned to Marvin, but token exchange has not finished yet.`,
-        nextActionLabel: "Refresh Or Validate"
-      };
-    }
-    if (account.tokenStatus === "error") {
-      return {
-        readinessState: "action-required",
-        readinessLabel: "Fix Provider Auth",
-        readinessDetail: `${providerLabel} token exchange failed. Review the provider error and reconnect.`,
-        nextActionLabel: "Reconnect"
-      };
-    }
-  }
-  if (account.connectionStatus === "connector-not-ready") {
     return {
-      readinessState: "action-required",
-      readinessLabel: "Finish Access Setup",
-      readinessDetail: account.connectionReason || `${providerLabel} still needs access setup before Marvin can connect it.`,
-      nextActionLabel: account.provider === "apple-caldav" ? "Add App Password" : "Open Access Settings"
+      readinessState: "pending",
+      readinessLabel: "Action Required",
+      readinessDetail: `${providerLabel} returned to Marvin, but the provider token is not usable yet.`,
+      nextActionLabel: "Check Access"
     };
   }
   if (account.connectionStatus === "invalid") {
     return {
-      readinessState: "action-required",
-      readinessLabel: "Fix And Validate",
-      readinessDetail: account.connectionReason || `${providerLabel} has invalid setup or failed validation.`,
-      nextActionLabel: "Validate Access"
+      readinessState: "invalid",
+      readinessLabel: "Action Required",
+      readinessDetail: account.connectionReason || `${providerLabel} validation failed.`,
+      nextActionLabel: "Fix Access"
     };
   }
-  if (account.provider === "apple-caldav") {
+  if (account.connectionStatus === "connector-not-ready") {
     return {
-      readinessState: "action-required",
-      readinessLabel: account.caldavPasswordConfigured ? "Validate Credentials" : "Add App Password",
-      readinessDetail: account.caldavPasswordConfigured ? "Apple / CalDAV still needs Marvin-side credential validation." : "Apple / CalDAV needs a server URL, username, and app password before validation can succeed.",
-      nextActionLabel: account.caldavPasswordConfigured ? "Validate Access" : "Edit Calendar"
+      readinessState: "pending",
+      readinessLabel: "Action Required",
+      readinessDetail: account.connectionReason || `${providerLabel} still needs setup before Marvin can link it.`,
+      nextActionLabel: "Finish Setup"
     };
   }
-  if (account.authCallbackReceivedAt && account.tokenStatus !== "usable") {
+  if (account.authCallbackReceivedAt) {
     return {
-      readinessState: "action-required",
-      readinessLabel: "Finish Provider Return",
-      readinessDetail: `${providerLabel} returned to Marvin, but the connection still needs refresh or validation to settle.`,
-      nextActionLabel: "Refresh Or Validate"
+      readinessState: "pending",
+      readinessLabel: "Action Required",
+      readinessDetail: `${providerLabel} returned to Marvin at ${account.authCallbackReceivedAt}, but final token validation is still pending.`,
+      nextActionLabel: "Check Access"
     };
   }
-  if (account.authRequestedAt || account.authStartVisitedAt) {
+  if (account.authRequestedAt) {
     return {
-      readinessState: "action-required",
-      readinessLabel: "Finish Sign-In",
-      readinessDetail: `${providerLabel} sign-in started, but Marvin has not confirmed a usable connection yet.`,
-      nextActionLabel: "Complete Provider Sign-In"
+      readinessState: "pending",
+      readinessLabel: "Action Required",
+      readinessDetail: `${providerLabel} sign-in was started, but Marvin is still waiting for the provider callback.`,
+      nextActionLabel: "Finish Sign-In"
     };
   }
   return {
-    readinessState: "action-required",
-    readinessLabel: "Connect Account",
-    readinessDetail: `${providerLabel} is configured in Marvin, but provider sign-in or validation has not finished yet.`,
-    nextActionLabel: "Connect"
+    readinessState: "pending",
+    readinessLabel: "Action Required",
+    readinessDetail: account.connectionReason || `${providerLabel} still needs provider sign-in and validation before automation can start.`,
+    nextActionLabel: "Link Account"
   };
 }
 
@@ -1171,7 +1233,7 @@ function buildReadinessSummary(accounts, runtimeStatus, runtimeProcess) {
     summary.overallState = summary.actionRequired === 0 ? "running" : "running-with-gaps";
   } else if (summary.readyToStartAutomation) {
     summary.overallState = "ready-to-start";
-    nextSteps.unshift("All current calendars look ready. Start Marvin automation when you are ready to keep them synced.");
+    nextSteps.unshift("All current calendars look ready. Start the Keeper runtime when you are ready to keep them synced.");
   } else {
     summary.overallState = "action-required";
   }
@@ -1205,6 +1267,22 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
     const record = connectionState.records.find((item) => item.calendarId === calendar.id);
     const tokenRecord = getTokenRecord(tokenState, calendar.id);
     const token = describeTokenRecord(tokenRecord);
+    const linkedAccountRef = token.linkedAccountRef || normalizeString(record?.accountRef);
+    const linkedAccountEmail = token.linkedAccountEmail || "";
+    const linkedAccountName = token.linkedAccountName || "";
+    const authEvidence = calendar.provider === "apple-caldav"
+      ? ((assessment?.status || calendar.connectionStatus) === "connected"
+        ? "Marvin validated the saved Apple / CalDAV credentials against the configured server."
+        : "Apple / CalDAV credentials have not been validated yet.")
+      : (token.tokenStatus === "usable"
+        ? "OAuth callback completed and Marvin stored a usable provider token locally."
+        : token.tokenStatus === "pending"
+          ? "Provider callback reached Marvin, but token completion still depends on provider settings or validation."
+          : token.tokenStatus === "error"
+            ? `Provider token exchange failed: ${token.tokenReason}`
+            : normalizeString(record?.authSession?.callbackReceivedAt)
+              ? "Provider callback reached Marvin, but a usable token is not present yet."
+              : "Provider sign-in has not been proven yet.");
     const readiness = describeAccountReadiness({
       provider: calendar.provider,
       label: calendar.label,
@@ -1215,6 +1293,9 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
       authStartVisitedAt: normalizeString(record?.authSession?.startVisitedAt),
       authCallbackReceivedAt: normalizeString(record?.authSession?.callbackReceivedAt),
       caldavPasswordConfigured: calendar.provider === "apple-caldav" ? Boolean(providerSecretStatus.caldavPasswordsConfigured?.[sanitizeName(calendar.id)] || providerSecrets.caldavPassword) : false,
+      linkedAccountRef,
+      linkedAccountEmail,
+      linkedAccountName
     });
     return {
       id: calendar.id,
@@ -1234,6 +1315,10 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
       supportsRealtime: Boolean(assessment?.supportsRealtime),
       lastValidatedAt: record?.lastValidatedAt || "",
       accountRef: record?.accountRef || "",
+      linkedAccountRef,
+      linkedAccountEmail,
+      linkedAccountName,
+      authEvidence,
       authProvider: normalizeString(record?.authSession?.provider),
       authRequestedAt: normalizeString(record?.authSession?.requestedAt),
       authStartVisitedAt: normalizeString(record?.authSession?.startVisitedAt),
@@ -1242,6 +1327,7 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
       tokenStatus: token.tokenStatus,
       tokenReason: token.tokenReason,
       tokenExpiresAt: token.tokenExpiresAt,
+      tokenObtainedAt: token.tokenObtainedAt,
       caldavServerUrl: calendar.provider === "apple-caldav" ? (calendar.caldavServerUrl || "") : "",
       caldavUsername: calendar.provider === "apple-caldav" ? (calendar.caldavUsername || calendar.email || "") : "",
       caldavPasswordConfigured: calendar.provider === "apple-caldav" ? Boolean(providerSecretStatus.caldavPasswordsConfigured?.[sanitizeName(calendar.id)] || providerSecrets.caldavPassword) : false,
@@ -1256,6 +1342,7 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
   const providerRequirements = buildProviderRequirements(effectiveProfileForAssessment, providerCredentials);
   const runtimeStatus = loadRuntimeStatus(effectiveProfile.name);
   const runtimeProcess = loadRuntimeProcessStatus(effectiveProfile.name);
+  const subscriptionState = loadSubscriptionState(effectiveProfile.name);
   const readinessSummary = buildReadinessSummary(accounts, runtimeStatus, runtimeProcess);
   return {
     marvinOperator: operatorEmail,
@@ -1278,7 +1365,8 @@ function materializeConfigFromProfile(profile, payload = {}, existingConfig = nu
     tokenSummary: summarizeTokenStateForUi(tokenState, effectiveProfile.calendars),
     tokenState,
     runtimeStatus,
-    runtimeProcess
+    runtimeProcess,
+    subscriptionState
   };
 }
 
@@ -1597,10 +1685,28 @@ async function handleConnectionValidateAll(payload) {
     invalid: results.filter((item) => item.status === "invalid").length
   };
 
+  // A successful final validation hands setup to the always-on sync process.
+  let runtimeStart = null;
+  if (validationSummary.total > 1 && validationSummary.connected === validationSummary.total) {
+    try {
+      runtimeStart = await handleRuntimeStart({
+        profileName: bundle.profile.name,
+        intervalSeconds: Number(process.env.MARVIN_SYNC_INTERVAL_SECONDS || 300),
+        windowDays: bundle.profile.syncWindowDays
+      });
+    } catch (error) {
+      runtimeStart = { error: error instanceof Error ? error.message : String(error) };
+    }
+  }
+
   return {
-    config,
+    config: runtimeStart?.config || config,
     results,
     validationSummary,
+    runtimeStarted: Boolean(runtimeStart?.runtimeProcess?.running),
+    runtimeStatus: runtimeStart?.runtimeStatus || null,
+    runtimeProcess: runtimeStart?.runtimeProcess || null,
+    runtimeStartError: runtimeStart?.error || "",
     nextStep: "console"
   };
 }
@@ -1670,7 +1776,7 @@ async function handleRuntimeStart(payload) {
   if (!readiness.readyToStartAutomation) {
     const nextSteps = Array.isArray(readiness.nextSteps) ? readiness.nextSteps.filter(Boolean) : [];
     const detail = nextSteps.length ? ` Next steps: ${nextSteps.join(" ")}` : "";
-    throw new Error(`Marvin cannot start automation yet because not every calendar is connected and validated.${detail}`);
+    throw new Error(`Paranoid Keeper cannot start synchronization yet because not every calendar is connected and validated.${detail}`);
   }
   startRuntimeProcess(root, {
     profileName: bundle.profile.name,
@@ -1873,7 +1979,8 @@ export function startMarvinOnboardServer() {
     try {
       const url = new URL(req.url || "/", `http://${req.headers.host}`);
       if (req.method === "GET" && (url.pathname === "/marvin-api/status" || url.pathname === "/api/status" || url.pathname === "/marvin-api/bootstrap")) return sendJson(res, 200, await bootstrapPayload(req));
-      if ((req.method === "GET" || req.method === "POST") && url.pathname === "/marvin-api/webhooks/microsoft") { const profileName = resolveSubscriptionProfileName(); const validationToken = url.searchParams.get("validationToken") || ""; if (validationToken) { recordMicrosoftWebhookValidation(profileName, validationToken); return sendText(res, 200, validationToken); } const payload = req.method === "POST" ? await parseJson(req).catch(() => ({})) : {}; recordMicrosoftWebhookNotifications(profileName, payload); return sendJson(res, 202, { ok: true, provider: "microsoft", profileName, received: Array.isArray(payload?.value) ? payload.value.length : 0 }); }
+      if ((req.method === "GET" || req.method === "POST") && url.pathname === "/marvin-api/webhooks/microsoft") { const profileName = resolveSubscriptionProfileName(); const validationToken = url.searchParams.get("validationToken") || ""; if (validationToken) { recordMicrosoftWebhookValidation(profileName, validationToken); return sendText(res, 200, validationToken); } const payload = req.method === "POST" ? await parseJson(req).catch(() => ({})) : {}; const recorded = recordMicrosoftWebhookNotifications(profileName, payload); return sendJson(res, 202, { ok: true, provider: "microsoft", profileName, received: recorded.notificationsReceived, queuedSync: recorded.notificationsReceived > 0, calendarIds: recorded.calendarIds }); }
+      if ((req.method === "POST" || req.method === "GET") && url.pathname === "/marvin-api/webhooks/google") { const profileName = resolveSubscriptionProfileName(); const payload = req.method === "POST" ? await parseJson(req).catch(() => ({})) : {}; const recorded = recordGoogleWebhookNotification(profileName, req, payload); return sendJson(res, 202, { ok: true, provider: "google", profileName, received: recorded.notificationsReceived, queuedSync: true, calendarIds: recorded.calendarIds }); }
       if (req.method === "POST" && url.pathname === "/marvin-api/login") { const result = await handleLogin(await parseJson(req)); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "POST" && url.pathname === "/marvin-api/logout") { const result = await handleLogout(req); return sendJson(res, 200, { ok: true, ...result }, result.headers || {}); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/microsoft/start") { const result = await handleOAuthStart("microsoft", url); if (result.redirectUrl) return sendRedirect(res, result.redirectUrl); return sendHtml(res, result.statusCode, result.html); }
@@ -1881,7 +1988,7 @@ export function startMarvinOnboardServer() {
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/microsoft/callback") { const result = await handleOAuthCallback("microsoft", url); return sendHtml(res, result.statusCode, result.html); }
       if (req.method === "GET" && url.pathname === "/marvin-api/oauth/google/callback") { const result = await handleOAuthCallback("google", url); return sendHtml(res, result.statusCode, result.html); }
       if (req.method === "GET" && url.pathname === "/marvin-api/connections") { requireAuth(req); return sendJson(res, 200, { ok: true, profileName: url.searchParams.get("profileName") || "", connectionState: loadConnectionState(url.searchParams.get("profileName") || ""), tokenState: loadTokenState(url.searchParams.get("profileName") || "") }); }
-      if (req.method === "GET" && url.pathname === "/marvin-api/runtime-status") { requireAuth(req); const profileName = url.searchParams.get("profileName") || getLatestState().profileName || ""; return sendJson(res, 200, { ok: true, profileName, runtimeStatus: loadRuntimeStatus(profileName), runtimeProcess: loadRuntimeProcessStatus(profileName) }); }
+      if (req.method === "GET" && url.pathname === "/marvin-api/runtime-status") { requireAuth(req); const profileName = url.searchParams.get("profileName") || getLatestState().profileName || ""; return sendJson(res, 200, { ok: true, profileName, runtimeStatus: loadRuntimeStatus(profileName), runtimeProcess: loadRuntimeProcessStatus(profileName), subscriptionState: loadSubscriptionState(profileName) }); }
       if (req.method === "GET" && url.pathname === "/marvin-api/config") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleLoadConfig(url.searchParams.get("profileName") || getLatestState().profileName || "")) }); }
       if (req.method === "GET" && url.pathname === "/marvin-api/provider-requirements") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderRequirements(url.searchParams.get("profileName") || getLatestState().profileName || "")) }); }
       if (req.method === "GET" && url.pathname === "/marvin-api/provider-plan") { requireAuth(req); return sendJson(res, 200, { ok: true, ...(await handleProviderPlan(url.searchParams.get("profileName") || getLatestState().profileName || "", url.searchParams.get("provider") || "")) }); }
@@ -1913,21 +2020,3 @@ export function startMarvinOnboardServer() {
   });
   return server;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

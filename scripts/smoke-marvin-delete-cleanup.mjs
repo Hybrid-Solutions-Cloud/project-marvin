@@ -122,7 +122,15 @@ END:VCALENDAR</c:calendar-data>
 </d:multistatus>`
     };
   }
-  if (String(url).includes("graph.microsoft.com") && options.method === "DELETE") {
+  if (String(url).includes("graph.microsoft.com") && (options.method === "POST" || options.method === "PATCH")) {
+    return { ok: true, status: options.method === "POST" ? 201 : 204, json: async () => ({ id: "ms-mirror" }) };
+  }
+  if (String(url).includes("googleapis.com") && (options.method === "POST" || options.method === "PUT")) {
+    return { ok: true, status: options.method === "POST" ? 201 : 200, json: async () => ({ id: "google-mirror" }) };
+  }
+  if (String(url).includes("127.0.0.1:9997") && options.method === "PUT") {
+    return { ok: true, status: 201, text: async () => "created" };
+  }  if (String(url).includes("graph.microsoft.com") && options.method === "DELETE") {
     return { ok: true, status: 204, json: async () => ({}) };
   }
   if (String(url).includes("googleapis.com") && options.method === "DELETE") {
@@ -189,13 +197,13 @@ assert.equal(sourceLoad.loaded, 3);
 assert.deepEqual(new Set(sourceLoad.loadedCalendarIds), new Set(["work", "family", "apple"]));
 
 const liveResult = await engine.applyLiveSync();
-assert.equal(liveResult.attempted, 3);
-assert.equal(liveResult.succeeded, 3);
+assert.equal(liveResult.attempted, 9);
+assert.equal(liveResult.succeeded, 9);
 assert.equal(liveResult.failed, 0);
 assert.equal(liveResult.skipped, 0);
 assert.equal(liveResult.cleanup.attempted, 3);
 assert.equal(liveResult.cleanup.succeeded, 3);
-assert.equal(liveResult.mappings.length, 0);
+assert.equal(liveResult.mappings.length, 6);
 assert.ok(requests.some((item) => item.url.includes("googleapis.com") && item.method === "DELETE"));
 assert.ok(requests.some((item) => item.url.includes("graph.microsoft.com") && item.method === "DELETE"));
 assert.ok(requests.some((item) => item.url.includes("127.0.0.1:9997") && item.method === "DELETE"));

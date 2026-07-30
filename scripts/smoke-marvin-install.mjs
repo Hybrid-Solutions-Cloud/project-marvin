@@ -99,9 +99,9 @@ try {
   assert.match(output, /Sign in with the Marvin workspace account created by this install run\./);
   assert.match(output, /npm run marvin:doctor/);
   assert.match(output, /npm run marvin:smoke-operator-journey/);
-  assert.match(output, /npm run marvin:runtime:start/);
+  assert.match(output, /Paranoid Keeper starts automatically after all calendar links validate/);
   assert.doesNotMatch(output, /Running Marvin doctor/);
-  assert.doesNotMatch(output, /Keeper/i);
+  assert.doesNotMatch(output, /Keeper\.sh/i);
   assert.doesNotMatch(installScript, /KeeperUrl/);
   assert.doesNotMatch(bootstrapScript, /KeeperUrl/);
   assert.match(installScript, /\[Alias\('WorkspaceId'\)\]/);

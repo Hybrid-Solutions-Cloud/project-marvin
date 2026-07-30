@@ -2,18 +2,19 @@
 
 ## Goal
 
-The Marvin UI is the product-owned front door for the Marvin workspace account that owns the linked calendars, provider credentials, and automation state:
+The Marvin UI is the product-owned front door for the Marvin workspace account that owns the linked calendars, provider credentials, and Keeper runtime state:
 
 - creating the Marvin workspace account on first run and signing back in later
 - adding, editing, and removing calendar accounts
 - assigning per-source prefixes
 - defining per-calendar inbound overrides for mirrored visibility, detail, location, and description
 - defining private-by-default mirror policy
+- previewing the exact mirror policy Marvin will apply from each source calendar to every other target before the Keeper runtime starts
 - allowing family-calendar detail overrides
 - showing whether a provider is actually ready for sign-in
 - preserving per-calendar inbound override state in Marvin's saved config and generated profile
 - collecting provider app settings needed for live provider-linking
-- surfacing Marvin-owned provider requirements such as redirect URIs, Microsoft delegated permissions, and copyable provider-plan helper commands
+- surfacing Marvin-owned provider requirements such as redirect URIs, helper commands, required provider app settings, and the exact access/linking state Marvin still needs before the Keeper runtime can start
 - keeping provider linking Marvin-native instead of exposing the older bridge-mode auth path in the operator UI
 - collecting Apple / CalDAV server settings and app-password validation data
 - persisting Apple / CalDAV app passwords per calendar account in Marvin's backend state
@@ -24,7 +25,7 @@ The Marvin UI is the product-owned front door for the Marvin workspace account t
 - keeping add, edit, remove, link, relink, and validation actions on one calendar-management list in the console instead of splitting them across duplicate cards
 - supporting non-interactive pre-creation of the Marvin workspace account through `npm run marvin:create-operator` when deployment automation needs the account record before browser setup begins
 
-## Current operator flow on July 29, 2026
+## Current operator flow on July 30, 2026
 
 1. Create the Marvin workspace account on first run, or sign in with it when you return to Marvin later.
 2. Add calendars.
@@ -33,15 +34,18 @@ The Marvin UI is the product-owned front door for the Marvin workspace account t
 5. Apply optional per-calendar inbound overrides where a target calendar should behave differently from the global rule.
 6. Save the generated Marvin workspace configuration and local `.marvin` state.
 7. Open the management console after setup is saved.
-8. Enter provider access settings in Marvin.
-9. Use Marvin's Provider Access panel to refresh the Microsoft or Google setup plan when you need the exact helper command, redirect URI, start URL, or first setup step without leaving the product.
-10. While adding or editing a calendar, Marvin now shows inline provider guidance so the operator knows whether Step 3 needs Microsoft or Google app settings, or whether Apple / CalDAV credentials are entered directly in the calendar form.
-11. Connect each provider account from Marvin's single Calendars management list after Marvin setup has been saved.
-12. Marvin now auto-refreshes local state for a short window after it opens Microsoft or Google provider sign-in.
-13. Use `Refresh Marvin State` if you want an explicit manual reload or if the callback completed outside Marvin's polling window.
-14. Review the Marvin Workspace card plus each calendar card's Setup saved, Access setup, Link status, and Last checked fields to confirm Marvin is actually ready.
-15. For Apple / CalDAV accounts, Marvin validates credentials directly instead of redirecting to OAuth.
-16. Start or stop the Marvin runtime and monitor its status from Marvin after setup has been saved.
+8. Use Workspace Settings later when you need to change the saved workspace. That path edits the live Marvin workspace configuration and does not drop the browser back into unsaved staging mode.
+9. Enter provider access settings in Marvin.
+10. Use Marvin's Link Accounts view as the main operator step. Link each calendar there first, and only drop into the admin-prerequisites section when Marvin says Microsoft or Google access setup is still missing.
+11. While adding or editing a calendar, Marvin shows inline provider guidance so the operator knows whether Step 3 can go straight to linking or whether Microsoft or Google app settings are still needed, while Apple / CalDAV credentials remain on the calendar form.
+12. Connect each provider account from Marvin's single Calendars management list after Marvin setup has been saved. Once setup exists, add, edit, and remove actions from that console persist immediately through Marvin's own account-management APIs.
+13. Marvin now auto-refreshes local state for a short window after it opens Microsoft or Google provider sign-in.
+14. Use `Refresh Marvin State` if you want an explicit manual reload or if the callback completed outside Marvin's polling window.
+15. Review the Marvin Workspace card plus each calendar card's Setup saved, Access setup, Link status, and Last checked fields to confirm Marvin is actually ready.
+16. Review the queued webhook wake state in the workspace and Keeper runtime views when Marvin is hosted with Microsoft or Google subscriptions enabled.
+17. For Apple / CalDAV accounts, Marvin validates credentials directly instead of redirecting to OAuth.
+18. Review the Mirror Preview section in Privacy Rules so Marvin shows exactly how source prefixes, visibility, detail, location, description, and timezone handling will apply across targets before the Keeper runtime starts.
+19. Start or stop the Keeper-backed Marvin runtime and monitor its status from Marvin after setup has been saved.
 
 ## What the UI stores and shows
 
@@ -55,20 +59,21 @@ The current UI stores and shows:
 - source prefix
 - inbound override state for calendars that need custom target behavior
 - connection-state summary
-- readiness summary with per-account next actions, recommended operator actions, ready-versus-action-required counts, batch validation, and automation-start readiness
+- readiness summary with per-account next actions, recommended operator actions, ready-versus-action-required counts, batch validation, and Keeper-start readiness
 - shorter operator-facing status labels so the calendar list reads like a product console instead of a raw state dump
 - clearer card fields such as Setup saved, Access setup, Link status, Access token, and Apple password
-- a clearer Step 3 flow that focuses on save settings, refresh provider setup plans, link accounts, validate access, and only then start automation
+- a clearer Step 3 flow that focuses on save settings, link accounts, validate access, and only then start the Keeper runtime
 - a console layout where one Calendars list holds inventory, linking, relinking, validation, edit, and remove actions together
 - token-state summary
 - per-account token status and reason
-- per-account auth-request, callback-received, linked-account, and last-validation timestamps or notes when Marvin has them
+- per-account auth-request, callback-received, linked-identity, token-obtained, auth-proof, and last-validation timestamps or notes when Marvin has them
 - whether Microsoft and Google client secrets are already stored locally
 - whether the Apple / CalDAV app password is already stored locally
 - the configured CalDAV server URL and username
-- Marvin workspace summary state such as active account ID, timezone, sync window, and automation state
-- automation process state such as whether the daemon is alive, its PID, and when it was started or stopped
-- runtime status such as last run, last completion time, and last sync result when a daemon status file exists
+- Marvin workspace summary state such as active account ID, timezone, sync window, and Keeper runtime state
+- Keeper runtime process state such as whether the daemon is alive, its PID, and when it was started or stopped
+- runtime status such as last run, last completion time, last wake reason, and last sync result when a daemon status file exists
+- queued webhook Keeper runtime state such as whether Microsoft or Google notifications are waiting to wake the next daemon cycle and which saved calendars were implicated
 
 ## Provider linking behavior
 
@@ -101,7 +106,7 @@ If callback-time token exchange cannot finish yet, Marvin records a pending or e
 Local validation now proves all of the following:
 
 - Marvin can save provider app settings through its own setup/config API
-- Marvin now gates provider linking, validation, and runtime controls on saved Marvin setup instead of only checking the account ID field
+- Marvin now gates provider linking, validation, and Keeper runtime controls on saved Marvin setup instead of only checking the account ID field
 - Marvin can generate the same local setup-state shape through `npm run marvin:setup`
 - Marvin can redirect a Microsoft or Google account-link request to the real provider OAuth authorize URL without relying on shell environment variables
 - Marvin can use the locally stored Microsoft or Google client secret during callback-time token exchange
@@ -111,14 +116,14 @@ Local validation now proves all of the following:
 - Marvin can start and stop the local daemon process through Marvin-owned runtime control endpoints
 - Marvin can serve the actual Marvin homepage and onboarding API correctly even when Marvin state is stored outside the repo root
 - Marvin can keep the operator inside Marvin-owned setup and management flows instead of defaulting back to a legacy bridge login screen
-- Marvin can add, edit, and remove managed calendar accounts through the same onboarding and management API surface
+- Marvin can add, edit, and remove managed calendar accounts through the same onboarding and management API surface, and the rebuilt management console now uses those APIs directly once setup already exists
 - Marvin can persist and reload edited source prefixes plus inbound override state through that same account-management flow
 - Marvin can add and reload Apple / CalDAV account settings through the same account-management API surface
 - Marvin can refresh its saved connection state back into the UI after an external OAuth callback
-- Marvin can show provider-auth progress in the UI while the operator returns from Microsoft or Google sign-in
-- Marvin can expose provider requirements back to the UI and to local setup scripts through Marvin-owned config and API state
-- Marvin can show the saved Marvin workspace ID, timezone, sync window, automation state, and runtime controls inside the management console instead of relying only on bootstrap state
-- Marvin now blocks the Start Automation action until every calendar is linked and validated, and surfaces that rule in both Step 3 and the management console
+- Marvin can show provider-auth progress in the UI while the operator returns from Microsoft or Google sign-in, and then show concrete linked-account proof once token exchange finishes
+- Marvin can expose provider requirements and readiness state back to the UI and to local setup scripts through Marvin-owned config and API state
+- Marvin can show the saved Marvin workspace ID, timezone, sync window, Keeper runtime state, and runtime controls inside the management console instead of relying only on bootstrap state
+- Marvin now blocks the Start Keeper Runtime action until every calendar is linked and validated, and surfaces that rule in both Step 3 and the management console
 - Marvin can check live provider access from the same Calendars management list instead of relying only on stored names or pending token records
 - Marvin can batch-check every saved calendar from one Marvin action and return a mixed linked/pending/invalid summary to the management console
 
@@ -148,9 +153,24 @@ That means:
 - `Connect` on an Apple / CalDAV account triggers Marvin to validate those credentials against the configured CalDAV server
 - a successful validation marks the calendar connected in Marvin
 
-As of July 29, 2026, Marvin's onboarding API and browser UI can store and validate separate Apple / CalDAV app passwords per calendar account, and Marvin's live-engine smokes also cover CalDAV event read/write behavior through the first-party adapter.
+As of July 30, 2026, Marvin's onboarding API and browser UI can store and validate separate Apple / CalDAV app passwords per calendar account, and Marvin's live-engine smokes also cover CalDAV event read/write behavior through the first-party adapter.
 
 
+
+
+
+
+
+
+## Frontend structure
+
+The Marvin operator UI is now split into small local frontend files instead of one large inline page:
+
+- `operator-ui/public/index.html`
+- `operator-ui/public/styles.css`
+- `operator-ui/public/app.js`
+
+That split is intentional. It keeps the Marvin account-first browser flow maintainable while still serving as a static frontend from the same local onboarding server.
 
 
 

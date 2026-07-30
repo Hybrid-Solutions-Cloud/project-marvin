@@ -3,11 +3,11 @@
   "timezone": "America/New_York",
   "syncWindowDays": 45,
   "privacyDefaults": {
-    "mirrorMode": "subject",
+    "mirrorMode": "full",
     "visibility": "private",
     "subjectPrefix": "SRC: ",
-    "copyLocation": false,
-    "copyDescription": false,
+    "copyLocation": true,
+    "copyDescription": true,
     "preserveOriginalTimezone": true
   },
   "runtime": {
@@ -105,13 +105,13 @@
         {
           "calendarId": "contract_m365",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "WORK: "
         },
         {
           "calendarId": "personal_google",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "WORK: "
         },
         {
@@ -125,7 +125,7 @@
         {
           "calendarId": "personal_apple",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "WORK: "
         }
       ]
@@ -136,13 +136,13 @@
         {
           "calendarId": "work_m365",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "CONTRACT: "
         },
         {
           "calendarId": "personal_google",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "CONTRACT: "
         },
         {
@@ -156,7 +156,7 @@
         {
           "calendarId": "personal_apple",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "CONTRACT: "
         }
       ]
@@ -167,13 +167,13 @@
         {
           "calendarId": "work_m365",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "GOOGLE: "
         },
         {
           "calendarId": "contract_m365",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "GOOGLE: "
         },
         {
@@ -187,7 +187,7 @@
         {
           "calendarId": "personal_apple",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "GOOGLE: "
         }
       ]
@@ -198,25 +198,25 @@
         {
           "calendarId": "work_m365",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "FAMILY: "
         },
         {
           "calendarId": "contract_m365",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "FAMILY: "
         },
         {
           "calendarId": "personal_google",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "FAMILY: "
         },
         {
           "calendarId": "personal_apple",
           "visibility": "private",
-          "detailMode": "subject",
+          "detailMode": "full",
           "subjectPrefix": "FAMILY: "
         }
       ]
