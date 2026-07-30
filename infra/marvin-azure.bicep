@@ -92,6 +92,9 @@ resource managedEnvironmentStorage 'Microsoft.App/managedEnvironments/storages@2
 
 resource marvinApp 'Microsoft.App/containerApps@2024-03-01' = {
   name: marvinAppName
+  dependsOn: [
+    managedEnvironmentStorage
+  ]
   location: location
   tags: combinedTags
   properties: {

@@ -13,7 +13,7 @@ Use this document when you want:
 - a Keeper-style backend bridge behind Marvin
 - an example of always-on hosted runtime shape on Azure
 
-If you want the primary Marvin product path first, read [Marvin on Azure](/solutions/marvin-azure).
+If you want the primary Paranoid Keeper product path first, read [Paranoid Keeper on Azure](/solutions/marvin-azure).
 
 ## What this deployment does
 

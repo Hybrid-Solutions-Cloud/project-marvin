@@ -25,7 +25,7 @@
     "marvin:render-status-doc": "node scripts/render-marvin-status-doc.mjs",
     "keeper:azure:deploy": "powershell -ExecutionPolicy Bypass -File .\\solutions\\paranoid-keeper\\deploy-azure-container-app.ps1",
     "marvin:azure:plan": "pwsh -ExecutionPolicy Bypass -File .\\solutions\\marvin-engine\\deploy-azure-container-app.ps1 -EmitPlanOnly",
-    "marvin:azure:deploy": "powershell -ExecutionPolicy Bypass -File .\\solutions\\marvin-engine\\deploy-azure-container-app.ps1",
+    "marvin:azure:deploy": "pwsh -ExecutionPolicy Bypass -File .\\solutions\\marvin-engine\\deploy-azure-container-app.ps1",
     "marvin:daemon": "node solutions/marvin-engine/src/daemon.mjs --interval-seconds 300",
     "marvin:smoke-daemon": "node scripts/smoke-marvin-daemon-once.mjs",
     "marvin:smoke-deploy-plan": "node scripts/smoke-marvin-deploy-plan.mjs",

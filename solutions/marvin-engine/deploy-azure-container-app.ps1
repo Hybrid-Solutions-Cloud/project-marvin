@@ -181,7 +181,6 @@ $deploymentJson = az deployment group create `
     registryPassword=$registryPassword `
     runtimeIntervalSeconds=$RuntimeIntervalSeconds `
     runtimeWindowDays=$RuntimeWindowDays `
-    tags="{\"Owner\":\"$Owner\",\"Project\":\"$ProjectName\",\"Environment\":\"$Environment\",\"CostCenter\":\"$CostCenter\"}" `
   --query properties.outputs `
   --output json
 Assert-Success 'Bicep deployment'

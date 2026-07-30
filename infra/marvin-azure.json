@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.41.2.15936",
-      "templateHash": "4619130780517625319"
+      "templateHash": "10771080682751258674"
     }
   },
   "parameters": {
@@ -287,7 +287,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]"
+        "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvironmentName'))]",
+        "[resourceId('Microsoft.App/managedEnvironments/storages', parameters('containerAppEnvironmentName'), parameters('storageLinkName'))]"
       ]
     }
   ],

@@ -1948,7 +1948,7 @@ async function bootstrapPayload(req) {
   return {
     ok: true,
     port,
-    product: "marvin",
+    product: "paranoid-keeper",
     deployEnabled,
     hostedMode,
     hasOperator: Boolean(operator),
