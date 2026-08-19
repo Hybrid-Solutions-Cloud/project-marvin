@@ -190,15 +190,17 @@ function renderDashboard(state) {
 
 function addCalendarForm() {
   return `<section class="panel">
-    <div class="section-heading"><div><span class="eyebrow">New connection</span><h2>Add a calendar</h2><p>Microsoft is the first supported release path. Other providers remain visible for existing configurations while their release gates are completed.</p></div></div>
+    <div class="section-heading"><div><span class="eyebrow">New connection</span><h2>Add a calendar</h2><p>Microsoft is available, and Apple Calendar is available in Preview while real iCloud acceptance testing continues. Google Calendar is planned for a later preview.</p></div></div>
     <div class="form-grid">
       <label class="field"><span>Calendar provider</span><select id="calendarProvider">
-        <optgroup label="Microsoft — current focus">
+        <optgroup label="Available">
           <option value="m365">Microsoft 365</option>
           <option value="outlook">Outlook.com</option>
         </optgroup>
-        <optgroup label="Later release gates">
+        <optgroup label="Apple preview">
           <option value="apple-caldav">Apple Calendar</option>
+        </optgroup>
+        <optgroup label="Planned for a later preview">
           <option value="google">Google Calendar</option>
         </optgroup>
       </select></label>
