@@ -31,7 +31,7 @@ function buildStatusDoc() {
 
 _This page is generated from Marvin's shared status model. Run \`npm run marvin:render-status-doc\` to refresh it manually._
 
-As of **${formatAsOfDate(coverage.asOf)}**, Project Marvin's local behavior, Azure deployment-plan contract, health endpoints, persistence contracts, and provider mocks are verified by automated tests. Platform maturity is tracked separately so a passing component test is not mistaken for production support. This public status page intentionally excludes all private deployment identities, URLs, resources, and acceptance evidence.
+As of **${formatAsOfDate(coverage.asOf)}**, Project Marvin is **Preview** software. Its local behavior, Azure deployment-plan contract, health endpoints, persistence contracts, and provider mocks are verified by automated tests. Platform maturity is tracked separately so a passing component test is not mistaken for production support. This public status page intentionally excludes all private deployment identities, URLs, resources, and acceptance evidence.
 
 ## Current coverage
 
@@ -51,6 +51,8 @@ The open-source repository currently demonstrates:
 - durable profile/account state across application restarts
 
 These capabilities do not make a hosting target Supported. See [Platform Support](/platform-support) for the evidence and promotion contract.
+
+Apple / CalDAV is the active provider release train. Google follows Apple, then the general availability release candidate adds self-service updates, safe deletion propagation, platform-neutral state and scheduling, the portable runtime prerequisite, and declared-host validation. See the [Roadmap](/roadmap) for the complete release sequence.
 
 ## Requirement matrix
 

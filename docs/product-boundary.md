@@ -10,9 +10,9 @@ The product is one portal and one runtime distributed through a portable Open Co
 
 ## Who the product serves
 
-The first acceptable release serves one person or household that needs a trustworthy view of availability across several calendar identities. A workspace has one Microsoft Entra owner and can connect multiple calendar accounts.
+The first generally available release serves one person or household that needs a trustworthy view of availability across several calendar identities. A workspace has one Microsoft Entra owner and can connect multiple calendar accounts.
 
-This release is not a multi-customer SaaS service and does not provide delegated workspace administration.
+The Preview and first generally available releases are not a multi-customer SaaS service and do not provide delegated workspace administration.
 
 ## Product journey
 
@@ -34,18 +34,20 @@ This release is not a multi-customer SaaS service and does not provide delegated
 - Source deletion can remove an owned mirror only after strict ownership and successful-source-read checks.
 - Live provider testing must not issue calendar deletion requests unless the environment owner separately authorizes that test.
 
-## Included in the first acceptable release
+## Included before general availability
 
 - Guided first-run and returning-operator portal journeys
 - Dashboard, Calendars, Sync Rules, Activity, Diagnostics, and Settings surfaces
 - Microsoft 365 and Outlook.com connection and synchronization
 - Apple Calendar connection through CalDAV
 - Google Calendar connection and synchronization
+- Safe, evidence-backed propagation of deleted source events
 - Private, busy-only, subject, and trusted-detail target policies
 - Runtime status and controls
 - Actionable authentication, permission, provider, and synchronization failures
-- Secure credential storage, durable mappings, restart recovery, backup, upgrade, and operational documentation
-- A versioned portable application artifact plus at least one deployment adapter that passes the complete support contract
+- Secure credential storage, durable mappings, restart recovery, backup, self-service update and rollback, and operational documentation
+- Platform-neutral state and scheduling plus a versioned portable runtime prerequisite
+- Repeatable validation on every operating system declared supported for the first generally available installation paths
 
 ## Explicitly out of scope
 
@@ -54,14 +56,17 @@ This release is not a multi-customer SaaS service and does not provide delegated
 - Mobile applications
 - Editing a generated mirror to modify its original
 - Providers beyond Microsoft, Apple, and Google
+- Docker Compose, Cloudflare Containers, and additional hosting adapters unless a declared general availability host gate requires them
 - General-purpose calendar-client or scheduling features
 - Power Automate, Bureaucratic Flow, and Google Hub as supported installation paths
 
 ## Release sequencing
 
-Provider work is gated rather than parallel:
+Provider and release work is gated:
 
 1. The portal foundation must be usable before the Microsoft connection journey is released.
 2. Microsoft connection, synchronization, and real-account validation must pass before Apple implementation begins.
 3. Apple discovery, polling, synchronization, and real-account validation must pass before Google implementation begins.
-4. Final release hardening follows three-provider proof.
+4. The final Preview release candidate adds self-service updates, safe deletion, platform-neutral state and scheduling, the portable runtime prerequisite, and declared-host validation.
+5. `1.0.0` becomes generally available only after the release candidate and final recovery, security, and operator-acceptance gates pass.
+6. Docker Compose, Cloudflare, and additional hosting adapters remain post-GA roadmap work unless a general availability host gate makes one a prerequisite.

@@ -33,9 +33,17 @@ assert.match(platform, /cannot become \*\*Supported\*\* until every listed persi
 assert.match(roadmap, /Publish platform support and maturity contract/);
 assert.match(roadmap, /AB#7741/);
 assert.match(roadmap, /\[platform matrix\]\(\/platform-support\)/);
-assert.match(releases, /there is no tagged production release yet/i);
+assert.match(roadmap, /`0\.2\.0-preview` \| \*\*In progress\*\*/);
+assert.match(roadmap, /`0\.3\.0-preview` \| Next/);
+assert.match(roadmap, /`1\.0\.0-rc\.1`/);
+assert.match(roadmap, /`1\.0\.0` \| General availability gate/);
+assert.match(roadmap, /AB#7734, AB#7735, AB#7736, AB#7738, AB#7739/);
+assert.match(releases, /Project Marvin is \*\*Preview\*\* software/);
+assert.match(releases, /there is no generally available or production-support release yet/i);
 assert.match(releases, /No hosted target is currently labeled \*\*Supported\*\*/);
+assert.match(releases, /Docker Compose, Cloudflare Containers, and additional hosting adapters remain post-GA/);
 assert.match(changelog, /AB#7741/);
+assert.match(changelog, /0\.1\.0-preview\.1/);
 assert.match(changelog, /Cloudflare Containers as Planned until a prototype exists/);
 
 for (const route of ["/platform-support", "/roadmap", "/releases"]) {

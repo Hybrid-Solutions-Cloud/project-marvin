@@ -11,12 +11,13 @@ description: Private, delegated multi-calendar synchronization across Microsoft 
 </div>
 
 <div class="marvin-home-intro">
-  <p class="marvin-home-kicker">Private multi-calendar synchronization</p>
+  <p class="marvin-home-kicker">Preview release · Private multi-calendar synchronization</p>
   <h1>One schedule across the calendars you already use.</h1>
   <p>Project Marvin connects authorized Microsoft 365, Outlook.com, Apple / CalDAV, and Google calendars. It mirrors availability automatically while preserving source ownership, privacy rules, and time zones.</p>
+  <p><strong>Project Marvin is currently Preview software.</strong> Apple integration is the active release train. Google follows, then the update, state, deletion, and host-validation gates required before general availability.</p>
   <div class="marvin-home-actions">
     <a class="marvin-action" href="/project-marvin/getting-started.html">Getting started</a>
-    <a class="marvin-action secondary" href="/project-marvin/platform-support.html">Platform status</a>
+    <a class="marvin-action secondary" href="/project-marvin/roadmap.html">Preview roadmap</a>
   </div>
 </div>
 

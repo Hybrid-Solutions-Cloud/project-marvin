@@ -13,11 +13,14 @@ All notable public Project Marvin changes are recorded here. This file contains 
 
 ### Changed
 
+- Classified the current baseline as `0.1.0-preview.1` and reserved `1.0.0` for general availability.
+- Sequenced the Apple Preview, Google Preview, general availability release candidate, and final general availability gate against standard Azure DevOps sprints.
+- Defined self-service updates, safe deletion propagation, platform-neutral state and scheduling, the portable runtime prerequisite, and host validation as pre-GA requirements; Docker Compose and additional cloud adapters remain post-GA.
 - Defined the Linux OCI image as the Project Marvin portability boundary and Azure as an experimental reference adapter rather than an application requirement.
 - Classified Cloudflare Containers as Planned until a prototype exists and limited any prototype to Experimental until all support gates pass.
 - Removed private environment-validation history and unsupported production-support wording from public operations guidance.
 
-## 0.1.0 — 2026-08-19
+## 0.1.0-preview.1 — 2026-08-19
 
 ### Added
 

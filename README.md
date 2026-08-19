@@ -7,6 +7,8 @@ Published documentation: https://labs.hybridsolutions.cloud/project-marvin/
 Like its namesake, it exists because the universe insists on being badly organized.
 **Project Marvin** is the calendar synchronization application: one onboarding flow, one management portal, and one **Marvin Engine** synchronization runtime. Bureaucratic Flow, Google Hub Of Last Resort, and older solution tracks are references only.
 
+**Release status: Preview.** The current public baseline is `0.1.0-preview.1`. General availability begins with `1.0.0` only after Apple and Google acceptance, self-service updates, safe deletion propagation, platform-neutral state and scheduling, and declared-host validation all pass. See the [release plan](https://labs.hybridsolutions.cloud/project-marvin/releases.html).
+
 ## Platform maturity
 
 Project Marvin's portability boundary is one versioned Linux Open Container Initiative image. Docker and cloud platforms are deployment adapters around that same application, not separate product forks.
@@ -112,5 +114,4 @@ npm run docs:build
 
 The repo speaks in the voice of Marvin: competent, tired, and unimpressed by unnecessary complexity.
 Because apparently calendar synchronization needed a personality disorder as well.
-
 
