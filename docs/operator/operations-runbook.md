@@ -1,11 +1,11 @@
 # Runbook: Project Marvin Operations and Recovery
 
-**Owner:** HCS Project Marvin | **Frequency:** Daily checks and as needed
-**Last Updated:** 2026-08-19 | **Last Run:** 2026-08-19
+**Owner:** Project Marvin deployment operator | **Frequency:** Daily checks and as needed
+**Last Updated:** 2026-08-19
 
 ## Purpose
 
-Operate, diagnose, back up, restore, upgrade, and recover the supported Azure-hosted Project Marvin deployment. This runbook never authorizes provider calendar deletion. Keep `MARVIN_PROVIDER_DELETE_MODE=disabled` throughout every procedure.
+Operate, diagnose, back up, restore, upgrade, and recover an installation using the **Experimental** Azure Container Apps reference adapter. This runbook is not evidence that Azure or any private installation is Supported. See [Platform support](/platform-support) for the authoritative maturity label. This runbook never authorizes provider calendar deletion. Keep `MARVIN_PROVIDER_DELETE_MODE=disabled` throughout every procedure.
 
 ## Prerequisites
 
@@ -46,7 +46,7 @@ az containerapp secret list --name $containerApp --resource-group $resourceGroup
 ```
 
 **Expected result:** Delete mode is `disabled`. Secret names include `entra-client-secret`, `microsoft-calendar-client-secret`, `data-protection-key`, and `backup-protection-key`.
-**If it fails:** Stop. Do not run provider validation. Redeploy the last approved commit with the supported script.
+**If it fails:** Stop. Do not run provider validation. Redeploy the last approved commit with the documented Azure reference script.
 
 ### Step 3: Check runtime evidence
 
@@ -70,9 +70,10 @@ az storage file list --account-name $storageAccount --account-key $storageKey --
 ### Step 5: Create and verify an operator backup locally
 
 ```powershell
+$backupPath = Join-Path ([IO.Path]::GetTempPath()) 'marvin-prechange.marvinbackup'
 $env:MARVIN_BACKUP_PASSPHRASE = Read-Host 'Backup passphrase' -AsSecureString | ConvertFrom-SecureString -AsPlainText
-node scripts/marvin-state-tool.mjs backup --root . --output D:\tmp\marvin-prechange.marvinbackup
-node scripts/marvin-state-tool.mjs verify --input D:\tmp\marvin-prechange.marvinbackup
+node scripts/marvin-state-tool.mjs backup --root . --output $backupPath
+node scripts/marvin-state-tool.mjs verify --input $backupPath
 Remove-Item Env:MARVIN_BACKUP_PASSPHRASE
 ```
 
@@ -82,11 +83,12 @@ Remove-Item Env:MARVIN_BACKUP_PASSPHRASE
 ### Step 6: Validate a restore in isolation
 
 ```powershell
-$restoreRoot = 'D:\tmp\marvin-restore-validation'
+$backupPath = Join-Path ([IO.Path]::GetTempPath()) 'marvin-prechange.marvinbackup'
+$restoreRoot = Join-Path ([IO.Path]::GetTempPath()) 'marvin-restore-validation'
 $repoRoot = (Resolve-Path .).Path
 New-Item -ItemType Directory -Path $restoreRoot -Force | Out-Null
 $env:MARVIN_BACKUP_PASSPHRASE = Read-Host 'Backup passphrase' -AsSecureString | ConvertFrom-SecureString -AsPlainText
-node scripts/marvin-state-tool.mjs restore --input D:\tmp\marvin-prechange.marvinbackup --target-root $restoreRoot
+node scripts/marvin-state-tool.mjs restore --input $backupPath --target-root $restoreRoot
 Push-Location $restoreRoot
 node "$repoRoot\scripts\marvin-doctor.mjs"
 Pop-Location
@@ -146,14 +148,13 @@ Route traffic to the prior healthy Container App revision and verify liveness/re
 
 | Situation | Contact | Method |
 | --- | --- | --- |
-| Critical/high security issue or suspected credential exposure | HCS security owner | ADO incident plus approved private channel; rotate affected credential |
+| Critical/high security issue or suspected credential exposure | Deployment security owner | Private incident channel; rotate the affected credential |
 | Repeated provider failure after reauthorization | Project Marvin owner | ADO work item with correlation ID, timestamp, provider, and safe error class |
-| Backup/restore integrity failure | HCS platform owner | Stop recovery, retain artifacts, and open an incident |
+| Backup/restore integrity failure | Deployment platform owner | Stop recovery, retain artifacts, and open an incident |
 | Calendar deletion observed | Project Marvin owner and HCS security | Stop runtime immediately and preserve logs/state; do not attempt cleanup |
 
 ## History
 
 | Date | Run By | Notes |
 | --- | --- | --- |
-| 2026-08-19 | Codex with Kris authorization | Custom domain and TLS verified; live health and persistent account cleanup checked before documentation release |
-| 2026-08-18 | Codex with Kris authorization | HCS deployment revision 0000028 healthy; secret stability and delete-disabled state verified |
+| 2026-08-19 | Project maintainers | Reclassified Azure as an Experimental reference adapter, removed private environment evidence, and made temporary-path examples portable |

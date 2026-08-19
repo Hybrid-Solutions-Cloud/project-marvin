@@ -5,7 +5,13 @@ Project Marvin is a mildly resentful product path for solving calendar sprawl.
 Published documentation: https://labs.hybridsolutions.cloud/project-marvin/
 
 Like its namesake, it exists because the universe insists on being badly organized.
-**Project Marvin** is the supported calendar synchronization application: one onboarding flow, one management portal, and one **Marvin Engine** synchronization runtime. Bureaucratic Flow, Google Hub Of Last Resort, and older solution tracks are references only.
+**Project Marvin** is the calendar synchronization application: one onboarding flow, one management portal, and one **Marvin Engine** synchronization runtime. Bureaucratic Flow, Google Hub Of Last Resort, and older solution tracks are references only.
+
+## Platform maturity
+
+Project Marvin's portability boundary is one versioned Linux Open Container Initiative image. Docker and cloud platforms are deployment adapters around that same application, not separate product forks.
+
+The current public baseline has no hosted target at **Supported** maturity. Windows source verification is **Tested**; the raw OCI image and Azure Container Apps adapter are **Experimental**; Docker Compose, Docker Desktop host verification, Cloudflare Containers, and additional OCI schedulers are **Planned**. See the [platform support matrix](https://labs.hybridsolutions.cloud/project-marvin/platform-support.html) for evidence and promotion gates.
 
 ## Fast start
 
@@ -40,9 +46,9 @@ If dependencies are already installed and you only want to scaffold Marvin local
 pwsh -ExecutionPolicy Bypass -File .\scripts\bootstrap-marvin.ps1 -SkipNpmInstall
 ```
 
-## Hosted Azure
+## Azure reference adapter
 
-If you want one hosted Marvin runtime on Azure Container Apps, review the computed resource names and runtime shape first:
+The Azure Container Apps adapter is currently **Experimental**. To evaluate its computed resource names and runtime shape, review the plan first:
 
 ```powershell
 npm run marvin:azure:plan -- -SubscriptionId <subscription-guid> -WorkloadName marvin -Environment dev -RegionShort wus3 -Instance 01 -Location westus3
@@ -55,6 +61,14 @@ npm run marvin:azure:deploy -- -SubscriptionId <subscription-guid> -WorkloadName
 ```
 
 Bind and validate your custom DNS name and TLS certificate, then redeploy with `-PublicBaseUrl https://<your-hostname>`. That final origin becomes authoritative for portal sign-in, provider callbacks, and webhooks.
+
+This Azure path is a reference adapter, not a requirement of the Project Marvin runtime and not a production-support declaration.
+
+## Project records
+
+- [Roadmap](https://labs.hybridsolutions.cloud/project-marvin/roadmap.html)
+- [Release status](https://labs.hybridsolutions.cloud/project-marvin/releases.html)
+- [Changelog](CHANGELOG.md)
 
 ## Shared profile system
 

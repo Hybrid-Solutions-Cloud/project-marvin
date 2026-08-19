@@ -6,7 +6,7 @@ _Status: working product contract · Tracking: AB#7663_
 
 **Project Marvin** is the customer-facing calendar synchronization application and the repository/product-development program. **Marvin Engine** is its first-party synchronization runtime.
 
-The supported product is one portal, one runtime, and one deployment path. Historical experiments remain useful design references, but they are not choices presented to a new operator.
+The product is one portal and one runtime distributed through a portable Open Container Initiative contract. Docker and cloud integrations are deployment adapters around that same application; they do not create separate Project Marvin products. Historical experiments remain useful design references, but they are not choices presented to a new operator.
 
 ## Who the product serves
 
@@ -14,9 +14,9 @@ The first acceptable release serves one person or household that needs a trustwo
 
 This release is not a multi-customer SaaS service and does not provide delegated workspace administration.
 
-## Supported product journey
+## Product journey
 
-1. Deploy Project Marvin locally for development or as one Azure Container App for ongoing use.
+1. Use the local source workflow for development, or choose a hosted adapter whose maturity and limitations are stated in the [platform support matrix](/platform-support).
 2. Sign in with the Microsoft identity that owns the workspace.
 3. Connect provider accounts in release order: Microsoft first, Apple second, and Google third.
 4. Select calendars, confirm privacy rules, and validate provider access.
@@ -32,7 +32,7 @@ This release is not a multi-customer SaaS service and does not provide delegated
 - Provider markers and persistent mappings prevent generated mirrors from looping back as originals.
 - Create and update operations must be idempotent.
 - Source deletion can remove an owned mirror only after strict ownership and successful-source-read checks.
-- Live testing against the authorized HCS deployment must not issue calendar deletion requests unless separately authorized.
+- Live provider testing must not issue calendar deletion requests unless the environment owner separately authorizes that test.
 
 ## Included in the first acceptable release
 
@@ -45,6 +45,7 @@ This release is not a multi-customer SaaS service and does not provide delegated
 - Runtime status and controls
 - Actionable authentication, permission, provider, and synchronization failures
 - Secure credential storage, durable mappings, restart recovery, backup, upgrade, and operational documentation
+- A versioned portable application artifact plus at least one deployment adapter that passes the complete support contract
 
 ## Explicitly out of scope
 

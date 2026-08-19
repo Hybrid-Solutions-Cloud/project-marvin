@@ -13,8 +13,11 @@ export default defineConfig({
     nav: [
       { text: "Home", link: "/" },
       { text: "Getting Started", link: "/getting-started" },
+      { text: "Platform Support", link: "/platform-support" },
+      { text: "Roadmap", link: "/roadmap" },
       { text: "Architecture", link: "/architecture" },
       { text: "Status", link: "/status" },
+      { text: "Releases", link: "/releases" },
       { text: "Research", link: "/research/" },
       { text: "Solutions", link: "/solutions" },
       { text: "Credits", link: "/credits" }
@@ -26,6 +29,9 @@ export default defineConfig({
           { text: "Overview", link: "/" },
           { text: "Getting Started", link: "/getting-started" },
           { text: "Requirements", link: "/requirements" },
+          { text: "Platform Support", link: "/platform-support" },
+          { text: "Roadmap", link: "/roadmap" },
+          { text: "Releases", link: "/releases" },
           { text: "Status", link: "/status" },
           { text: "Architecture", link: "/architecture" },
           { text: "Product Boundary", link: "/product-boundary" },
