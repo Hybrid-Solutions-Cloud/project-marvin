@@ -72,6 +72,7 @@ try {
   Invoke-NpmScript 'marvin:smoke-runtime-webhook-wake'
   Invoke-NpmScript 'marvin:smoke-docs-commands'
   Invoke-NpmScript 'marvin:smoke-status-reporting'
+  Invoke-NpmScript 'marvin:smoke-platform-docs'
   Invoke-NpmScript 'marvin:smoke-onboarding-guidance'
   Invoke-NpmScript 'marvin:smoke-live'
   Invoke-NpmScript 'marvin:smoke-delete-cleanup'

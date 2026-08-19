@@ -1,6 +1,8 @@
 # Project Marvin on Azure
 
-The first hosted deployment uses a single Azure Container App with `minReplicas: 1`.
+_Status: Experimental reference adapter · Tracking: AB#7735, AB#7736_
+
+The Azure reference adapter deploys a single Azure Container App with `minReplicas: 1`. It is not a requirement of the Project Marvin application and is not yet a Supported target under the [platform maturity contract](/platform-support).
 
 ## Resources
 
@@ -14,7 +16,7 @@ The runtime has readiness and liveness checks against `/marvin-api/status`. Azur
 
 ## Deploy
 
-First deploy without a custom public origin so Azure creates the Container App and generated HTTPS hostname:
+For an experimental evaluation, first deploy without a custom public origin so Azure creates the Container App and generated HTTPS hostname:
 
 ```powershell
 npm run marvin:azure:plan
@@ -52,3 +54,5 @@ No credentials, OAuth secrets, tokens, or customer calendar data belong in this 
 4. Review Sync Rules and use the Dashboard runtime control. The hosted process starts with a saved profile; only connected and validated calendars are eligible for provider work.
 
 If a Microsoft organization blocks user consent, coordinate the tenant-specific review privately with its administrator. See [Getting Started](/getting-started) for the provider-specific setup flow.
+
+Do not promote this adapter to Supported based on a successful deployment alone. Public conformance, persistence, security, backup, update, rollback, and recovery evidence must satisfy the [platform promotion rules](/platform-support#promotion-rules).

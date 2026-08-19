@@ -16,6 +16,7 @@ description: Private, delegated multi-calendar synchronization across Microsoft 
   <p>Project Marvin connects authorized Microsoft 365, Outlook.com, Apple / CalDAV, and Google calendars. It mirrors availability automatically while preserving source ownership, privacy rules, and time zones.</p>
   <div class="marvin-home-actions">
     <a class="marvin-action" href="/project-marvin/getting-started.html">Getting started</a>
+    <a class="marvin-action secondary" href="/project-marvin/platform-support.html">Platform status</a>
   </div>
 </div>
 

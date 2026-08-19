@@ -1,6 +1,6 @@
 # Product Guide
 
-There is one supported product path: **Project Marvin**.
+There is one product path: **Project Marvin**.
 
 **Marvin Engine** is its synchronization runtime. It is not a second application to install.
 
@@ -16,8 +16,11 @@ There is one supported product path: **Project Marvin**.
 
 - [Getting Started](/getting-started)
 - [Project Marvin application contract](/solutions/project-marvin)
-- [Azure Container Apps](/solutions/marvin-azure)
+- [Platform support and maturity](/platform-support)
+- [Azure Container Apps experimental adapter](/solutions/marvin-azure)
 - [Onboarding and management UI](/operator/onboarding-ui)
+
+Deployment targets must consume the same Project Marvin runtime. The [platform matrix](/platform-support) is authoritative for whether a target is Supported, Tested, Experimental, or Planned.
 
 ## Historical References
 

@@ -78,6 +78,7 @@
     "marvin:smoke-bureaucratic-flow-opt-in": "node scripts/smoke-marvin-bureaucratic-flow-opt-in.mjs",
     "marvin:smoke-runtime-track-split": "node scripts/smoke-marvin-runtime-track-split.mjs",
     "marvin:smoke-status-reporting": "node scripts/smoke-marvin-status-reporting.mjs",
+    "marvin:smoke-platform-docs": "node scripts/smoke-marvin-platform-docs.mjs",
     "marvin:smoke-route-policy": "node scripts/smoke-marvin-route-policy.mjs",
     "marvin:smoke-subscriptions": "node scripts/smoke-marvin-subscriptions.mjs",
     "marvin:smoke-microsoft-sync": "node scripts/smoke-marvin-microsoft-sync.mjs",

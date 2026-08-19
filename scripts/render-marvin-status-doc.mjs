@@ -31,11 +31,11 @@ function buildStatusDoc() {
 
 _This page is generated from Marvin's shared status model. Run \`npm run marvin:render-status-doc\` to refresh it manually._
 
-As of **${formatAsOfDate(coverage.asOf)}**, Project Marvin's local behavior, Azure deployment plan, custom-domain configuration contract, health endpoints, persistence contracts, and provider mocks are verified by automated tests. This public status page intentionally excludes all private deployment identities, URLs, resources, and acceptance evidence.
+As of **${formatAsOfDate(coverage.asOf)}**, Project Marvin's local behavior, Azure deployment-plan contract, health endpoints, persistence contracts, and provider mocks are verified by automated tests. Platform maturity is tracked separately so a passing component test is not mistaken for production support. This public status page intentionally excludes all private deployment identities, URLs, resources, and acceptance evidence.
 
 ## Current coverage
 
-The open-source repository currently supports:
+The open-source repository currently demonstrates:
 
 - bidirectional route planning across Microsoft 365, Outlook, Apple / CalDAV, and Google calendars
 - private-by-default mirrored events
@@ -47,8 +47,10 @@ The open-source repository currently supports:
 - Microsoft Entra workspace bootstrap, staged onboarding, sign-in gating, and ongoing calendar management UI
 - scriptable local install, bootstrap, verification, and Azure deployment-plan generation
 - generated doctor/status reporting tied to the shared requirement model
-- an Azure Container Apps deployment path with configurable custom DNS/TLS and redacted liveness/readiness endpoints
+- an Experimental Azure Container Apps reference adapter with configurable public origin and redacted liveness/readiness endpoints
 - durable profile/account state across application restarts
+
+These capabilities do not make a hosting target Supported. See [Platform Support](/platform-support) for the evidence and promotion contract.
 
 ## Requirement matrix
 
@@ -71,6 +73,8 @@ Marvin still does **not** have strong proof of all of the following:
 - completed production acceptance, recovery exercises, and independent security review
 - fully zero-touch provider-app creation across every Microsoft and Google tenant
 - environment-specific provider authorization and real-account acceptance testing
+- a published immutable OCI release and complete cross-platform container conformance evidence
+- a Supported hosted deployment adapter with public backup, update, rollback, and recovery proof
 
 ## Use the repo to verify status
 
@@ -90,6 +94,9 @@ For the fuller written requirement audit, read:
 
 - [Requirements](/requirements)
 - [Getting Started](/getting-started)
+- [Platform Support](/platform-support)
+- [Roadmap](/roadmap)
+- [Releases](/releases)
 - [Marvin Engine](/solutions/marvin-engine)
 `;
 }

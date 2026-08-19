@@ -129,7 +129,7 @@ export function buildRequirementCoverage() {
         "npm run marvin:smoke-status-reporting",
         "npm run docs:build"
       ],
-      remainingGap: "Public documentation covers only the generic open-source solution; private deployment identities and acceptance evidence are intentionally excluded."
+      remainingGap: "The public architecture, maturity matrix, roadmap, release record, and operations guidance are covered; platform promotion still depends on future public conformance evidence, while private deployment identities and acceptance results remain excluded."
     }
   ];
 
