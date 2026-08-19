@@ -189,10 +189,6 @@ function parseVevents(icsContent = "", calendarId = "", href = "") {
   )).filter((event) => event.id && event.start && event.end);
 }
 
-function toBasicAuth(username, password) {
-  return `Basic ${Buffer.from(`${username}:${password}`, "utf8").toString("base64")}`;
-}
-
 function buildCalendarQueryXml(windowStart, windowEnd) {
   const start = formatIcsUtc(windowStart);
   const end = formatIcsUtc(windowEnd);
@@ -373,16 +369,21 @@ export class CalDavAdapter {
     if (!isCalDavCalendarReady(this.config, calendar)) {
       return [];
     }
-    const response = await this.fetchImpl(connection.serverUrl, {
+    const request = await requestCalDavWithAuthRedirects({
+      url: connection.serverUrl,
+      username: connection.username,
+      password: connection.password,
       method: "REPORT",
       headers: {
-        Authorization: toBasicAuth(connection.username, connection.password),
         Depth: "1",
         Prefer: 'return=minimal',
         "Content-Type": 'application/xml; charset="utf-8"'
       },
-      body: buildCalendarQueryXml(options.windowStart, options.windowEnd)
+      body: buildCalendarQueryXml(options.windowStart, options.windowEnd),
+      fetchImpl: this.fetchImpl,
+      stage: "event-read"
     });
+    const { response } = request;
     const xml = await response.text();
     if (!response.ok && response.status !== 207) {
       throw new Error(`CalDAV REPORT failed with HTTP ${response.status}.`);
@@ -395,16 +396,21 @@ export class CalDavAdapter {
     if (!isCalDavCalendarReady(this.config, calendar)) {
       return { events: [], deletedEventIds: [], deltaLink: normalizeString(options.deltaLink) };
     }
-    const response = await this.fetchImpl(connection.serverUrl, {
+    const request = await requestCalDavWithAuthRedirects({
+      url: connection.serverUrl,
+      username: connection.username,
+      password: connection.password,
       method: "REPORT",
       headers: {
-        Authorization: toBasicAuth(connection.username, connection.password),
         Depth: "1",
         Prefer: "return=minimal",
         "Content-Type": 'application/xml; charset="utf-8"'
       },
-      body: buildCalendarQueryXml(options.windowStart, options.windowEnd)
+      body: buildCalendarQueryXml(options.windowStart, options.windowEnd),
+      fetchImpl: this.fetchImpl,
+      stage: "event-change-read"
     });
+    const { response } = request;
     const xml = await response.text();
     if (!response.ok && response.status !== 207) throw new Error(`CalDAV REPORT failed with HTTP ${response.status}.`);
     const current = parseCalendarQueryXml(xml, calendar.id);
@@ -442,17 +448,22 @@ export class CalDavAdapter {
     }
     const resourceName = buildResourceName(operation, context.existingMapping);
     const targetUrl = `${canonicalUrl(connection.serverUrl)}/${encodeURIComponent(resourceName)}`;
-    const response = await this.fetchImpl(targetUrl, {
+    const request = await requestCalDavWithAuthRedirects({
+      url: targetUrl,
+      username: connection.username,
+      password: connection.password,
       method: "PUT",
       headers: {
-        Authorization: toBasicAuth(connection.username, connection.password),
         "Content-Type": 'text/calendar; charset="utf-8"',
         ...(normalizeString(context.existingMapping?.targetEtag)
           ? { "If-Match": normalizeString(context.existingMapping.targetEtag) }
           : { "If-None-Match": "*" })
       },
-      body: buildIcsEvent(operation)
+      body: buildIcsEvent(operation),
+      fetchImpl: this.fetchImpl,
+      stage: "event-write"
     });
+    const { response } = request;
     if (response.status === 412) {
       throw new Error("CalDAV write was rejected because the target event changed remotely. Refresh before retrying this mirror.");
     }
@@ -472,12 +483,15 @@ export class CalDavAdapter {
       throw new Error(`CalDAV credentials are not usable for ${targetCalendar.label}.`);
     }
     const targetUrl = `${canonicalUrl(connection.serverUrl)}/${encodeURIComponent(normalizeString(targetEventId))}`;
-    const response = await this.fetchImpl(targetUrl, {
+    const request = await requestCalDavWithAuthRedirects({
+      url: targetUrl,
+      username: connection.username,
+      password: connection.password,
       method: "DELETE",
-      headers: {
-        Authorization: toBasicAuth(connection.username, connection.password)
-      }
+      fetchImpl: this.fetchImpl,
+      stage: "event-delete"
     });
+    const { response } = request;
     if (!response.ok && response.status !== 404) {
       throw new Error(`CalDAV DELETE failed with HTTP ${response.status}.`);
     }
@@ -487,4 +501,4 @@ export class CalDavAdapter {
     };
   }
 }
-import { discoverCalDavCalendars } from "../util/caldav-connection.mjs";
+import { discoverCalDavCalendars, requestCalDavWithAuthRedirects } from "../util/caldav-connection.mjs";

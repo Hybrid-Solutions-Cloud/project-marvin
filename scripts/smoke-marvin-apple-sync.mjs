@@ -7,6 +7,7 @@ const username = "apple@example.com";
 const password = "app-specific-password";
 const expectedAuth = `Basic ${Buffer.from(`${username}:${password}`, "utf8").toString("base64")}`;
 const requests = [];
+const redirectRequests = [];
 let reportCount = 0;
 
 function davResponse(body) {
@@ -102,8 +103,32 @@ const server = http.createServer((req, res) => {
 
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = server.address().port;
-const entryUrl = `http://127.0.0.1:${port}/entry`;
+const redirectServer = http.createServer((req, res) => {
+  redirectRequests.push({ method: req.method || "", url: req.url || "", auth: req.headers.authorization || "" });
+  if (req.headers.authorization !== expectedAuth) {
+    res.writeHead(401).end("unauthorized");
+    return;
+  }
+  if (req.url === "/entry") {
+    res.writeHead(301, { Location: `http://127.0.0.1:${port}/dav/` }).end();
+    return;
+  }
+  if (req.url === "/unsafe") {
+    res.writeHead(301, { Location: `http://localhost:${port}/dav/` }).end();
+    return;
+  }
+  if (req.url?.startsWith("/cal/home/")) {
+    res.writeHead(307, { Location: `http://127.0.0.1:${port}${req.url}` }).end();
+    return;
+  }
+  res.writeHead(404).end("not found");
+});
+await new Promise((resolve) => redirectServer.listen(0, "127.0.0.1", resolve));
+const redirectPort = redirectServer.address().port;
+const entryUrl = `http://127.0.0.1:${redirectPort}/entry`;
+const unsafeEntryUrl = `http://127.0.0.1:${redirectPort}/unsafe`;
 const selectedUrl = `http://127.0.0.1:${port}/cal/home/`;
+const redirectedSelectedUrl = `http://127.0.0.1:${redirectPort}/cal/home/`;
 const calendar = { id: "apple-home", label: "Apple Home", provider: "apple-caldav", email: username, caldavServerUrl: entryUrl, caldavUsername: username };
 const adapter = new CalDavAdapter({
   profile: { calendars: [calendar], runtime: { providerConnections: { caldav: {} } } },
@@ -113,6 +138,9 @@ const adapter = new CalDavAdapter({
 
 try {
   const discovery = await adapter.discoverCalendars(calendar);
+  assert.equal(discovery.serviceUrl, `http://127.0.0.1:${port}/dav/`);
+  assert.equal(discovery.redirectCount, 1);
+  assert.equal(redirectRequests[0].auth, expectedAuth);
   assert.equal(discovery.principalUrl, `http://127.0.0.1:${port}/principal/`);
   assert.equal(discovery.calendarHomeUrl, `http://127.0.0.1:${port}/home/`);
   assert.equal(discovery.calendars.length, 2);
@@ -120,7 +148,13 @@ try {
   assert.equal(discovery.calendars[0].canEdit, true);
   assert.equal(discovery.calendars[1].canEdit, false);
 
-  const selectedCalendar = { ...calendar, providerCalendarId: selectedUrl, caldavServerUrl: selectedUrl };
+  await assert.rejects(
+    () => adapter.discoverCalendars({ ...calendar, caldavServerUrl: unsafeEntryUrl }),
+    (error) => error?.stage === "redirect" && /refused to forward credentials/.test(error.message)
+  );
+  assert.equal(requests.filter((request) => request.url === "/dav/").length, 1);
+
+  const selectedCalendar = { ...calendar, providerCalendarId: selectedUrl, caldavServerUrl: redirectedSelectedUrl };
   const selectedAdapter = new CalDavAdapter({
     profile: { calendars: [selectedCalendar], runtime: { providerConnections: { caldav: {} } } },
     providerSecrets: { caldavPasswords: { "apple-home": password } },
@@ -160,6 +194,9 @@ try {
   const puts = requests.filter((request) => request.method === "PUT");
   assert.equal(puts[0].ifNoneMatch, "*");
   assert.equal(puts[1].ifMatch, '"created-1"');
+  assert.equal(redirectRequests.filter((request) => request.method === "REPORT").length, 3);
+  assert.equal(redirectRequests.filter((request) => request.method === "PUT").length, 2);
+  assert.ok(redirectRequests.filter((request) => ["REPORT", "PUT"].includes(request.method)).every((request) => request.auth === expectedAuth));
   assert.equal(requests.filter((request) => request.method === "DELETE").length, 0);
   assert.equal(calculatePollDelaySeconds(300, 0), 300);
   assert.equal(calculatePollDelaySeconds(300, 1), 600);
@@ -168,6 +205,9 @@ try {
 
   console.log(JSON.stringify({
     ok: true,
+    authenticatedDiscoveryRedirects: discovery.redirectCount,
+    authenticatedRuntimeRedirects: redirectRequests.filter((request) => ["REPORT", "PUT"].includes(request.method)).length,
+    unsafeRedirectBlocked: true,
     discovered: discovery.calendars.length,
     writable: discovery.calendars.filter((item) => item.canEdit).length,
     initialEvents: first.events.length,
@@ -179,5 +219,6 @@ try {
     deleteRequests: 0
   }, null, 2));
 } finally {
+  await new Promise((resolve) => redirectServer.close(resolve));
   await new Promise((resolve) => server.close(resolve));
 }

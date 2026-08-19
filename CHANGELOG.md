@@ -13,6 +13,8 @@ All notable public Project Marvin changes are recorded here. This file contains 
 
 ### Changed
 
+- Defaulted Apple onboarding to the standard iCloud CalDAV service entry point so users do not need prior CalDAV URL knowledge.
+- Hardened authenticated CalDAV discovery and synchronization redirects: credentials survive approved iCloud host changes but are refused for unrelated hosts or HTTPS downgrades.
 - Classified the current baseline as `0.1.0-preview.1` and reserved `1.0.0` for general availability.
 - Sequenced the Apple Preview, Google Preview, general availability release candidate, and final general availability gate against standard Azure DevOps sprints.
 - Defined self-service updates, safe deletion propagation, platform-neutral state and scheduling, the portable runtime prerequisite, and host validation as pre-GA requirements; Docker Compose and additional cloud adapters remain post-GA.

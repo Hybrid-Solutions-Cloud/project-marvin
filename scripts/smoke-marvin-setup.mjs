@@ -47,8 +47,6 @@ try {
     "-GoogleEmail", "personal@example.com",
     "-FamilyEmail", "family@example.com",
     "-AppleEmail", "apple@example.com",
-    "-AppleCalDavServerUrl", "https://caldav.example.com/calendars/personal",
-    "-AppleCalDavUsername", "apple-user",
     "-AppleCalDavAppPassword", "apple-secret",
     "-MicrosoftClientId", "ms-client",
     "-MicrosoftClientSecret", "ms-secret",
@@ -85,8 +83,8 @@ try {
 
   const appleCalendar = profile.calendars.find((calendar) => calendar.id === "personal_apple");
   assert.ok(appleCalendar, "Expected Apple calendar in generated profile.");
-  assert.equal(appleCalendar.caldavServerUrl, "https://caldav.example.com/calendars/personal");
-  assert.equal(appleCalendar.caldavUsername, "apple-user");
+  assert.equal(appleCalendar.caldavServerUrl, "https://caldav.icloud.com/");
+  assert.equal(appleCalendar.caldavUsername, "apple@example.com");
 
   assert.ok(Array.isArray(events.events) && events.events.length >= 4, "Expected generated event fixtures.");
   assert.equal(setup.profileName, profileSlug);
@@ -112,7 +110,10 @@ try {
   assert.equal(Array.isArray(connections.records), true);
   assert.equal(connections.records.length, 5);
   assert.equal(summary.profile, profileSlug);
-  assert.equal(summary.solutions.length, 4);
+  assert.deepEqual(
+    summary.solutions.map((item) => item.name).sort(),
+    ["bureaucratic-flow", "google-hub", "marvin-engine"]
+  );
   assert.match(setupScript, /IncludeBureaucraticFlow/);
   assert.match(setupScript, /Bureaucratic Flow runtime tenant ID/);
   assert.doesNotMatch(setupScript, /Power Automate runtime tenant ID/);

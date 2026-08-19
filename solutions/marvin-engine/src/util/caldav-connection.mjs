@@ -52,27 +52,105 @@ function discoveryError(stage, message, httpStatus = 0) {
   return error;
 }
 
-async function propfind({ url, username, password, depth, body, fetchImpl, timeoutMs, stage }) {
+function isRedirectStatus(status) {
+  return [301, 302, 303, 307, 308].includes(Number(status));
+}
+
+function isICloudHostname(hostname = "") {
+  const normalized = normalizeString(hostname).toLowerCase();
+  return normalized === "icloud.com" || normalized.endsWith(".icloud.com");
+}
+
+function canForwardCalDavAuthorization(currentUrl, nextUrl) {
+  if (currentUrl.protocol === "https:" && nextUrl.protocol !== "https:") return false;
+  if (currentUrl.hostname.toLowerCase() === nextUrl.hostname.toLowerCase()) return true;
+  return isICloudHostname(currentUrl.hostname) && isICloudHostname(nextUrl.hostname);
+}
+
+export async function requestCalDavWithAuthRedirects({
+  url,
+  username,
+  password,
+  method = "GET",
+  headers = {},
+  body,
+  fetchImpl = fetch,
+  timeoutMs = 15000,
+  stage = "request",
+  maxRedirects = 5
+}) {
+  let currentUrl;
+  try {
+    currentUrl = new URL(url);
+  } catch {
+    throw discoveryError("configuration", "CalDAV request URL is invalid.");
+  }
   const signal = typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
     ? AbortSignal.timeout(timeoutMs)
     : undefined;
-  let response;
-  try {
-    response = await fetchImpl(url, {
-      method: "PROPFIND",
-      redirect: "follow",
-      headers: {
-        Authorization: buildBasicAuthHeader(username, password),
-        Depth: String(depth),
-        Prefer: "return=minimal",
-        "Content-Type": 'application/xml; charset="utf-8"'
-      },
-      body,
-      signal
-    });
-  } catch (error) {
-    throw discoveryError(stage, `${stage} request failed: ${error instanceof Error ? error.message : String(error)}`);
+  const authorization = buildBasicAuthHeader(username, password);
+  let redirects = 0;
+
+  while (true) {
+    let response;
+    try {
+      response = await fetchImpl(currentUrl.toString(), {
+        method,
+        redirect: "manual",
+        headers: {
+          ...headers,
+          Authorization: authorization
+        },
+        body,
+        signal
+      });
+    } catch (error) {
+      throw discoveryError(stage, `${stage} request failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    if (!isRedirectStatus(response.status)) {
+      return { response, finalUrl: response.url || currentUrl.toString(), redirects };
+    }
+
+    const location = normalizeString(response.headers?.get?.("location"));
+    if (!location) throw discoveryError("redirect", `CalDAV ${stage} returned HTTP ${response.status} without a Location header.`, response.status);
+    if (redirects >= maxRedirects) throw discoveryError("redirect", `CalDAV ${stage} exceeded ${maxRedirects} redirects.`, response.status);
+
+    let nextUrl;
+    try {
+      nextUrl = new URL(location, currentUrl);
+    } catch {
+      throw discoveryError("redirect", `CalDAV ${stage} returned an invalid redirect URL.`, response.status);
+    }
+    if (!canForwardCalDavAuthorization(currentUrl, nextUrl)) {
+      throw discoveryError(
+        "redirect",
+        `CalDAV ${stage} refused to forward credentials from ${currentUrl.hostname} to untrusted host ${nextUrl.hostname}.`,
+        response.status
+      );
+    }
+    currentUrl = nextUrl;
+    redirects += 1;
   }
+}
+
+async function propfind({ url, username, password, depth, body, fetchImpl, timeoutMs, stage }) {
+  const request = await requestCalDavWithAuthRedirects({
+    url,
+    username,
+    password,
+    method: "PROPFIND",
+    headers: {
+      Depth: String(depth),
+      Prefer: "return=minimal",
+      "Content-Type": 'application/xml; charset="utf-8"'
+    },
+    body,
+    fetchImpl,
+    timeoutMs,
+    stage
+  });
+  const { response } = request;
   const xml = await response.text();
   if (response.status === 401 || response.status === 403) {
     throw discoveryError("authentication", "CalDAV server rejected the supplied username or app-specific password.", response.status);
@@ -80,7 +158,7 @@ async function propfind({ url, username, password, depth, body, fetchImpl, timeo
   if (response.status !== 207 && !response.ok) {
     throw discoveryError(stage, `CalDAV ${stage} returned HTTP ${response.status}.`, response.status);
   }
-  return { response, xml, finalUrl: response.url || url };
+  return { response, xml, finalUrl: request.finalUrl, redirects: request.redirects };
 }
 
 export async function discoverCalDavCalendars({
@@ -160,6 +238,7 @@ export async function discoverCalDavCalendars({
     serviceUrl: principalResult.finalUrl,
     principalUrl,
     calendarHomeUrl,
+    redirectCount: principalResult.redirects + homeResult.redirects + collectionResult.redirects,
     calendars
   };
 }
@@ -190,26 +269,35 @@ export async function validateCalDavCredentials({
     "Content-Type": 'application/xml; charset="utf-8"'
   };
 
-  const signal = typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
-    ? AbortSignal.timeout(timeoutMs)
-    : undefined;
-
   try {
-    let response = await fetchImpl(normalizedUrl, {
+    let request = await requestCalDavWithAuthRedirects({
+      url: normalizedUrl,
+      username: normalizedUsername,
+      password: normalizedPassword,
       method: "PROPFIND",
-      headers,
+      headers: {
+        Depth: headers.Depth,
+        Prefer: headers.Prefer,
+        "Content-Type": headers["Content-Type"]
+      },
       body: '<?xml version="1.0" encoding="utf-8" ?><propfind xmlns="DAV:"><prop><displayname /></prop></propfind>',
-      signal
+      fetchImpl,
+      timeoutMs,
+      stage: "credential-validation"
     });
+    let response = request.response;
 
     if (response.status === 405 || response.status === 501) {
-      response = await fetchImpl(normalizedUrl, {
+      request = await requestCalDavWithAuthRedirects({
+        url: request.finalUrl,
+        username: normalizedUsername,
+        password: normalizedPassword,
         method: "OPTIONS",
-        headers: {
-          Authorization: headers.Authorization
-        },
-        signal
+        fetchImpl,
+        timeoutMs,
+        stage: "credential-validation"
       });
+      response = request.response;
     }
 
     if (response.status === 401 || response.status === 403) {
