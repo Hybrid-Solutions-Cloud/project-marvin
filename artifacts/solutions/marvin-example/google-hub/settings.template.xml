@@ -1,0 +1,19 @@
+<OGCSConfig>
+  <ProfileName>marvin-example</ProfileName>
+  <Timezone>America/New_York</Timezone>
+  <SyncWindowDays>45</SyncWindowDays>
+  <Profile index="1" name="OGCS-1">
+    <OutlookCalendar>you@work.example.com</OutlookCalendar>
+    <GoogleCalendar>you@gmail.com</GoogleCalendar>
+    <SyncDirection>Bidirectional</SyncDirection>
+    <TargetPrivacy>Private</TargetPrivacy>
+    <TargetSubjectPrefix>WORK: </TargetSubjectPrefix>
+  </Profile>
+  <Profile index="2" name="OGCS-2">
+    <OutlookCalendar>you@contract.example.com</OutlookCalendar>
+    <GoogleCalendar>you@gmail.com</GoogleCalendar>
+    <SyncDirection>Bidirectional</SyncDirection>
+    <TargetPrivacy>Private</TargetPrivacy>
+    <TargetSubjectPrefix>CONTRACT: </TargetSubjectPrefix>
+  </Profile>
+</OGCSConfig>

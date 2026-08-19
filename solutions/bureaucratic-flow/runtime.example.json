@@ -1,0 +1,17 @@
+{
+  "powerAutomate": {
+    "automationTenantId": "00000000-0000-0000-0000-000000000000",
+    "environmentUrl": "https://org000000.crm.dynamics.com",
+    "deploymentModel": "graph-http-entra-id",
+    "flowSolutionName": "ProjectMarvinCalendarSync",
+    "graphAppDisplayName": "Project Marvin Flow Runtime",
+    "supportedAccountTypes": "AzureADMultipleOrgs",
+    "graphPermissions": [
+      "Calendars.ReadWrite"
+    ],
+    "notes": [
+      "Do not use the Office 365 Outlook connector for automation-first deployment because it does not support service principal authentication.",
+      "Use Microsoft Graph through HTTP with Microsoft Entra ID or a custom Graph connector instead."
+    ]
+  }
+}

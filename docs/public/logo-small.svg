@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 64" role="img" aria-label="Project Marvin logo small">
+  <rect width="240" height="64" rx="16" fill="#101722"/>
+  <g transform="translate(10 8)">
+    <rect x="0" y="4" width="48" height="40" rx="12" fill="#c9d3dd"/>
+    <circle cx="16" cy="24" r="4" fill="#ff8e3c"/>
+    <circle cx="32" cy="24" r="4" fill="#ff8e3c"/>
+    <path d="M12 34h24" stroke="#405261" stroke-width="4" stroke-linecap="round"/>
+    <path d="M24 0v8" stroke="#ff8e3c" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="72" y="31" fill="#f5f7fa" font-size="24" font-family="Georgia, 'Times New Roman', serif" font-weight="700">Project Marvin</text>
+  <text x="72" y="49" fill="#8ea0b1" font-size="12" font-family="Verdana, Geneva, sans-serif">calendar sync, but gloomy</text>
+</svg>

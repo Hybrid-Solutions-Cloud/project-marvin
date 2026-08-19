@@ -1,0 +1,12 @@
+node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+operator-ui/dist/
+profiles/*.local.json
+profiles/*.local.events.json
+artifacts/solutions/*.local/
+.marvin/
+artifacts/solutions/marvin-install-debug/
+artifacts/marvin-engine/marvin-install-debug.mappings.json
+profiles/marvin-install-debug.json
+profiles/marvin-install-debug.events.json

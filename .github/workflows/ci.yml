@@ -1,0 +1,61 @@
+name: Verify Project Marvin
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: marvin-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Product, security, and infrastructure verification
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Run product verification
+        shell: pwsh
+        run: ./scripts/verify-marvin.ps1 -SkipProviderSmokes
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Compile Azure infrastructure
+        shell: pwsh
+        run: |
+          $outputPath = Join-Path $env:RUNNER_TEMP 'marvin-azure.json'
+          az bicep build --file ./infra/marvin-azure.bicep --outfile $outputPath
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Azure Bicep compilation failed.'
+          }
+
+      - name: Confirm verification leaves tracked files unchanged
+        shell: pwsh
+        run: |
+          $changes = @(git status --porcelain)
+          if ($changes.Count -gt 0) {
+            $changes | Write-Error
+            throw 'Verification modified tracked files or left untracked artifacts.'
+          }

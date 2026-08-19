@@ -1,0 +1,7 @@
+node_modules
+.git
+.codex
+.marvin
+artifacts
+C:/tmp
+npm-debug.log*

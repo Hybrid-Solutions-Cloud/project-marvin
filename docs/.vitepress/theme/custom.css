@@ -1,0 +1,112 @@
+.marvin-hero-logo {
+  margin: 0 auto 2rem;
+  max-width: 1120px;
+  padding: 1rem 0 0;
+}
+
+.marvin-hero-logo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+}
+
+.marvin-home-intro {
+  margin: 0 auto 3rem;
+  max-width: 880px;
+  text-align: center;
+}
+
+.marvin-home-intro h1 {
+  border: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.1rem, 5vw, 3.8rem);
+  line-height: 1.08;
+  margin: 0.35rem auto 1rem;
+}
+
+.marvin-home-intro > p:not(.marvin-home-kicker) {
+  color: var(--vp-c-text-2);
+  font-size: 1.12rem;
+  line-height: 1.75;
+  margin: 0 auto;
+  max-width: 760px;
+}
+
+.marvin-home-kicker {
+  color: #d96d1f;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.marvin-home-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.75rem;
+}
+
+.marvin-action {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  color: var(--vp-c-text-1);
+  font-weight: 650;
+  padding: 0.7rem 1.15rem;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.marvin-action:hover {
+  border-color: #ff8e3c;
+  color: var(--vp-c-text-1);
+  transform: translateY(-1px);
+}
+
+.marvin-action.primary {
+  background: #ff8e3c;
+  border-color: #ff8e3c;
+  color: #111820;
+}
+
+.marvin-feature-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0 auto 3rem;
+  max-width: 1040px;
+}
+
+.marvin-feature-grid section {
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 18px;
+  padding: 1.35rem 1.5rem;
+}
+
+.marvin-feature-grid h2 {
+  border: 0;
+  font-size: 1.08rem;
+  margin: 0 0 0.45rem;
+  padding: 0;
+}
+
+.marvin-feature-grid p {
+  color: var(--vp-c-text-2);
+  line-height: 1.65;
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .marvin-hero-logo {
+    margin-bottom: 1.25rem;
+  }
+
+  .marvin-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}

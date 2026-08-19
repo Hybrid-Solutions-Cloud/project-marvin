@@ -1,0 +1,45 @@
+{
+  "profile": "marvin-example",
+  "routes": 4,
+  "providerRuntime": {
+    "microsoft": {
+      "provider": "m365",
+      "authMode": "marvin-engine",
+      "clientId": "",
+      "tenantMode": "multi-tenant",
+      "marvinBaseUrl": "",
+      "authorizePath": "/marvin-api/oauth/microsoft/start"
+    },
+    "google": {
+      "provider": "google",
+      "authMode": "marvin-engine",
+      "clientId": "",
+      "marvinBaseUrl": "",
+      "authorizePath": "/marvin-api/oauth/google/start"
+    },
+    "caldav": {
+      "provider": "apple-caldav",
+      "authMode": "manual-caldav",
+      "marvinBaseUrl": "",
+      "authorizePath": "",
+      "serverUrl": "",
+      "username": "",
+      "passwordConfigured": false,
+      "passwords": {}
+    }
+  },
+  "solutions": [
+    {
+      "name": "bureaucratic-flow",
+      "path": "artifacts\\solutions\\marvin-example\\bureaucratic-flow"
+    },
+    {
+      "name": "google-hub",
+      "path": "artifacts\\solutions\\marvin-example\\google-hub"
+    },
+    {
+      "name": "marvin-engine",
+      "path": "artifacts\\solutions\\marvin-example\\marvin-engine"
+    }
+  ]
+}

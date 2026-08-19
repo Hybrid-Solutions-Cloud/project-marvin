@@ -1,0 +1,12 @@
+FROM node:22-alpine
+WORKDIR /app
+ENV NODE_ENV=production
+COPY . .
+RUN node scripts/build-marvin-portal.mjs
+ENV MARVIN_ROOT_DIR=/data
+ENV MARVIN_UI_PORT=4177
+ENV MARVIN_UI_PUBLIC_DIR=/app/operator-ui/dist
+ENV MARVIN_HOSTED=true
+ENV MARVIN_AUTO_START=true
+EXPOSE 4177
+CMD ["node", "scripts/marvin-hosted.mjs"]

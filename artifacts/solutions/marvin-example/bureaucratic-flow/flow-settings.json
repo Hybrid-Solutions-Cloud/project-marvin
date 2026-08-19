@@ -1,0 +1,40 @@
+{
+  "profile": "marvin-example",
+  "timezone": "America/New_York",
+  "syncWindowDays": 45,
+  "eligibleCalendars": [
+    {
+      "id": "work_m365",
+      "label": "Work Microsoft 365",
+      "provider": "m365",
+      "email": "you@work.example.com",
+      "tenantId": "11111111-1111-1111-1111-111111111111",
+      "scope": "work",
+      "sourcePrefix": "WORK: ",
+      "connectionStatus": "pending"
+    },
+    {
+      "id": "contract_m365",
+      "label": "Contract Microsoft 365",
+      "provider": "m365",
+      "email": "you@contract.example.com",
+      "tenantId": "22222222-2222-2222-2222-222222222222",
+      "scope": "contract",
+      "sourcePrefix": "CONTRACT: ",
+      "connectionStatus": "pending"
+    }
+  ],
+  "eligibleRoutes": [],
+  "providerRuntime": {
+    "provider": "m365",
+    "authMode": "marvin-engine",
+    "clientId": "",
+    "tenantMode": "multi-tenant",
+    "marvinBaseUrl": "",
+    "authorizePath": "/marvin-api/oauth/microsoft/start"
+  },
+  "notes": [
+    "This solution is intentionally narrowed to Outlook and Microsoft 365 calendars.",
+    "Routes involving Google or Apple are excluded because the Power Automate baseline is not the full Marvin target architecture."
+  ]
+}

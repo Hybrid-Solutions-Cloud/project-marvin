@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-label="Marvin robot mark">
+  <defs>
+    <linearGradient id="marvin-mark-bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#111d28"/>
+      <stop offset="100%" stop-color="#1a2a38"/>
+    </linearGradient>
+    <linearGradient id="marvin-mark-panel" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#d6dde4"/>
+      <stop offset="100%" stop-color="#b7c3cf"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="304" height="304" rx="68" fill="url(#marvin-mark-bg)" stroke="#263b4b" stroke-width="8"/>
+  <path d="M160 44v42" stroke="#ff9d52" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="160" cy="38" r="15" fill="#ff9d52"/>
+  <rect x="51" y="79" width="218" height="172" rx="48" fill="url(#marvin-mark-panel)"/>
+  <rect x="75" y="103" width="170" height="124" rx="32" fill="#ecf1f5"/>
+  <circle cx="128" cy="157" r="19" fill="#ff8e3c"/>
+  <circle cx="192" cy="157" r="19" fill="#ff8e3c"/>
+  <path d="M118 201h84" stroke="#485a69" stroke-width="14" stroke-linecap="round"/>
+  <path d="M51 139H31v55h20M269 139h20v55h-20" fill="none" stroke="#93a5b7" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
