@@ -29,6 +29,10 @@ try {
   assert.match(appJs, /marvin-api\/auth\/entra\/start/i);
   assert.match(uiSource, /Calendar provider/i);
   assert.match(uiSource, /Account email/i);
+  assert.match(uiSource, /Apple Calendar is available in Preview/i);
+  assert.match(uiSource, /optgroup label="Apple preview"[\s\S]*option value="apple-caldav"/i);
+  assert.match(uiSource, /optgroup label="Planned for a later preview"[\s\S]*option value="google"/i);
+  assert.doesNotMatch(uiSource, /Later release gates/i);
   assert.match(appJs, /Starting account authorization/i);
   assert.match(appJs, /window\.location\.assign\(result\.launchUrl\)/i);
   assert.match(appJs, /activeView:\s*"calendars"/i);
