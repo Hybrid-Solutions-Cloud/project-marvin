@@ -7,12 +7,12 @@ Project Marvin connects to Apple Calendar through CalDAV. Apple does not use the
 ## Connect an Apple account
 
 1. In the Apple Account security settings, create an app-specific password for Project Marvin. See [Apple's app-specific password guidance](https://support.apple.com/102654).
-2. In **Calendars**, choose **Apple Calendar**, enter the Apple Account email and app-specific password, and select **Add calendar**.
+2. In **Calendars**, choose **Apple Calendar**, enter the Apple Account email and app-specific password, and select **Add calendar**. Project Marvin uses `https://caldav.icloud.com/` as the service entry point; no CalDAV URL knowledge is required. Self-hosted operators can override that entry point for another compatible CalDAV service.
 3. After the credential check succeeds, select **Discover calendars**. Project Marvin follows redirects, resolves the current-user principal, resolves the calendar home set, and lists VEVENT calendar collections.
 4. Select one or more readable, writable calendars. Read-only collections are visible but cannot be selected as two-way targets.
 5. Select **Check capabilities**. Readiness requires current authentication, successful discovery, read privilege, write privilege, and polling support. The check uses WebDAV properties and leaves no test event behind.
 
-The discovery flow follows the `current-user-principal` and `calendar-home-set` model defined by [RFC 4791](https://datatracker.ietf.org/doc/html/rfc4791). A selected collection URL is stored as the provider calendar identifier; it is not inferred from the Apple email address.
+The discovery flow follows the `current-user-principal` and `calendar-home-set` model defined by [RFC 4791](https://datatracker.ietf.org/doc/html/rfc4791). A selected collection URL is stored as the provider calendar identifier; it is not inferred from the Apple email address. Authenticated discovery, polling, and write redirects are followed manually so authorization survives approved iCloud host changes; credentials are never forwarded to an unrelated hostname or through an HTTPS-to-HTTP downgrade.
 
 ## Synchronization behavior
 

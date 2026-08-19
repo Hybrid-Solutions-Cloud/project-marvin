@@ -26,7 +26,7 @@ The management sign-in and calendar authorizations are separate. Entra controls 
 
 Prefixes and private-by-default copies are created automatically. You always see complete details as the calendar owner. Use **Show details** only when other viewers of a family or otherwise trusted destination calendar may also see mirrored event details.
 
-Apple does not offer the same browser OAuth flow; it uses an Apple app-specific password. Provider secrets and refresh tokens are encrypted at rest and are never returned by the portal API.
+Apple does not offer the same browser OAuth flow; it uses an Apple app-specific password. Project Marvin supplies the standard iCloud CalDAV service entry point automatically, so the user provides only the Apple Account email and app-specific password. Provider secrets and refresh tokens are encrypted at rest and are never returned by the portal API.
 
 ## Hosted Azure Path
 

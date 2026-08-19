@@ -14,7 +14,7 @@ param(
   [string]$GoogleEmail,
   [string]$FamilyEmail,
   [string]$AppleEmail,
-  [string]$AppleCalDavServerUrl = '',
+  [string]$AppleCalDavServerUrl = 'https://caldav.icloud.com/',
   [string]$AppleCalDavUsername = '',
   [string]$AppleCalDavAppPassword = '',
   [string]$WorkTenantId = '11111111-1111-1111-1111-111111111111',
